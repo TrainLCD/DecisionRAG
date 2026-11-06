@@ -1,0 +1,95 @@
+import { answer } from './answer.js';
+import { GitHub } from './github.js';
+import { readText } from './http.js';
+import { Jev } from './jev.js';
+import { DEFAULT_BUDGETS, d1Store, retrieve } from './retrieval.js';
+import { enqueue, sync } from './sync.js';
+import { boundedNumber, HttpError, type Env, type SyncJob } from './types.js';
+import { purgeRepo, secureEqual, webhook } from './webhook.js';
+
+async function bodyJson(request: Request): Promise<Record<string, unknown>> {
+  if (!request.headers.get('content-type')?.startsWith('application/json')) throw new HttpError(415, 'json_required');
+  try {
+    const parsed: unknown = JSON.parse(await readText(new Response(request.body), 16_000));
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error();
+    return parsed as Record<string, unknown>;
+  } catch (e) { if (e instanceof HttpError) throw e; throw new HttpError(400, 'invalid_json'); }
+}
+async function route(request: Request, env: Env): Promise<Response> {
+  const path = new URL(request.url).pathname;
+  if (path === '/health' && request.method === 'GET') return Response.json({ ok: true });
+  if (path === '/webhooks/github' && request.method === 'POST') return webhook(request, env);
+  if (!env.API_TOKEN) throw new HttpError(503, 'authentication_not_configured');
+  if (!await secureEqual(request.headers.get('authorization') || '', `Bearer ${env.API_TOKEN}`)) throw new HttpError(401, 'unauthorized');
+  if (path === '/sync' && request.method === 'POST') {
+    await enqueue(env, { type: 'org', page: 1 });
+    return Response.json({ status: 'queued' }, { status: 202 });
+  }
+  if (path === '/sync/status' && request.method === 'GET') {
+    const [jobs, sources, repos, errors] = await Promise.all([
+      env.DB.prepare('SELECT status,count(*) AS count FROM sync_jobs GROUP BY status').all(),
+      env.DB.prepare('SELECT repo,kind,count(*) AS count,max(updated_at) AS latest_source_update FROM sources GROUP BY repo,kind').all(),
+      env.DB.prepare('SELECT * FROM repositories ORDER BY repo').all(),
+      env.DB.prepare("SELECT id,job,status,error,updated_at FROM sync_jobs WHERE status IN ('failed','retrying') ORDER BY updated_at DESC LIMIT 20").all(),
+    ]);
+    return Response.json({ jobs: jobs.results, sources: sources.results, repositories: repos.results, errors: errors.results });
+  }
+  if (path === '/admin/purge' && request.method === 'POST') {
+    const body = await bodyJson(request);
+    if (typeof body.repo !== 'string') throw new HttpError(400, 'repository_required');
+    new GitHub(env).assertRepo(body.repo);
+    await purgeRepo(env, body.repo);
+    return Response.json({ purged: body.repo });
+  }
+  if (['/search', '/answer'].includes(path) && request.method === 'POST') {
+    const body = await bodyJson(request);
+    if (typeof body.query !== 'string' || !body.query.trim() || body.query.length > 1500) throw new HttpError(400, 'query_must_be_1_to_1500_characters');
+    const query = body.query.trim();
+    const judge = new Jev(env);
+    const start = Date.now();
+    const evidence = await retrieve(query, d1Store(env), judge, { ...DEFAULT_BUDGETS,
+      maxDocuments: boundedNumber(env.MAX_SCREENED_DOCUMENTS, 20_000, 1, 100_000) });
+    const result = path === '/answer' ? await answer(query, evidence, env, judge) : { status: evidence.length ? 'retrieved' : 'empty' };
+    return Response.json({ ...result, evidence, trace: judge.trace, elapsed_ms: Date.now() - start,
+      retrieval: 'hierarchical_decision', release_inference: 'disabled' });
+  }
+  throw new HttpError(404, 'not_found');
+}
+const worker: ExportedHandler<Env, SyncJob> = {
+  async fetch(request, env) {
+    try {
+      const response = await route(request, env);
+      response.headers.set('Cache-Control', 'no-store');
+      response.headers.set('X-Content-Type-Options', 'nosniff');
+      return response;
+    } catch (e) {
+      const status = e instanceof HttpError ? e.status : 500;
+      const code = e instanceof HttpError ? e.code : 'internal_error';
+      console.error(JSON.stringify({ event: 'request_error', status, code }));
+      return Response.json({ error: code }, { status, headers: { 'Cache-Control': 'no-store' } });
+    }
+  },
+  async scheduled(_controller, env) { await enqueue(env, { type: 'org', page: 1 }); },
+  async queue(batch, env) {
+    for (const message of batch.messages) {
+      const now = new Date().toISOString();
+      await env.DB.prepare(`INSERT INTO sync_jobs(id,job,status,updated_at) VALUES(?,?,'running',?)
+        ON CONFLICT(id) DO UPDATE SET status='running',updated_at=excluded.updated_at,error=NULL`)
+        .bind(message.id, JSON.stringify(message.body), now).run();
+      try {
+        await sync(env, message.body);
+        await env.DB.prepare("UPDATE sync_jobs SET status='completed',updated_at=?,error=NULL WHERE id=?")
+          .bind(new Date().toISOString(), message.id).run();
+        message.ack();
+      } catch (e) {
+        const code = e instanceof HttpError ? e.code : 'sync_error';
+        await env.DB.prepare('UPDATE sync_jobs SET status=?,updated_at=?,error=? WHERE id=?')
+          .bind(message.attempts >= 6 ? 'failed' : 'retrying', new Date().toISOString(), code, message.id).run();
+        console.error(JSON.stringify({ event: 'sync_error', type: message.body.type, code, attempts: message.attempts }));
+        message.retry({ delaySeconds: Math.min(3600, 30 * 2 ** Math.min(message.attempts, 6)) });
+      }
+    }
+    await env.DB.prepare("DELETE FROM sync_jobs WHERE status='completed' AND updated_at<datetime('now','-7 days')").run();
+  },
+};
+export default worker;
