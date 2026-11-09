@@ -59,7 +59,7 @@ npx wrangler secret put TYPESAFE_API_KEY
 
 任意の文章生成を使う場合は、`ANSWER_MODEL`・`ANSWER_BASE_URL` を設定し、`wrangler secret put ANSWER_API_KEY` を実行する。OpenAI互換の `/chat/completions` とJSON object出力に対応するプロバイダーを想定する。根拠の本文がJevへ、生成有効時は生成プロバイダーにも送信される。
 
-`workers_dev` は既定で `false`。利用するホスト名のrouteを設定するか、意図して `true` に変更してから `npm run deploy` を実行する。APIは `/health` を除きBearer認証が必須。WebhookはHMAC-SHA256署名検証が必須。複数ユーザー向けのACLは実装していないため、このAPIトークンを他者に配布しないこと。
+`workers_dev` は既定で `false`。利用するホスト名のrouteを設定するか、意図して `true` に変更してから `npm run deploy` を実行する。検索・同期・管理APIはBearer認証が必須。サンプル画面と `/health` は認証なしで開ける。WebhookはHMAC-SHA256署名検証が必須。複数ユーザー向けのACLは実装していないため、このAPIトークンを他者に配布しないこと。
 
 ローカル開発:
 
@@ -71,6 +71,10 @@ npm run dev
 ```
 
 `.dev.vars`、`.env`、ローカルD1データはgit対象外。
+
+## サンプルWebアプリ
+
+`npm run dev` で表示されるローカルURLの `/` を開き、設定した `API_TOKEN` で接続する。サンプルはWorkerと同じオリジンから配信され、利用キーはページのメモリ内でのみ保持する。検索モードは「資料を探す」と「資料から回答する」から選べる。ヘッダーのメニューから取り込み状況を確認できる。
 
 ## API
 

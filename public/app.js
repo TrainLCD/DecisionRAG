@@ -1,0 +1,490 @@
+"use strict";
+const $ = (id) => document.getElementById(id);
+const settings = $("settings-dialog");
+let token = "";
+let session = 0;
+let searching = false;
+let connecting = false;
+let syncing = false;
+let refreshing = false;
+const RESULT_PAGE_SIZE = 5;
+let resultEvidence = [];
+let resultPage = 0;
+const requests = new Set();
+const number = (value) =>
+  Number.isFinite(Number(value)) ? Number(value).toLocaleString("ja-JP") : "—";
+const statuses = {
+  retrieved: [
+    "関連する本文が見つかりました",
+    "出典を開き、対象のバージョンや時点も確認してください。",
+  ],
+  empty: [
+    "根拠が見つかりませんでした",
+    "質問を変えるか、同期状況を確認してください。",
+  ],
+  answered: ["検証済みの回答", ""],
+  evidence_ready: [
+    "回答に使える根拠があります",
+    "回答生成モデルは未設定です。以下の根拠を確認してください。",
+  ],
+  insufficient_evidence: [
+    "回答に十分な根拠がありません",
+    "関連する資料はありますが、回答を裏付けるには不十分です。",
+  ],
+  conflicting_evidence: [
+    "根拠に矛盾があります",
+    "同じ対象・時点について異なる記述があるため、回答を保留しました。",
+  ],
+  verification_failed: [
+    "回答の検証を通過しませんでした",
+    "生成した回答は表示せず、参照した根拠を表示します。",
+  ],
+};
+const errors = {
+  unauthorized: "認証に失敗しました。API_TOKENを確認して接続し直してください。",
+  authentication_not_configured: "サーバーにAPI_TOKENが設定されていません。",
+  jev_not_configured: "サーバーにJevのAPIキーが設定されていません。",
+  upstream_http_401:
+    "外部サービスの認証に失敗しました。サーバーのAPIキーを確認してください。",
+  upstream_http_403: "外部サービスの権限または利用制限を確認してください。",
+  upstream_http_429:
+    "外部サービスの利用制限に達しました。時間をおいて再実行してください。",
+  upstream_network_error:
+    "外部サービスと通信できませんでした。時間をおいて再実行してください。",
+  upstream_timeout:
+    "外部サービスの応答がタイムアウトしました。再実行してください。",
+  upstream_context_limit: "資料が長すぎるため検索を完了できませんでした。",
+  document_screening_budget_exceeded:
+    "検索する文書数の上限を超えました。管理者に設定の確認を依頼してください。",
+  passage_screening_budget_exceeded: "検索する本文区間数の上限を超えました。",
+};
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = String(text);
+  return node;
+}
+function markdownContent(text, html, className = "") {
+  const root = element("div", className + " markdown-body");
+  if (typeof html !== "string") {
+    root.classList.add("plain-text");
+    root.textContent = String(text || "");
+    return root;
+  }
+  // Parse pre-rendered HTML inertly, then build only allowed elements. Never
+  // insert API-provided attributes, scripts or images directly into the page.
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  const allowed = new Set(["p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "blockquote", "pre", "code",
+    "em", "strong", "del", "br", "hr", "a", "table", "thead", "tbody", "tr", "th", "td", "input"]);
+  function append(source, target) {
+    for (const child of source.childNodes) {
+      if (child.nodeType === 3) { target.append(document.createTextNode(child.textContent)); continue; }
+      if (child.nodeType !== 1) continue;
+      const tag = child.tagName.toLowerCase();
+      if (!allowed.has(tag) || tag === "input" && child.getAttribute("type") !== "checkbox") continue;
+      const node = element(tag);
+      if (tag === "a") {
+        try {
+          const url = new URL(child.getAttribute("href"));
+          if (["https:", "http:", "mailto:"].includes(url.protocol) && !url.username && !url.password) {
+            node.href = url.href; node.target = "_blank"; node.rel = "noopener noreferrer";
+          }
+        } catch {}
+        if (child.hasAttribute("title")) node.title = child.getAttribute("title");
+      }
+      if (tag === "code" && /^language-[\w-]+$/.test(child.className)) node.className = child.className;
+      if (["ul", "ol", "li"].includes(tag) && ["contains-task-list", "task-list-item"].includes(child.className)) node.className = child.className;
+      if (tag === "ol" && /^\d{1,9}$/.test(child.getAttribute("start"))) node.setAttribute("start", child.getAttribute("start"));
+      if (["th", "td"].includes(tag) && ["left", "right", "center"].includes(child.getAttribute("align"))) node.setAttribute("align", child.getAttribute("align"));
+      if (tag === "input") {
+        node.setAttribute("type", "checkbox"); node.disabled = true;
+        if (child.hasAttribute("checked")) node.setAttribute("checked", "");
+      }
+      append(child, node);
+      target.append(node);
+    }
+  }
+  append(template.content, root);
+  return root;
+}
+function notice(message, kind = "", target = $("notice")) {
+  target.textContent = message;
+  target.className = "notice " + kind;
+}
+function settingsNotice(message, kind = "") {
+  notice(message, kind, $("settings-notice"));
+}
+function controls() {
+  $("empty-connect").hidden = Boolean(token);
+  $("connect-button").disabled = connecting;
+  $("connect-button").textContent = connecting ? "接続中…" : "接続";
+  $("search-button").disabled = !token || searching;
+  $("search-button").textContent = searching ? "探索中…" : "検索";
+  $("sync-button").disabled = !token || syncing;
+  $("sync-button").textContent = syncing ? "登録中…" : "GitHubから取り込む";
+  $("refresh-button").disabled = !token || refreshing;
+  $("token").disabled = connecting;
+  $("results").setAttribute("aria-busy", String(searching));
+}
+function clearResults() {
+  resultEvidence = [];
+  resultPage = 0;
+  document.querySelectorAll(".result-pagination").forEach((nav) => {
+    nav.hidden = true;
+    nav.querySelector("[data-page-label]").textContent = "";
+    nav.querySelectorAll("button").forEach((button) => { button.disabled = true; });
+  });
+  $("evidence-list").replaceChildren();
+  $("trace-list").replaceChildren();
+  $("answer-panel").replaceChildren();
+  $("answer-panel").hidden = true;
+  $("trace-panel").hidden = true;
+  $("result-summary").hidden = true;
+  $("empty-state").hidden = false;
+}
+function disconnect(message = "接続を解除しました。") {
+  session++;
+  for (const controller of requests) controller.abort();
+  requests.clear();
+  token = "";
+  searching = false;
+  connecting = false;
+  syncing = false;
+  refreshing = false;
+  $("token").value = "";
+  $("connect-form").hidden = false;
+  $("disconnect-button").hidden = true;
+  $("connection-state").textContent = "未接続";
+  $("connection-state").className = "badge";
+  $("repo-count").textContent = "—";
+  $("source-count").textContent = "—";
+  $("sync-summary").textContent = "接続後に表示します。";
+  $("sync-updated").textContent = "";
+  $("sync-error-list").replaceChildren();
+  $("sync-errors").hidden = true;
+  clearResults();
+  controls();
+  notice(message);
+  settingsNotice(message);
+  if (settings.open) $("token").focus();
+}
+async function api(path, options = {}, credential = token) {
+  const controller = new AbortController();
+  requests.add(controller);
+  const timeout = setTimeout(() => controller.abort(), 180000);
+  try {
+    const response = await fetch(path, {
+      ...options,
+      signal: controller.signal,
+      cache: "no-store",
+      credentials: "omit",
+      headers: {
+        Authorization: "Bearer " + credential,
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+      },
+    });
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error("サーバーから読み取れない応答が返りました。");
+    }
+    if (!response.ok) {
+      if (response.status === 401 && token && credential === token)
+        disconnect("認証が無効になりました。接続し直してください。");
+      throw new Error(
+        errors[data.error] ||
+          "リクエストに失敗しました（HTTP " + response.status + "）。",
+      );
+    }
+    return data;
+  } catch (error) {
+    if (error.name === "AbortError")
+      throw new Error("リクエストが中断されたか、タイムアウトしました。");
+    if (error instanceof TypeError)
+      throw new Error(
+        "サーバーに接続できません。ネットワークを確認してください。",
+      );
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+    requests.delete(controller);
+  }
+}
+function renderSync(data) {
+  const jobs = Object.fromEntries(
+    (data.jobs || []).map((job) => [job.status, Number(job.count)]),
+  );
+  $("repo-count").textContent = number((data.repositories || []).length);
+  $("source-count").textContent = number(
+    (data.sources || []).reduce((sum, source) => sum + Number(source.count), 0),
+  );
+  $("sync-summary").textContent =
+    (jobs.running || jobs.retrying)
+      ? "取り込み処理中：実行中 " + number(jobs.running || 0) + "件、再試行待ち " + number(jobs.retrying || 0) + "件。登録済みの資料は検索できます。"
+      : "現在実行中の取り込み処理はありません。登録済みの資料を検索できます。";
+  if (jobs.failed) $("sync-summary").textContent += " 過去の失敗が" + number(jobs.failed) + "件あります。詳細はエラー履歴を確認してください。";
+  $("sync-updated").textContent =
+    "最終確認 " + new Date().toLocaleTimeString("ja-JP") + " · 自動更新なし";
+  const list = $("sync-error-list");
+  list.replaceChildren();
+  for (const error of data.errors || []) {
+    const row = element("div", "sync-error-row");
+    row.append(
+      element("strong", "", error.error),
+      element("div", "", error.updated_at),
+      element("div", "", error.job),
+    );
+    list.append(row);
+  }
+  $("sync-errors").hidden = !(data.errors || []).length;
+}
+function safeSourceUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" &&
+      url.hostname === "github.com" &&
+      !url.username &&
+      !url.password
+      ? url.href
+      : null;
+  } catch {
+    return null;
+  }
+}
+function renderResult(data) {
+  clearResults();
+  $("empty-state").hidden = true;
+  const evidence = Array.isArray(data.evidence) ? data.evidence : [];
+  resultEvidence = evidence;
+  const label = statuses[data.status] || ["結果を取得しました", ""];
+  const summary = $("result-summary");
+  summary.replaceChildren(
+    element("strong", "", "関連する本文：" + number(evidence.length) + "件"),
+    element("span", "muted", "検索時間：" + (Number(data.elapsed_ms) / 1000).toFixed(2) + "秒"),
+  );
+  summary.hidden = false;
+  notice(label[0] + (label[1] ? "。" + label[1] : "。"));
+  if (data.status !== "retrieved") {
+    const panel = $("answer-panel");
+    panel.hidden = false;
+    panel.append(element("h3", "", label[0]));
+    panel.append(data.status === "answered" && typeof data.answer === "string"
+      ? markdownContent(data.answer, data.answer_html)
+      : element("p", "", label[1]));
+  }
+  renderEvidencePage();
+  const trace = Array.isArray(data.trace) ? data.trace : [];
+  $("trace-panel").hidden = !trace.length;
+  if (data.timings) {
+    const row = element("div", "trace-row", "所要時間の内訳");
+    row.append(element("span", "", "DBから取得：" + number(data.timings.storage_ms) + " ms / Jev判定：" + number(data.timings.model_ms) + " ms / その他：" + number(data.timings.other_ms) + " ms"));
+    $("trace-list").append(row);
+  }
+  for (const step of trace) {
+    const stageNames = { branch_screening: "検索する分野の選択", document_screening: "文書の選択", passage_scoring: "本文の評価", passage_ranking: "本文の評価と表示順の決定", shared_shortlist: "本文の再評価", choice_rerank: "表示順の決定", assess_evidence: "回答できるかの確認", verify_answer: "回答の検証" };
+    const row = element("div", "trace-row", stageNames[step.stage] || step.stage);
+    row.append(
+      element(
+        "span",
+        "",
+        "候補 " +
+          number(step.candidates) +
+          " · API " +
+          number(step.calls) +
+          " 回" +
+          (step.cache_hits ? " · 判定の再利用 " + number(step.cache_hits) + " 回" : "") +
+          " · " +
+          number(step.elapsed_ms) +
+          " ms · " +
+          (step.model || []).join(", "),
+      ),
+    );
+    $("trace-list").append(row);
+  }
+}
+function renderEvidencePage() {
+  const start = resultPage * RESULT_PAGE_SIZE;
+  const end = Math.min(start + RESULT_PAGE_SIZE, resultEvidence.length);
+  const pages = Math.ceil(resultEvidence.length / RESULT_PAGE_SIZE);
+  $("evidence-list").replaceChildren();
+  document.querySelectorAll(".result-pagination").forEach((nav) => {
+    nav.hidden = pages <= 1;
+    nav.querySelector("[data-page-label]").textContent = resultEvidence.length
+      ? number(resultPage + 1) + " / " + number(pages) + "ページ（" + number(start + 1) + "〜" + number(end) + "件 / " + number(resultEvidence.length) + "件）"
+      : "";
+    nav.querySelector('[data-page-step="-1"]').disabled = resultPage === 0;
+    nav.querySelector('[data-page-step="1"]').disabled = resultPage + 1 >= pages;
+  });
+  if (!resultEvidence.length) {
+    $("evidence-list").append(
+      element(
+        "p",
+        "muted",
+        "表示できる根拠はありません。質問を変えるか、同期状況を確認してください。",
+      ),
+    );
+  }
+  for (const item of resultEvidence.slice(start, end)) {
+    const card = element("article", "evidence-card");
+    const top = element("div", "evidence-top");
+    top.append(
+      element("span", "citation", "[" + item.citation + "]"),
+      element("span", "evidence-kind", ({ pr: "プルリクエスト", issue: "Issue", feedback: "利用者の報告", doc: "文書" })[item.kind] || item.kind),
+    );
+    const heading = element("h3");
+    const url = safeSourceUrl(item.url);
+    if (url) {
+      const link = element("a", "", item.title);
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      heading.append(link);
+    } else heading.textContent = item.title;
+    const metadata = item.metadata || {};
+    const meta = [
+      item.repo,
+      ({ open: "未完了", closed: "完了" })[metadata.state] || metadata.state,
+      metadata.base_branch ? "→ " + metadata.base_branch : "",
+      metadata.merged_at ? "マージ済み" : "",
+      "リリース状況：未確認",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    card.append(
+      top,
+      heading,
+      element("div", "evidence-meta", meta),
+      markdownContent(item.text, item.text_html, "evidence-text"),
+    );
+    $("evidence-list").append(card);
+  }
+}
+document.querySelectorAll("[data-page-step]").forEach((button) => {
+  button.addEventListener("click", () => {
+    if (!token || searching || button.disabled) return;
+    const next = resultPage + Number(button.dataset.pageStep);
+    if (next < 0 || next >= Math.ceil(resultEvidence.length / RESULT_PAGE_SIZE)) return;
+    resultPage = next;
+    renderEvidencePage();
+    $("result-summary").scrollIntoView?.({ block: "start" });
+    $("evidence-list").focus?.({ preventScroll: true });
+  });
+});
+for (const button of [$("settings-button"), $("empty-connect")]) {
+  button.addEventListener("click", () => {
+    settings.showModal();
+    if (!token && !connecting) $("token").focus();
+  });
+}
+$("connect-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (connecting) return;
+  const candidate = $("token").value.trim();
+  if (!candidate) return;
+  const current = ++session;
+  connecting = true;
+  controls();
+  settingsNotice("接続を確認しています…", "loading");
+  try {
+    const data = await api("/sync/status", {}, candidate);
+    if (current !== session) return;
+    token = candidate;
+    $("token").value = "";
+    $("connect-form").hidden = true;
+    $("disconnect-button").hidden = false;
+    $("connection-state").textContent = "接続済み";
+    $("connection-state").className = "badge connected";
+    renderSync(data);
+    settingsNotice("");
+    notice("接続しました。調べたいことを入力してください。");
+    settings.close();
+    $("query").focus();
+  } catch (error) {
+    if (current === session) {
+      settingsNotice(error.message, "error");
+      if (!settings.open) notice(error.message, "error");
+    }
+  } finally {
+    if (current === session) {
+      connecting = false;
+      controls();
+    }
+  }
+});
+$("disconnect-button").addEventListener("click", () => disconnect());
+$("query").addEventListener("input", () => {
+  $("query-count").textContent = number($("query").value.length) + " / 1,500文字";
+});
+$("search-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!token || searching) return;
+  const query = $("query").value.trim();
+  if (!query) {
+    $("query").focus();
+    return;
+  }
+  const current = session;
+  const mode = document.querySelector('input[name="mode"]:checked').value;
+  searching = true;
+  clearResults();
+  controls();
+  $("workspace").scrollTop = 0;
+  notice("文書の階層を探索しています。しばらくお待ちください…", "loading");
+  try {
+    const data = await api("/" + mode, {
+      method: "POST",
+      body: JSON.stringify({ query }),
+    });
+    if (current === session) renderResult(data);
+  } catch (error) {
+    if (current === session) notice(error.message, "error");
+  } finally {
+    if (current === session) {
+      searching = false;
+      controls();
+    }
+  }
+});
+$("refresh-button").addEventListener("click", async () => {
+  if (!token || refreshing) return;
+  const current = session;
+  refreshing = true;
+  controls();
+  try {
+    const data = await api("/sync/status");
+    if (current === session) {
+      renderSync(data);
+      settingsNotice("同期状況を更新しました。");
+    }
+  } catch (error) {
+    if (current === session) settingsNotice(error.message, "error");
+  } finally {
+    if (current === session) {
+      refreshing = false;
+      controls();
+    }
+  }
+});
+$("sync-button").addEventListener("click", async () => {
+  if (!token || syncing) return;
+  const current = session;
+  syncing = true;
+  controls();
+  try {
+    await api("/sync", { method: "POST" });
+    if (current === session)
+      settingsNotice(
+        "同期をキューに登録しました。しばらくしてから同期状況を更新してください。",
+      );
+  } catch (error) {
+    if (current === session) settingsNotice(error.message, "error");
+  } finally {
+    if (current === session) {
+      syncing = false;
+      controls();
+    }
+  }
+});
+controls();
