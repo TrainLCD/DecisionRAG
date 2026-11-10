@@ -69,6 +69,7 @@ function element(tag, className, text) {
   if (text !== undefined) node.textContent = String(text);
   return node;
 }
+/** Render text or rebuild pre-rendered markup with a restricted set of elements. */
 function markdownContent(text, html, className = "") {
   const root = element("div", className + " markdown-body");
   if (typeof html !== "string") {
@@ -278,6 +279,7 @@ function showEvidence(index) {
   card.focus({ preventScroll: true });
   card.scrollIntoView({ block: "start" });
 }
+/** Link citations to their evidence cards, including cards on other pages. */
 function linkAnswerCitations(content) {
   const citationIndices = new Map(resultEvidence.map((item, index) => [item.citation, index]));
   const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
@@ -309,6 +311,7 @@ function linkAnswerCitations(content) {
   }
   return content;
 }
+/** Render the response with the question captured when the search was submitted. */
 function renderResult(data, mode, query) {
   clearResults();
   $("empty-state").hidden = true;
@@ -370,6 +373,7 @@ function renderResult(data, mode, query) {
     $("trace-list").append(row);
   }
 }
+/** Render a page of evidence with the full text of each retrieved passage. */
 function renderEvidencePage() {
   const start = resultPage * RESULT_PAGE_SIZE;
   const end = Math.min(start + RESULT_PAGE_SIZE, resultEvidence.length);
@@ -423,7 +427,9 @@ function renderEvidencePage() {
     const body = (item.text ?? "").trim();
     const preview = !body || /^\((?:no body|empty document)\)$/i.test(body) ? "内容なし" : body;
     const excerpt = element("div", "evidence-text");
-    excerpt.append(element("p", "evidence-excerpt", preview));
+    const passage = element("p", "evidence-excerpt", preview);
+    passage.tabIndex = 0;
+    excerpt.append(passage);
     card.append(
       top,
       heading,

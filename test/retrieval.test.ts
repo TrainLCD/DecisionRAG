@@ -99,6 +99,27 @@ test('passage ranking still screens before Choice when the shortlist would prune
   } finally { restore(); sqlite.close(); }
 });
 
+test('combined passage ranking uses Choice order and preserves binary relevance', async () => {
+  const { env, sqlite } = fixture();
+  let calls = 0;
+  const restore = mockFetch((_url, init) => {
+    calls++;
+    const { questions } = JSON.parse(String(init?.body));
+    assert.deepEqual(Object.fromEntries(Object.entries(questions).map(([id, question]) =>
+      [id, (question as { type: string }).type])), { c0: 'noul', c1: 'noul', best: 'choice' });
+    return Response.json({ model: 'test', usage: { input_tokens: 1, output_tokens: 1 }, answers: {
+      c0: { type: 'noul', noul: 0.9 }, c1: { type: 'noul', noul: 0.6 },
+      best: { type: 'choice', choice: 'c1', probabilities: { c0: 0.1, c1: 0.9 } },
+    } });
+  });
+  try {
+    const judge = new Jev(env);
+    const ranked = await judge.rankPassages('query', ['first', 'second'].map(id => ({ id, description: id })), 2);
+    assert.equal(calls, 1);
+    assert.deepEqual(ranked.map(({ item, probability }) => [item.id, probability]), [['second', 0.6], ['first', 0.9]]);
+  } finally { restore(); sqlite.close(); }
+});
+
 test('support and conflict gates fail closed and validate thresholds', () => {
   const { env, sqlite } = fixture();
   assert.equal(gate(env, { supported: 0.2, conflict: 0.1 }), 'insufficient_evidence');
@@ -114,13 +135,14 @@ test('verified partial summaries are returned, but unsupported claims and unknow
     kind: 'pr' as const, metadata: { merged_at: null }, updated_at: '2026-11-06', url: 'https://github.com/TrainLCD/MobileApp/pull/1', citation: 'p1', relevance: 0.9 }];
   let calls = 0;
   let support = 0.99;
+  let conflict = 0.1;
   let citations = ['p1'];
   let claimText = 'A change was proposed.';
   const restore = mockFetch((url, init) => {
     if (url.includes('typesafe')) {
       const { questions, state } = JSON.parse(String(init?.body));
       const answers = Object.fromEntries(Object.keys(questions).map(key => [key, { type: 'noul',
-        noul: key === 'supported' || state.draft?.[key]?.text === 'A change was proposed.' ? support : 0.1 }]));
+        noul: key === 'conflict' ? conflict : (key === 'supported' || state.draft?.[key]?.text === 'A change was proposed.' ? support : 0.1) }]));
       return Response.json({ model: 'test', answers, usage: { input_tokens: 1, output_tokens: 1 } });
     }
     calls++;
@@ -140,6 +162,12 @@ test('verified partial summaries are returned, but unsupported claims and unknow
     assert.equal(calls, 1);
     assert.deepEqual(judge.trace.map(step => step.stage), ['generate_answer', 'verify_answer']);
     assert.equal(judge.trace[0]?.output_tokens, 20);
+    conflict = 0.6;
+    const contradicted = await answer('Released?', evidence, { ...configured, CONFLICT_THRESHOLD: '0.6' }, new Jev(env));
+    assert.equal(contradicted.status, 'conflicting_evidence');
+    assert.equal(contradicted.answer, null);
+    assert.deepEqual(contradicted.citations, []);
+    conflict = 0.1;
     support = 0.2;
     const rejected = await answer('Released?', evidence, configured, new Jev(env));
     assert.equal(rejected.status, 'verification_failed');

@@ -130,15 +130,21 @@ test('public search and answers keep private and feedback sources out of model r
   }
   const inputs: string[] = [];
   let githubAvailable = true;
+  let githubCalls = 0;
+  let mobileAppPublic = true;
   const restore = mockFetch((url, init) => {
     if (url.includes('api.github.com')) {
+      githubCalls++;
       assert.equal(new URL(url).searchParams.get('type'), 'public');
+      const previous = new Headers(init?.headers).get('If-None-Match');
+      assert.equal(previous, githubCalls === 1 ? null : '"public-v1"');
       if (!githubAvailable) return Response.json({}, { status: 503 });
+      if (previous && mobileAppPublic) return new Response(null, { status: 304 });
       return Response.json([
-        { full_name: 'TrainLCD/MobileApp', private: false, visibility: 'public' },
+        { full_name: 'TrainLCD/MobileApp', private: !mobileAppPublic, visibility: mobileAppPublic ? 'public' : 'private' },
         { full_name: 'TrainLCD/Issues', private: false, visibility: 'public' },
         { full_name: 'TrainLCD/Private', private: true, visibility: 'private' },
-      ]);
+      ], { headers: { ETag: mobileAppPublic ? '"public-v1"' : '"public-v2"' } });
     }
     const { state, questions } = JSON.parse(String(init?.body));
     inputs.push(JSON.stringify(state));
@@ -175,6 +181,11 @@ test('public search and answers keep private and feedback sources out of model r
     assert.equal(limited.status, 429);
     githubAvailable = false;
     assert.equal((await worker.fetch!(request('search', false), app, context)).status, 502);
+    assert.equal(inputs.length, callsBeforeFailure);
+    githubAvailable = true;
+    mobileAppPublic = false;
+    const nowPrivate = await worker.fetch!(request('search', false), app, context);
+    assert.deepEqual((await nowPrivate.json() as { evidence: unknown[] }).evidence, []);
     assert.equal(inputs.length, callsBeforeFailure);
   } finally { restore(); sqlite.close(); }
 });

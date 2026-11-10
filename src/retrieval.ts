@@ -8,6 +8,7 @@ export interface RetrievalStore {
 }
 export interface Budgets { branches: number; documents: number; passages: number; maxDocuments: number; maxPassages: number }
 export const DEFAULT_BUDGETS: Budgets = { branches: 6, documents: 12, passages: 10, maxDocuments: 20_000, maxPassages: 4000 };
+/** Load D1 candidates while the public scope is checked, then filter before scoring. */
 export function d1Store(env: Env, scope?: Promise<SearchScope>, timings = { storage_ms: 0 }): RetrievalStore {
   async function measure<T>(operation: Promise<T>): Promise<T> {
     const start = Date.now();
@@ -29,6 +30,7 @@ export function d1Store(env: Env, scope?: Promise<SearchScope>, timings = { stor
   };
 }
 export interface Evidence extends Passage { citation: string; relevance: number }
+/** Screen branches, documents and passages in order, rejecting incomplete searches above budget. */
 export async function retrieve(query: string, store: RetrievalStore, judge: Judge, budget: Budgets = DEFAULT_BUDGETS): Promise<Evidence[]> {
   const roots = await store.branches();
   if (!roots.length) return [];

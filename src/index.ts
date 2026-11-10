@@ -15,11 +15,13 @@ async function bodyJson(request: Request): Promise<Record<string, unknown>> {
     return parsed as Record<string, unknown>;
   } catch (e) { if (e instanceof HttpError) throw e; throw new HttpError(400, 'invalid_json'); }
 }
+/** Enforce the configured Bearer credential for private or administrative operations. */
 async function requireToken(request: Request, env: Env): Promise<void> {
   if (!env.API_TOKEN) throw new HttpError(503, 'authentication_not_configured');
   if (!await secureEqual(request.headers.get('authorization') || '', `Bearer ${env.API_TOKEN}`)) throw new HttpError(401, 'unauthorized');
 }
 
+/** Search within the caller's allowed scope and record server-side phase timings. */
 async function search(request: Request, env: Env, path: string): Promise<Response> {
   const body = await bodyJson(request);
   if (typeof body.query !== 'string' || !body.query.trim() || body.query.length > 1500) throw new HttpError(400, 'query_must_be_1_to_1500_characters');
@@ -55,6 +57,7 @@ async function search(request: Request, env: Env, path: string): Promise<Respons
     retrieval: 'hierarchical_decision', release_inference: 'disabled' });
 }
 
+/** Dispatch public endpoints before applying the authentication gate for admin routes. */
 async function route(request: Request, env: Env): Promise<Response> {
   const path = new URL(request.url).pathname;
   if (path === '/health' && request.method === 'GET') return Response.json({ ok: true });
@@ -84,6 +87,7 @@ async function route(request: Request, env: Env): Promise<Response> {
   throw new HttpError(404, 'not_found');
 }
 const worker: ExportedHandler<Env, SyncJob> = {
+  /** Handle HTTP errors without exposing upstream payloads or credentials. */
   async fetch(request, env) {
     try {
       const response = await route(request, env);

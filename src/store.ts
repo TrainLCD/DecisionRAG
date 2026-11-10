@@ -56,12 +56,14 @@ export async function branches(env: Env): Promise<Branch[]> {
 }
 export interface DocumentCursor { branch: Branch; after: string }
 export const DOCUMENT_PAGE_SIZE = 540;
+/** Advance each branch's document cursor in one D1 round trip. */
 export async function documentPages(env: Env, cursors: DocumentCursor[]): Promise<Candidate[][]> {
   const results = await env.DB.batch<{ id: string; title: string; metadata: string }>(cursors.map(({ branch, after }) =>
     env.DB.prepare(`SELECT id,title,metadata FROM sources
       WHERE repo=? AND kind=? AND id>? ORDER BY id LIMIT ?`).bind(branch.repo, branch.kind, after, DOCUMENT_PAGE_SIZE)));
   return results.map(result => result.results.map(r => ({ id: r.id, description: `${r.title}\n${r.metadata}` })));
 }
+/** Load passage text after reapplying the search scope to the selected sources. */
 export async function passagesFor(env: Env, ids: string[], scope?: SearchScope): Promise<Passage[]> {
   if (!ids.length) return [];
   // A legacy snapshot can contain a draft review visible only to the sync credential.

@@ -15,6 +15,7 @@ async function saveBounded(env: Env, source: Source, snapshot?: { repo: string; 
   if (new TextEncoder().encode(source.body).length > 600_000) throw new HttpError(422, 'source_size_budget_exceeded');
   await saveSource(env, source, snapshot);
 }
+/** Process one sync job and index only submitted review content from pull requests. */
 export async function sync(env: Env, job: SyncJob): Promise<void> {
   const gh = new GitHub(env);
   if (job.type === 'org') {
