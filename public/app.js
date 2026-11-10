@@ -284,7 +284,8 @@ function linkAnswerCitations(content) {
     for (const match of text.matchAll(/\[([A-Za-z0-9_-]+)\]/g)) {
       const index = citationIndices.get(match[1]);
       if (index === undefined) continue;
-      const link = element("a", "", match[0]);
+      const title = resultEvidence[index].title?.trim() || "根拠資料";
+      const link = element("a", "", title);
       link.href = "#" + evidenceId(match[1]);
       link.addEventListener("click", (event) => {
         if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) showEvidence(index);
