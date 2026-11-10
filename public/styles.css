@@ -233,7 +233,15 @@ summary { cursor: pointer; font-weight: 600; }
 .query-option input:checked + .query-option-icon { color: var(--primary); background: var(--primary-soft); }
 .query-option input:focus-visible + .query-option-icon { outline: 2px solid var(--primary); outline-offset: 2px; }
 .query-option input:disabled ~ span { opacity: 0.55; cursor: not-allowed; }
-#search-button { flex-shrink: 0; width: 2.75rem; height: 2.75rem; padding: 0; border-radius: 50%; }
+#search-button {
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0.375rem;
+  border: 0;
+  border-radius: 50%;
+  background-clip: content-box;
+}
 textarea {
   display: block;
   width: 100%;
