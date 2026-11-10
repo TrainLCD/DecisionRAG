@@ -165,7 +165,8 @@ test('public search and answers keep private and feedback sources out of model r
     for (const path of ['search', 'answer']) {
       const response = await worker.fetch!(request(path, false), { ...app, API_TOKEN: '' }, context);
       assert.equal(response.status, 200);
-      const payload = await response.json() as { evidence: { title: string }[] };
+      const payload = await response.json() as { hit_count: number; evidence: { title: string }[] };
+      assert.equal(payload.hit_count, 1);
       assert.deepEqual(payload.evidence.map(item => item.title), ['Public issue']);
       assert.doesNotMatch(JSON.stringify(payload), /TrainLCD\/(Issues|Private)|Unpublished review/);
     }
@@ -185,7 +186,9 @@ test('public search and answers keep private and feedback sources out of model r
     githubAvailable = true;
     mobileAppPublic = false;
     const nowPrivate = await worker.fetch!(request('search', false), app, context);
-    assert.deepEqual((await nowPrivate.json() as { evidence: unknown[] }).evidence, []);
+    const privatePayload = await nowPrivate.json() as { evidence: unknown[]; hit_count: number };
+    assert.deepEqual(privatePayload.evidence, []);
+    assert.equal(privatePayload.hit_count, 0);
     assert.equal(inputs.length, callsBeforeFailure);
   } finally { restore(); sqlite.close(); }
 });

@@ -4,10 +4,11 @@ interface Noul { type: 'noul'; noul: number }
 interface Choice { type: 'choice'; choice: string; probabilities: Record<string, number>; confidence: number }
 interface Result { model: string; answers: Record<string, Noul | Choice>; usage: { input_tokens: number; output_tokens: number } }
 interface Assessment { supported: number; conflict: number }
+interface PassageRanking<T> { ranked: Scored<T>[]; hitCount: number }
 export interface CitedClaim { text: string; citations: string[] }
 export interface Judge {
   score<T extends Candidate>(query: string, candidates: T[], stage: string): Promise<Scored<T>[]>;
-  rankPassages<T extends Candidate>(query: string, candidates: T[], shortlistSize: number): Promise<Scored<T>[]>;
+  rankPassages<T extends Candidate>(query: string, candidates: T[], shortlistSize: number): Promise<PassageRanking<T>>;
   assess(query: string, evidence: unknown): Promise<Assessment>;
   verify(query: string, evidence: unknown, claims: CitedClaim[]): Promise<{ claims: number[]; complete: number; conflict: number }>;
   trace: Trace[];
@@ -24,6 +25,7 @@ const maxBatchChars = 70_000;
 const passageBatchSize = 60;
 const candidateId = (index: number) => `c${index}`;
 const passageId = (index: number) => `p${index}`;
+const isRelevant = (row: Scored<Candidate>) => row.probability > 0.5;
 
 /** Assign one relevance question to each candidate in the shared context. */
 function binaryQuestions(candidates: Candidate[]) {
@@ -97,7 +99,7 @@ export class Jev implements Judge {
     return scored;
   }
   /** Screen passages and compare the shortlist, combining both judgments when all candidates fit. */
-  async rankPassages<T extends Candidate>(query: string, candidates: T[], shortlistSize: number): Promise<Scored<T>[]> {
+  async rankPassages<T extends Candidate>(query: string, candidates: T[], shortlistSize: number): Promise<PassageRanking<T>> {
     // When no passage would be pruned, both judgments can share one request.
     if (candidates.length >= 2 && candidates.length <= Math.min(shortlistSize, passageBatchSize) &&
       candidates.every(c => c.description.length <= maxCandidateChars) &&
@@ -106,15 +108,15 @@ export class Jev implements Judge {
       const ids = candidates.map((_, i) => candidateId(i));
       const result = await this.call({ query, candidates: Object.fromEntries(candidates.map((c, i) => [ids[i], c.description])) },
         { ...binaryQuestions(candidates), best: choiceQuestion(ids) });
-      const ranked = choiceOrder(binaryScores(candidates, result), result, ids);
+      const ranked = choiceOrder(binaryScores(candidates, result), result, ids).filter(isRelevant);
       this.trace.push({ stage: 'passage_ranking', candidates: candidates.length, selected: ranked.map(r => r.item.id),
         calls: 1, model: [result.model], ...result.usage, elapsed_ms: Date.now() - start });
-      return ranked;
+      return { ranked, hitCount: ranked.length };
     }
 
-    const scored = await this.score(query, candidates, 'passage_scoring');
-    const shortlist = scored.slice(0, shortlistSize);
-    if (shortlist.length < 2) return shortlist;
+    const hits = (await this.score(query, candidates, 'passage_scoring')).filter(isRelevant);
+    const shortlist = hits.slice(0, shortlistSize);
+    if (shortlist.length < 2) return { ranked: shortlist, hitCount: hits.length };
     const start = Date.now();
     const ids = shortlist.map((_, i) => passageId(i));
     const result = await this.call({ query, passages: Object.fromEntries(shortlist.map((r, i) => [ids[i], r.item.description])) }, {
@@ -123,7 +125,7 @@ export class Jev implements Judge {
     const ranked = choiceOrder(shortlist, result, ids);
     this.trace.push({ stage: 'choice_rerank', candidates: shortlist.length, selected: ranked.map(r => r.item.id),
       calls: 1, model: [result.model], ...result.usage, elapsed_ms: Date.now() - start });
-    return ranked;
+    return { ranked, hitCount: hits.length };
   }
   /** Assess evidence when there is no draft to verify. */
   async assess(query: string, evidence: unknown): Promise<Assessment> {

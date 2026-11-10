@@ -7,7 +7,7 @@ export interface RetrievalStore {
   passages(ids: string[]): Promise<Passage[]>;
 }
 export interface Budgets { branches: number; documents: number; passages: number; maxDocuments: number; maxPassages: number }
-export const DEFAULT_BUDGETS: Budgets = { branches: 6, documents: 12, passages: 10, maxDocuments: 20_000, maxPassages: 4000 };
+export const DEFAULT_BUDGETS: Budgets = { branches: 6, documents: 12, passages: 20, maxDocuments: 20_000, maxPassages: 4000 };
 /** Load D1 candidates while the public scope is checked, then filter before scoring. */
 export function d1Store(env: Env, scope?: Promise<SearchScope>, timings = { storage_ms: 0 }): RetrievalStore {
   async function measure<T>(operation: Promise<T>): Promise<T> {
@@ -30,10 +30,11 @@ export function d1Store(env: Env, scope?: Promise<SearchScope>, timings = { stor
   };
 }
 export interface Evidence extends Passage { citation: string; relevance: number }
+interface RetrievalResult { evidence: Evidence[]; hitCount: number }
 /** Screen branches, documents and passages in order, rejecting incomplete searches above budget. */
-export async function retrieve(query: string, store: RetrievalStore, judge: Judge, budget: Budgets = DEFAULT_BUDGETS): Promise<Evidence[]> {
+export async function retrieve(query: string, store: RetrievalStore, judge: Judge, budget: Budgets = DEFAULT_BUDGETS): Promise<RetrievalResult> {
   const roots = await store.branches();
-  if (!roots.length) return [];
+  if (!roots.length) return { evidence: [], hitCount: 0 };
   const selected = (await judge.score(query, roots, 'branch_screening')).slice(0, budget.branches);
   let screened = 0;
   // No lexical/vector prefilter: every document title in each retained branch is evaluated.
@@ -59,11 +60,12 @@ export async function retrieve(query: string, store: RetrievalStore, judge: Judg
   if (passages.length > budget.maxPassages) throw new HttpError(422, 'passage_screening_budget_exceeded');
   const candidates = passages.map(p => ({ ...p,
     description: `${p.title}\nRepository: ${p.repo}\nMetadata: ${JSON.stringify(p.metadata)}\n${p.text}` }));
-  const ranked = await judge.rankPassages(query, candidates, Math.min(20, budget.passages * 2));
-  return ranked.slice(0, budget.passages).map((r, i) => {
+  const { ranked, hitCount } = await judge.rankPassages(query, candidates, Math.min(20, budget.passages * 2));
+  const evidence = ranked.slice(0, budget.passages).map((r, i) => {
     const { description: _, ...passage } = r.item;
     return { ...passage, citation: `p${i + 1}`, relevance: r.probability };
   });
+  return { evidence, hitCount };
 }
 export function gate(env: Env, decision: { supported: number; conflict: number }): 'ready' | 'insufficient_evidence' | 'conflicting_evidence' {
   const support = boundedNumber(env.SUPPORT_THRESHOLD, 0.85, 0, 1);
