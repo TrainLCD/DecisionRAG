@@ -321,7 +321,11 @@ function renderResult(data, mode) {
     element("span", "muted", (mode === "answer" ? "回答時間：" : "検索時間：") + (Number(data.elapsed_ms) / 1000).toFixed(2) + "秒"),
   );
   summary.hidden = false;
-  notice(label[0] + (label[1] ? "。" + label[1] : "。"));
+  if (data.status === "verification_failed") {
+    notice("");
+  } else {
+    notice(label[0] + (label[1] ? "。" + label[1] : "。"));
+  }
   if (data.status !== "retrieved") {
     const panel = $("answer-panel");
     panel.hidden = false;
