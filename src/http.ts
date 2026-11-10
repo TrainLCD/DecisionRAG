@@ -33,7 +33,12 @@ export async function taggedJsonRequest<T>(url: string, init: RequestInit = {}, 
   }
   if (response.status === 304 && previous?.etag) return previous;
   if (!response.ok) {
-    await response.body?.cancel();
+    if (response.status === 400) {
+      const detail = await readText(response, 8192).catch(() => '');
+      if (detail.includes('"max_tokens_exceeded"')) throw new HttpError(502, 'upstream_context_limit');
+    } else {
+      await response.body?.cancel();
+    }
     // Never echo upstream bodies, headers, credentials or retrieved private text.
     throw new HttpError(502, `upstream_http_${response.status}`);
   }

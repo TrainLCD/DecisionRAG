@@ -56,6 +56,18 @@ export async function branches(env: Env): Promise<Branch[]> {
 }
 export interface DocumentCursor { branch: Branch; after: string }
 export const DOCUMENT_PAGE_SIZE = 540;
+/** Load scoped titles together so small collections can skip repository routing. */
+export async function documentsFor(env: Env, limit: number, scope?: SearchScope): Promise<Candidate[]> {
+  const result = await env.DB.prepare(`SELECT s.id,s.kind,s.title,s.metadata,
+      CASE WHEN s.kind='doc' THEN substr(s.body,1,140) ELSE '' END AS introduction
+    FROM sources s JOIN repositories r ON s.repo=r.repo ${scope ? `WHERE ${scopedSources}` : ''}
+    ORDER BY s.repo,s.kind,s.id LIMIT ?`)
+    .bind(...(scope ? [JSON.stringify(scope.publicRepos), scope.feedbackRepo ?? null] : []), limit)
+    .all<{ id: string; kind: Kind; title: string; metadata: string; introduction: string }>();
+  return result.results.map(({ id, kind, title, metadata, introduction }) => ({
+    id, description: `${title}\n${id} (${kind})\n${metadata}${introduction ? '\n' + introduction : ''}`,
+  }));
+}
 /** Advance each branch's document cursor in one D1 round trip. */
 export async function documentPages(env: Env, cursors: DocumentCursor[]): Promise<Candidate[][]> {
   const results = await env.DB.batch<{ id: string; title: string; metadata: string }>(cursors.map(({ branch, after }) =>
@@ -64,15 +76,15 @@ export async function documentPages(env: Env, cursors: DocumentCursor[]): Promis
   return results.map(result => result.results.map(r => ({ id: r.id, description: `${r.title}\n${r.metadata}` })));
 }
 /** Load passage text after reapplying the search scope to the selected sources. */
-export async function passagesFor(env: Env, ids: string[], scope?: SearchScope): Promise<Passage[]> {
+export async function passagesFor(env: Env, ids: string[], limit: number, scope?: SearchScope): Promise<Passage[]> {
   if (!ids.length) return [];
   // A legacy snapshot can contain a draft review visible only to the sync credential.
   const scopeFilter = scope ? `AND ${scopedSources}
     AND (s.kind<>'pr' OR instr(s.body,char(10)||'PENDING'||char(10))=0)` : '';
   const result = await env.DB.prepare(`SELECT p.*,s.repo,s.kind,s.title,s.url,s.metadata,s.updated_at
     FROM passages p JOIN sources s ON s.id=p.source_id
-    WHERE s.id IN (${ids.map(() => '?').join(',')}) ${scopeFilter} ORDER BY s.id,p.ordinal`)
-    .bind(...ids, ...(scope ? [JSON.stringify(scope.publicRepos), scope.feedbackRepo ?? null] : []))
+    WHERE s.id IN (SELECT value FROM json_each(?)) ${scopeFilter} ORDER BY s.id,p.ordinal LIMIT ?`)
+    .bind(JSON.stringify(ids), ...(scope ? [JSON.stringify(scope.publicRepos), scope.feedbackRepo ?? null] : []), limit)
     .all<Omit<Passage, 'metadata'> & { metadata: string }>();
   return result.results.map(p => ({ ...p, metadata: JSON.parse(p.metadata) as Record<string, unknown> }));
 }

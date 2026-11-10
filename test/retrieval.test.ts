@@ -28,11 +28,13 @@ test('retrieves by shared-context hierarchy without lexical or vector filtering'
   });
   try {
     const judge = new Jev(env);
-    const evidence = await retrieve('地下鉄で位置が止まる問題への対応は？', d1Store(env), judge);
+    const { evidence, hitCount } = await retrieve('地下鉄で位置が止まる問題への対応は？', d1Store(env), judge);
+    assert.equal(hitCount, 1);
+    assert.equal(evidence.length, 1);
     assert.equal(evidence[0]?.source_id, 'TrainLCD/MobileApp#1');
     assert.ok(states.some(s => Object.values(s.candidates || {}).some(t => t.includes('Restore continuous heartbeat')) &&
       Object.values(s.candidates || {}).some(t => t.includes('地下鉄の駅名を修正'))));
-    assert.deepEqual(judge.trace.map(t => t.stage), ['branch_screening', 'document_screening', 'passage_ranking']);
+    assert.deepEqual(judge.trace.map(t => t.stage), ['document_screening', 'passage_ranking']);
     assert.equal(evidence[0]?.metadata.release_status, 'unknown');
   } finally { restore(); sqlite.close(); }
 });
@@ -46,6 +48,7 @@ test('screening budget never returns silently incomplete evidence', async () => 
   });
   try {
     await assert.rejects(retrieve('query', {
+      documents: async () => [{ id: 'd1', description: 'one' }, { id: 'd2', description: 'two' }],
       branches: async () => [{ id: 'b', repo: 'TrainLCD/MobileApp', kind: 'pr', description: 'branch' }],
       documentPages: async () => [[{ id: 'd1', description: 'one' }, { id: 'd2', description: 'two' }]],
       passages: async () => { throw new Error('Must not expand partial corpus'); },
@@ -69,7 +72,8 @@ test('batched document pages retain branch order and screen the tail of a full p
     return items.map(item => ({ item, probability: 1 }));
   };
   try {
-    await retrieve('query', { ...store, documentPages: cursors => {
+    await retrieve('query', { ...store, documents: async limit => Array.from({ length: limit }, () => ({ id: 'overflow', description: 'overflow' })),
+      documentPages: cursors => {
       cursorBatches.push(cursors.map(({ branch }) => branch.kind));
       return store.documentPages(cursors);
     } }, judge);
@@ -79,7 +83,45 @@ test('batched document pages retain branch order and screen the tail of a full p
   } finally { sqlite.close(); }
 });
 
-test('passage ranking still screens before Choice when the shortlist would prune candidates', async () => {
+test('direct title screening expands relevant documents beyond the fallback shortlist', async () => {
+  const { env, sqlite } = fixture();
+  const documents = Array.from({ length: 16 }, (_, i) => ({ id: `doc${i}`, description: `title ${i}` }));
+  const judge = new Jev(env);
+  judge.score = async (_query, items) => items.map(item => ({ item, probability: item.id === 'doc15' ? 0.4 : 0.6 }));
+  try {
+    await retrieve('query', {
+      documents: async () => documents,
+      branches: async () => { throw new Error('Small collections should not use branch routing'); },
+      documentPages: async () => { throw new Error('Small collections should not use branch cursors'); },
+      passages: async ids => {
+        assert.deepEqual(ids, documents.slice(0, 15).map(doc => doc.id));
+        return [];
+      },
+    }, judge, { ...DEFAULT_BUDGETS, documents: 12 });
+  } finally { sqlite.close(); }
+});
+
+test('Jev retries only the overlong batch without losing candidates', async () => {
+  const { env, sqlite } = fixture();
+  const batches: string[][] = [];
+  const restore = mockFetch((_url, init) => {
+    const { state } = JSON.parse(String(init?.body));
+    const entries = Object.entries<string>(state.candidates);
+    batches.push(entries.map(([, value]) => value));
+    if (entries.length > 2) return Response.json({ error: { code: 'max_tokens_exceeded' } }, { status: 400 });
+    return Response.json({ model: 'test', usage: { input_tokens: 1, output_tokens: 1 },
+      answers: Object.fromEntries(entries.map(([id]) => [id, { type: 'noul', noul: 0.8 }])) });
+  });
+  try {
+    const judge = new Jev(env);
+    const items = ['one', 'two', 'three', 'four'].map(id => ({ id, description: id }));
+    assert.deepEqual((await judge.score('query', items, 'document_screening')).map(row => row.item.id), items.map(item => item.id));
+    assert.deepEqual(batches, [['one', 'two', 'three', 'four'], ['one', 'two'], ['three', 'four']]);
+    assert.equal(judge.trace[0]?.calls, 3);
+  } finally { restore(); sqlite.close(); }
+});
+
+test('passage ranking counts all matches before limiting the Choice shortlist', async () => {
   const { env, sqlite } = fixture();
   const calls: string[][] = [];
   const restore = mockFetch((_url, init) => {
@@ -87,15 +129,16 @@ test('passage ranking still screens before Choice when the shortlist would prune
     const options = Object.values<string>(state.candidates ?? state.passages);
     calls.push(options);
     const answers = state.candidates
-      ? Object.fromEntries(Object.keys(state.candidates).map((id, i) => [id, { type: 'noul', noul: i / 10 }]))
+      ? Object.fromEntries(Object.keys(state.candidates).map((id, i) => [id, { type: 'noul', noul: [0.5, 0.6, 0.7, 0.8][i] }]))
       : { best: { type: 'choice', choice: 'p1', probabilities: { p0: 0.1, p1: 0.9 } } };
     return Response.json({ model: 'test', answers, usage: { input_tokens: 1, output_tokens: 1 } });
   });
   try {
     const judge = new Jev(env);
-    const ranked = await judge.rankPassages('query', ['one', 'two', 'three'].map(id => ({ id, description: id })), 2);
-    assert.deepEqual(calls, [['one', 'two', 'three'], ['three', 'two']]);
-    assert.deepEqual(ranked.map(({ item, probability }) => [item.id, probability]), [['two', 0.1], ['three', 0.2]]);
+    const { ranked, hitCount } = await judge.rankPassages('query', ['one', 'two', 'three', 'four'].map(id => ({ id, description: id })), 2);
+    assert.equal(hitCount, 3);
+    assert.deepEqual(calls, [['one', 'two', 'three', 'four'], ['four', 'three']]);
+    assert.deepEqual(ranked.map(({ item, probability }) => [item.id, probability]), [['three', 0.7], ['four', 0.8]]);
   } finally { restore(); sqlite.close(); }
 });
 
@@ -114,8 +157,9 @@ test('combined passage ranking uses Choice order and preserves binary relevance'
   });
   try {
     const judge = new Jev(env);
-    const ranked = await judge.rankPassages('query', ['first', 'second'].map(id => ({ id, description: id })), 2);
+    const { ranked, hitCount } = await judge.rankPassages('query', ['first', 'second'].map(id => ({ id, description: id })), 2);
     assert.equal(calls, 1);
+    assert.equal(hitCount, 2);
     assert.deepEqual(ranked.map(({ item, probability }) => [item.id, probability]), [['second', 0.6], ['first', 0.9]]);
   } finally { restore(); sqlite.close(); }
 });

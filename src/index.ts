@@ -46,14 +46,14 @@ async function search(request: Request, env: Env, path: string): Promise<Respons
   });
   const query = body.query.trim();
   const judge = new Jev(env);
-  const evidence = await retrieve(query, d1Store(env, scope, timings), judge, { ...DEFAULT_BUDGETS, maxDocuments });
+  const { evidence, hitCount } = await retrieve(query, d1Store(env, scope, timings), judge, { ...DEFAULT_BUDGETS, maxDocuments });
   timings.retrieval_ms = Date.now() - start;
   const result = path === '/answer' ? await answer(query, evidence, env, judge) : { status: evidence.length ? 'retrieved' : 'empty' };
   for (const step of judge.trace) {
     if (step.stage === 'generate_answer') timings.generation_ms += step.elapsed_ms;
     else timings.model_ms += step.elapsed_ms;
   }
-  return Response.json({ ...result, evidence, trace: judge.trace, timings, elapsed_ms: Date.now() - start,
+  return Response.json({ ...result, evidence, hit_count: hitCount, trace: judge.trace, timings, elapsed_ms: Date.now() - start,
     retrieval: 'hierarchical_decision', release_inference: 'disabled' });
 }
 

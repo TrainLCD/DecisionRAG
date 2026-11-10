@@ -1,13 +1,15 @@
-import { branches, DOCUMENT_PAGE_SIZE, documentPages, passagesFor, type Branch, type DocumentCursor, type SearchScope } from './store.js';
+import { branches, DOCUMENT_PAGE_SIZE, documentPages, documentsFor, passagesFor, type Branch, type DocumentCursor, type SearchScope } from './store.js';
 import type { Judge } from './jev.js';
 import { boundedNumber, HttpError, type Candidate, type Env, type Passage } from './types.js';
 export interface RetrievalStore {
+  documents(limit: number): Promise<Candidate[]>;
   branches(): Promise<Branch[]>;
   documentPages(cursors: DocumentCursor[]): Promise<Candidate[][]>;
-  passages(ids: string[]): Promise<Passage[]>;
+  passages(ids: string[], limit: number): Promise<Passage[]>;
 }
 export interface Budgets { branches: number; documents: number; passages: number; maxDocuments: number; maxPassages: number }
-export const DEFAULT_BUDGETS: Budgets = { branches: 6, documents: 12, passages: 10, maxDocuments: 20_000, maxPassages: 4000 };
+export const DEFAULT_BUDGETS: Budgets = { branches: 6, documents: 30, passages: 20, maxDocuments: 20_000, maxPassages: 4000 };
+const directDocumentLimit = 5_000;
 /** Load D1 candidates while the public scope is checked, then filter before scoring. */
 export function d1Store(env: Env, scope?: Promise<SearchScope>, timings = { storage_ms: 0 }): RetrievalStore {
   async function measure<T>(operation: Promise<T>): Promise<T> {
@@ -16,6 +18,7 @@ export function d1Store(env: Env, scope?: Promise<SearchScope>, timings = { stor
     finally { timings.storage_ms += Date.now() - start; }
   }
   return {
+    documents: async limit => measure(documentsFor(env, limit, await scope)),
     async branches() {
       // Wait for the fresh allowlist before exposing candidates to the judge.
       const [roots, allowed] = await Promise.all([measure(branches(env)), scope]);
@@ -26,14 +29,14 @@ export function d1Store(env: Env, scope?: Promise<SearchScope>, timings = { stor
         : publicRepos.has(root.repo.toLowerCase()));
     },
     documentPages: cursors => measure(documentPages(env, cursors)),
-    passages: async ids => measure(passagesFor(env, ids, await scope)),
+    passages: async (ids, limit) => measure(passagesFor(env, ids, limit, await scope)),
   };
 }
 export interface Evidence extends Passage { citation: string; relevance: number }
-/** Screen branches, documents and passages in order, rejecting incomplete searches above budget. */
-export async function retrieve(query: string, store: RetrievalStore, judge: Judge, budget: Budgets = DEFAULT_BUDGETS): Promise<Evidence[]> {
+interface RetrievalResult { evidence: Evidence[]; hitCount: number }
+/** Route large collections by repository and source type before scanning their titles. */
+async function routedDocuments(query: string, store: RetrievalStore, judge: Judge, budget: Budgets): Promise<Candidate[]> {
   const roots = await store.branches();
-  if (!roots.length) return [];
   const selected = (await judge.score(query, roots, 'branch_screening')).slice(0, budget.branches);
   let screened = 0;
   // No lexical/vector prefilter: every document title in each retained branch is evaluated.
@@ -53,17 +56,27 @@ export async function retrieve(query: string, store: RetrievalStore, judge: Judg
       return page.length === DOCUMENT_PAGE_SIZE;
     });
   }
-  const documentScores = await judge.score(query, branchesToScreen.flatMap(state => state.documents), 'document_screening');
-  const selectedDocs = documentScores.slice(0, budget.documents).map(r => r.item.id);
-  const passages = await store.passages(selectedDocs);
+  return branchesToScreen.flatMap(state => state.documents);
+}
+
+/** Let Jev screen titles and then passages, routing only when the collection is too large. */
+export async function retrieve(query: string, store: RetrievalStore, judge: Judge, budget: Budgets = DEFAULT_BUDGETS): Promise<RetrievalResult> {
+  const directLimit = Math.min(directDocumentLimit, Math.floor(budget.maxDocuments));
+  const direct = await store.documents(directLimit + 1);
+  const documents = direct.length <= directLimit ? direct : await routedDocuments(query, store, judge, budget);
+  const documentScores = await judge.score(query, documents, 'document_screening');
+  // Keep the strongest candidates even when title-level scores are uncertain.
+  const selectedDocs = documentScores.filter((r, index) => index < budget.documents || r.probability > 0.5).map(r => r.item.id);
+  const passages = await store.passages(selectedDocs, budget.maxPassages + 1);
   if (passages.length > budget.maxPassages) throw new HttpError(422, 'passage_screening_budget_exceeded');
   const candidates = passages.map(p => ({ ...p,
     description: `${p.title}\nRepository: ${p.repo}\nMetadata: ${JSON.stringify(p.metadata)}\n${p.text}` }));
-  const ranked = await judge.rankPassages(query, candidates, Math.min(20, budget.passages * 2));
-  return ranked.slice(0, budget.passages).map((r, i) => {
+  const { ranked, hitCount } = await judge.rankPassages(query, candidates, Math.min(20, budget.passages * 2));
+  const evidence = ranked.slice(0, budget.passages).map((r, i) => {
     const { description: _, ...passage } = r.item;
     return { ...passage, citation: `p${i + 1}`, relevance: r.probability };
   });
+  return { evidence, hitCount };
 }
 export function gate(env: Env, decision: { supported: number; conflict: number }): 'ready' | 'insufficient_evidence' | 'conflicting_evidence' {
   const support = boundedNumber(env.SUPPORT_THRESHOLD, 0.85, 0, 1);
