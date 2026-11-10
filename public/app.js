@@ -1,6 +1,7 @@
 "use strict";
 const $ = (id) => document.getElementById(id);
 const settings = $("settings-dialog");
+const SAVED_TOKEN_KEY = "decisionrag.apiToken";
 let token = "";
 let feedbackRequested = false;
 let session = 0;
@@ -154,10 +155,33 @@ function clearResults() {
   $("result-summary").hidden = true;
   $("empty-state").hidden = false;
 }
+function readSavedToken() {
+  try {
+    return localStorage.getItem(SAVED_TOKEN_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+function saveToken(credential) {
+  try {
+    localStorage.setItem(SAVED_TOKEN_KEY, credential);
+  } catch {
+    // Browsers that block storage can still connect for the current page.
+  }
+}
+function forgetSavedToken(credential) {
+  if (!credential || readSavedToken() !== credential) return;
+  try {
+    localStorage.removeItem(SAVED_TOKEN_KEY);
+  } catch {
+    // Browser settings can block storage access.
+  }
+}
 function disconnect(message = "接続を解除しました。") {
   session++;
   for (const controller of requests) controller.abort();
   requests.clear();
+  forgetSavedToken(token);
   token = "";
   feedbackRequested = false;
   searching = false;
@@ -197,6 +221,11 @@ async function api(path, options = {}, credential = token) {
         ...(options.body ? { "Content-Type": "application/json" } : {}),
       },
     });
+    if (response.status === 401 && credential) {
+      if (credential === token)
+        disconnect("認証が無効になりました。接続し直してください。");
+      else forgetSavedToken(credential);
+    }
     let data;
     try {
       data = await response.json();
@@ -204,8 +233,6 @@ async function api(path, options = {}, credential = token) {
       throw new Error("サーバーから読み取れない応答が返りました。");
     }
     if (!response.ok) {
-      if (response.status === 401 && token && credential === token)
-        disconnect("認証が無効になりました。接続し直してください。");
       throw new Error(
         errors[data.error] ||
           "リクエストに失敗しました（HTTP " + response.status + "）。",
@@ -492,11 +519,8 @@ $("include-feedback").addEventListener("change", () => {
   clearResults();
   notice("");
 });
-$("connect-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (connecting) return;
-  const candidate = $("token").value.trim();
-  if (!candidate) return;
+async function connect(candidate, restoring = false) {
+  if (!candidate || connecting) return;
   const current = session;
   connecting = true;
   controls();
@@ -504,7 +528,12 @@ $("connect-form").addEventListener("submit", async (event) => {
   try {
     const data = await api("/sync/status", {}, candidate);
     if (current !== session) return;
+    if (restoring && readSavedToken() !== candidate) {
+      settingsNotice("");
+      return;
+    }
     token = candidate;
+    if (!restoring) saveToken(candidate);
     if (feedbackRequested && settings.open) {
       $("include-feedback").checked = true;
       clearResults();
@@ -516,13 +545,15 @@ $("connect-form").addEventListener("submit", async (event) => {
     $("connection-state").className = "badge connected";
     renderSync(data);
     settingsNotice("");
-    notice("接続しました。調べたいことを入力してください。");
-    settings.close();
-    $("query").focus();
+    if (!restoring) {
+      notice("接続しました。調べたいことを入力してください。");
+      settings.close();
+      $("query").focus();
+    }
   } catch (error) {
     if (current === session) {
       settingsNotice(error.message, "error");
-      if (!settings.open) notice(error.message, "error");
+      if (!restoring && !settings.open) notice(error.message, "error");
     }
   } finally {
     if (current === session) {
@@ -530,8 +561,18 @@ $("connect-form").addEventListener("submit", async (event) => {
       controls();
     }
   }
+}
+$("connect-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  void connect($("token").value.trim());
 });
 $("disconnect-button").addEventListener("click", () => disconnect());
+window.addEventListener("storage", (event) => {
+  if (!token || event.storageArea !== localStorage) return;
+  const tokenRemoved = event.key === null || (event.key === SAVED_TOKEN_KEY && event.oldValue === token);
+  if (tokenRemoved && readSavedToken() !== token)
+    disconnect();
+});
 function updateQueryCount() {
   $("query-count").textContent = number($("query").value.length) + " / 1,500文字";
 }
@@ -620,3 +661,4 @@ $("sync-button").addEventListener("click", async () => {
   }
 });
 controls();
+void connect(readSavedToken(), true);
