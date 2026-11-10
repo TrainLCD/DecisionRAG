@@ -15,15 +15,28 @@ export async function readText(response: Response, maxBytes = 2_000_000): Promis
     return text + decoder.decode();
   } finally { await reader.cancel().catch(() => {}); }
 }
+/** Fetch and parse upstream JSON under a deadline that also covers reading the body. */
 export async function jsonRequest<T>(url: string, init: RequestInit = {}, maxBytes?: number): Promise<T> {
-  const response = await fetch(url, { ...init, signal: AbortSignal.timeout(25_000), redirect: 'error' });
+  const signal = AbortSignal.timeout(25_000);
+  let response: Response;
+  try {
+    // Workers supports manual redirects. Reject 3xx below before credentials can be forwarded.
+    response = await fetch(url, { ...init, signal, redirect: 'manual' });
+  } catch (error) {
+    if (signal.aborted || (error instanceof Error && error.name === 'TimeoutError')) throw new HttpError(502, 'upstream_timeout');
+    throw new HttpError(502, 'upstream_network_error');
+  }
   if (!response.ok) {
     await response.body?.cancel();
     // Never echo upstream bodies, headers, credentials or retrieved private text.
     throw new HttpError(502, `upstream_http_${response.status}`);
   }
   try { return JSON.parse(await readText(response, maxBytes)) as T; }
-  catch (error) { if (error instanceof HttpError) throw error; throw new HttpError(502, 'invalid_upstream_json'); }
+  catch (error) {
+    if (error instanceof HttpError) throw error;
+    if (signal.aborted) throw new HttpError(502, 'upstream_timeout');
+    throw new HttpError(502, 'invalid_upstream_json');
+  }
 }
 export async function mapConcurrent<T, R>(items: T[], concurrency: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const results = new Array<R>(items.length);
