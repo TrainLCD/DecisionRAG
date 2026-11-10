@@ -128,6 +128,9 @@ function controls() {
   $("results").setAttribute("aria-busy", String(searching));
 }
 function clearResults() {
+  if (resultEvidence.some((item) => location.hash === "#" + evidenceId(item.citation))) {
+    history.replaceState(history.state, "", location.pathname + location.search);
+  }
   resultEvidence = [];
   resultPage = 0;
   document.querySelectorAll(".result-pagination").forEach((nav) => {
@@ -253,6 +256,49 @@ function safeSourceUrl(value) {
     return null;
   }
 }
+function evidenceId(citation) {
+  return "evidence-" + citation;
+}
+function showEvidence(index) {
+  const page = Math.floor(index / RESULT_PAGE_SIZE);
+  if (page !== resultPage) {
+    resultPage = page;
+    renderEvidencePage();
+  }
+  const card = $(evidenceId(resultEvidence[index].citation));
+  card.focus({ preventScroll: true });
+  card.scrollIntoView({ block: "start" });
+}
+function linkAnswerCitations(content) {
+  const citationIndices = new Map(resultEvidence.map((item, index) => [item.citation, index]));
+  const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+  const textNodes = [];
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (!node.parentElement.closest("a, code, pre")) textNodes.push(node);
+  }
+  for (const node of textNodes) {
+    const parts = document.createDocumentFragment();
+    const text = node.textContent;
+    let offset = 0;
+    for (const match of text.matchAll(/\[([A-Za-z0-9_-]+)\]/g)) {
+      const index = citationIndices.get(match[1]);
+      if (index === undefined) continue;
+      const link = element("a", "", match[0]);
+      link.href = "#" + evidenceId(match[1]);
+      link.addEventListener("click", (event) => {
+        if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) showEvidence(index);
+      });
+      parts.append(text.slice(offset, match.index), link);
+      offset = match.index + match[0].length;
+    }
+    if (offset > 0) {
+      parts.append(text.slice(offset));
+      node.replaceWith(parts);
+    }
+  }
+  return content;
+}
 function renderResult(data) {
   clearResults();
   $("empty-state").hidden = true;
@@ -271,7 +317,7 @@ function renderResult(data) {
     panel.hidden = false;
     panel.append(element("h3", "", label[0]));
     panel.append(data.status === "answered" && typeof data.answer === "string"
-      ? markdownContent(data.answer, data.answer_html)
+      ? linkAnswerCitations(markdownContent(data.answer, data.answer_html))
       : element("p", "", label[1]));
   }
   renderEvidencePage();
@@ -328,6 +374,8 @@ function renderEvidencePage() {
   }
   for (const item of resultEvidence.slice(start, end)) {
     const card = element("article", "evidence-card");
+    card.id = evidenceId(item.citation);
+    card.tabIndex = -1;
     const top = element("div", "evidence-top");
     top.append(
       element("span", "citation", "[" + item.citation + "]"),
@@ -361,6 +409,10 @@ function renderEvidencePage() {
     $("evidence-list").append(card);
   }
 }
+window.addEventListener("hashchange", () => {
+  const index = resultEvidence.findIndex((item) => location.hash === "#" + evidenceId(item.citation));
+  if (index >= 0 && Math.floor(index / RESULT_PAGE_SIZE) !== resultPage) showEvidence(index);
+});
 document.querySelectorAll("[data-page-step]").forEach((button) => {
   button.addEventListener("click", () => {
     if (!token || searching || button.disabled) return;

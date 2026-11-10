@@ -138,7 +138,9 @@ svg { width: 1.25rem; height: 1.25rem; flex: none; }
   padding-block: 1rem;
   border-bottom: 1px solid var(--line);
   overflow-wrap: anywhere;
+  scroll-margin-top: 0.5rem;
 }
+.evidence-card:target { background: #eef5fe; }
 .evidence-card h3 { margin: 0.375rem 0 0.25rem; }
 .evidence-top { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; font-size: 0.75rem; }
 .citation, .evidence-kind { padding: 0.125rem 0.5rem; border-radius: 6px; }
