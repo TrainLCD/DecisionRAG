@@ -87,6 +87,21 @@ npm run dev
 
 有効化後は、デフォルトブランチが更新されると CI を実行し、成功した最新コミットを Wrangler でデプロイする。自動デプロイは `wrangler.jsonc` の `vars` を除外し、Cloudflare に登録済みの本番変数と Secrets を引き継ぐ。`SUPPORT_THRESHOLD` などの本番値は、Cloudflare の本番 Worker の Variables and Secrets で変更する。
 
+#### 本番 D1 のマイグレーション
+
+CI のマイグレーションはローカル D1 にのみ適用する。本番のスキーマ変更に依存する PR は、次の順で反映する。
+
+1. 現行 Worker でも動く互換性のあるマイグレーションを用意する。列の削除や名前変更が必要なら、新旧スキーマに対応できる Worker を先にデプロイし、旧スキーマを参照しなくなってから削除する。
+2. マージ前に、対象のマイグレーションファイルを含む作業ツリーで、本番 D1 を指す Wrangler 設定を使って未適用のマイグレーションを確認し、適用する。適用後に未適用分がないことと、現行 Worker の `/sync/status` が本番 D1 を読み取れることを確認する。
+
+   ```sh
+   npx wrangler d1 migrations list DB --remote --config "$DECISIONRAG_PROD_CONFIG"
+   npx wrangler d1 migrations apply DB --remote --config "$DECISIONRAG_PROD_CONFIG"
+   npx wrangler d1 migrations list DB --remote --config "$DECISIONRAG_PROD_CONFIG"
+   ```
+
+3. 適用と動作確認が成功してから PR をマージし、Worker の自動デプロイへ進む。どちらかが失敗したらマージを保留する。先にマージする必要がある場合は、マージ前に `DECISIONRAG_DEPLOY_ENABLED=false` を設定し、実行待ちの本番デプロイもキャンセルする。複数のマイグレーションの途中で失敗した場合、先に成功した分は適用済みなので、再試行前に未適用分を確認する。
+
 ## API
 
 | Method | Path | 役割 |
