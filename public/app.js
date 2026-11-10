@@ -520,7 +520,7 @@ $("search-form").addEventListener("submit", async (event) => {
   clearResults();
   controls();
   $("workspace").scrollTop = 0;
-  notice("文書の階層を探索しています。しばらくお待ちください…", "loading");
+  notice("検索しています。しばらくお待ちください…", "loading");
   try {
     const data = await api("/" + mode, {
       method: "POST",
