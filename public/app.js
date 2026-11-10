@@ -71,7 +71,7 @@ function element(tag, className, text) {
   return node;
 }
 /** Render text or rebuild pre-rendered markup with a restricted set of elements. */
-function markdownContent(text, html, className = "") {
+function markdownContent(text, html, className = "", baseUrl) {
   const root = element("div", className + " markdown-body");
   if (typeof html !== "string") {
     root.classList.add("plain-text");
@@ -83,18 +83,25 @@ function markdownContent(text, html, className = "") {
   const template = document.createElement("template");
   template.innerHTML = html;
   const allowed = new Set(["p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "blockquote", "pre", "code",
-    "em", "strong", "del", "br", "hr", "a", "table", "thead", "tbody", "tr", "th", "td", "input"]);
+    "em", "strong", "del", "br", "hr", "a", "img", "table", "thead", "tbody", "tr", "th", "td", "input"]);
   function append(source, target) {
     for (const child of source.childNodes) {
       if (child.nodeType === 3) { target.append(document.createTextNode(child.textContent)); continue; }
       if (child.nodeType !== 1) continue;
       const tag = child.tagName.toLowerCase();
       if (!allowed.has(tag) || tag === "input" && child.getAttribute("type") !== "checkbox") continue;
-      const node = element(tag);
-      if (tag === "a") {
+      const image = tag === "img";
+      const imageLabel = image ? child.getAttribute("alt") || "画像を開く" : "";
+      if (image && target.closest("a")) {
+        target.append(imageLabel);
+        continue;
+      }
+      const node = image ? element("a", "", imageLabel) : element(tag);
+      if (tag === "a" || image) {
+        const href = child.getAttribute(image ? "src" : "href");
         try {
-          const url = new URL(child.getAttribute("href"));
-          if (["https:", "http:", "mailto:"].includes(url.protocol) && !url.username && !url.password) {
+          const url = href && new URL(href, baseUrl || undefined);
+          if (url && ["https:", "http:", "mailto:"].includes(url.protocol) && !url.username && !url.password) {
             node.href = url.href; node.target = "_blank"; node.rel = "noopener noreferrer";
           }
         } catch {}
@@ -108,8 +115,8 @@ function markdownContent(text, html, className = "") {
         node.setAttribute("type", "checkbox"); node.disabled = true;
         if (child.hasAttribute("checked")) node.setAttribute("checked", "");
       }
-      append(child, node);
       target.append(node);
+      append(child, node);
     }
   }
   append(template.content, root);
@@ -470,9 +477,9 @@ function renderEvidencePage() {
       }
     }
     const body = (item.text ?? "").trim();
-    const preview = !body || /^\((?:no body|empty document)\)$/i.test(body) ? "内容なし" : body;
+    const empty = !body || /^\((?:no body|empty document)\)$/i.test(body);
     const excerpt = element("div", "evidence-text");
-    const passage = element("p", "evidence-excerpt", preview);
+    const passage = markdownContent(empty ? "内容なし" : body, empty ? undefined : item.text_html, "evidence-excerpt", url);
     passage.tabIndex = 0;
     excerpt.append(passage);
     card.append(

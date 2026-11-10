@@ -1,3 +1,4 @@
+import { Marked } from 'marked';
 import { answer } from './answer.js';
 import { GitHub } from './github.js';
 import { readText } from './http.js';
@@ -6,6 +7,17 @@ import { DEFAULT_BUDGETS, d1Store, retrieve } from './retrieval.js';
 import { enqueue, sync } from './sync.js';
 import { boundedNumber, HttpError, type Env, type SyncJob } from './types.js';
 import { purgeRepo, secureEqual, webhook } from './webhook.js';
+
+const markdown = new Marked({ gfm: true, renderer: { html: () => '' } });
+
+function passageHtml(text: string): string | undefined {
+  try {
+    return markdown.parse(text, { async: false }).trim() || undefined;
+  } catch {
+    // Keep the original passage available if Markdown parsing fails.
+    return undefined;
+  }
+}
 
 async function bodyJson(request: Request): Promise<Record<string, unknown>> {
   if (!request.headers.get('content-type')?.startsWith('application/json')) throw new HttpError(415, 'json_required');
@@ -53,7 +65,8 @@ async function search(request: Request, env: Env, path: string): Promise<Respons
     if (step.stage === 'generate_answer') timings.generation_ms += step.elapsed_ms;
     else timings.model_ms += step.elapsed_ms;
   }
-  return Response.json({ ...result, evidence, hit_count: hitCount, trace: judge.trace, timings, elapsed_ms: Date.now() - start,
+  const excerpts = evidence.map(item => ({ ...item, text_html: passageHtml(item.text) }));
+  return Response.json({ ...result, evidence: excerpts, hit_count: hitCount, trace: judge.trace, timings, elapsed_ms: Date.now() - start,
     retrieval: 'hierarchical_decision', release_inference: 'github_release_commit_ancestry' });
 }
 
