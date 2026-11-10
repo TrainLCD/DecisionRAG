@@ -502,15 +502,18 @@ $("connect-form").addEventListener("submit", async (event) => {
   }
 });
 $("disconnect-button").addEventListener("click", () => disconnect());
-$("query").addEventListener("input", () => {
+function updateQueryCount() {
   $("query-count").textContent = number($("query").value.length) + " / 1,500文字";
-});
+}
+$("query").addEventListener("input", updateQueryCount);
 $("search-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   if (searching) return;
-  const query = $("query").value.trim();
+  const queryField = $("query");
+  const submittedText = queryField.value;
+  const query = submittedText.trim();
   if (!query) {
-    $("query").focus();
+    queryField.focus();
     return;
   }
   const current = session;
@@ -530,7 +533,13 @@ $("search-form").addEventListener("submit", async (event) => {
       method: "POST",
       body: JSON.stringify({ query, include_feedback: includeFeedback }),
     }, includeFeedback ? token : "");
-    if (current === session) renderResult(data, mode);
+    if (current === session) {
+      renderResult(data, mode);
+      if (queryField.value === submittedText) {
+        queryField.value = "";
+        updateQueryCount();
+      }
+    }
   } catch (error) {
     if (current === session) notice(error.message, "error");
   } finally {
