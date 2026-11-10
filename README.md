@@ -76,6 +76,16 @@ npm run dev
 
 `npm run dev` で表示されるローカルURLの `/` を開き、設定した `API_TOKEN` で接続する。サンプルはWorkerと同じオリジンから配信され、利用キーはページのメモリ内でのみ保持する。検索モードは「資料を探す」と「資料から回答する」から選べる。ヘッダーのメニューから取り込み状況を確認できる。
 
+### 本番の自動デプロイ
+
+既存の `trainlcd-decision-rag` Worker を対象にする。有効化の前に、公開中の Worker のソースをデフォルトブランチへ取り込み、D1、Queues、Cron の設定が `wrangler.jsonc` と一致することを確認する。
+
+1. GitHub Actions の `production` 環境に `CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` を Secrets として登録する。デプロイ先ブランチはデフォルトブランチに限定する。
+2. 同じ環境の Variables に、既存の本番 D1 の ID を `DECISIONRAG_D1_DATABASE_ID` として登録する。
+3. リポジトリの Actions Variables に `DECISIONRAG_DEPLOY_ENABLED=true` を設定する。
+
+有効化後は、デフォルトブランチが更新されると CI を実行し、成功した最新コミットを Wrangler でデプロイする。Worker に登録済みの環境変数と Secrets を使用する。
+
 ## API
 
 | Method | Path | 役割 |
