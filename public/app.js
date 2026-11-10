@@ -354,9 +354,8 @@ function renderResult(data, mode, query) {
   const label = statuses[data.status] || ["結果を取得しました", ""];
   const summary = $("result-summary");
   const hitCount = "関連する本文：" + number(data.hit_count) + "件";
-  const displayLimit = data.hit_count > evidence.length ? "（上位" + number(evidence.length) + "件を表示）" : "";
   summary.replaceChildren(
-    element("strong", "", hitCount + displayLimit),
+    element("strong", "", hitCount),
     element("span", "muted", (mode === "answer" ? "回答時間：" : "検索時間：") + (Number(data.elapsed_ms) / 1000).toFixed(2) + "秒"),
   );
   summary.hidden = false;

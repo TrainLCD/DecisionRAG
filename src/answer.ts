@@ -21,6 +21,7 @@ const writingGuide = `Answer the query in your own words, like an engineer reply
 日本語で仕組みを説明するときは、まず「何が何をするか」を動詞で伝えてください。実装方式の名前は、質問に答えるうえで必要なときに添えます。文体の例は「ツールがログを読み、原因が分かれば修正PRを作ります。途中で止まったら、どこまで進んだかをIssueに書きます。」です。資料の文をなぞらず、読んだ人にそのまま話せる文に言い直してください。`;
 
 const maxClaims = 3;
+const verificationPassageLimit = 20;
 /** Restrict the generator to structured claims and IDs from its supplied sources. */
 function claimSchema(citations: string[]) {
   return {
@@ -54,13 +55,14 @@ function readClaim(value: unknown, valid: Set<string>): CitedClaim | null {
 /** Generate cited claims and withhold drafts when the retrieved sources conflict. */
 export async function answer(query: string, evidence: Evidence[], env: Env, judge: Judge) {
   if (!evidence.length) return { status: 'insufficient_evidence', answer: null, citations: [] };
+  const answerEvidence = evidence.slice(0, verificationPassageLimit);
   const external = env.ANSWER_MODEL && env.ANSWER_API_KEY;
   if (!env.AI && !external) {
-    const assessment = await judge.assess(query, evidence);
+    const assessment = await judge.assess(query, answerEvidence);
     const status = gate(env, assessment);
     return { status: status === 'ready' ? 'evidence_ready' : status, answer: null, citations: [], assessment };
   }
-  const verificationEvidence = evidence.map(({ citation, repo, title, text, kind, metadata }) => ({ citation, repo, title, text, kind, metadata }));
+  const verificationEvidence = answerEvidence.map(({ citation, repo, title, text, kind, metadata }) => ({ citation, repo, title, text, kind, metadata }));
   const context = verificationEvidence.slice(0, 6);
   const valid = new Set(context.map(p => p.citation));
   const messages = [

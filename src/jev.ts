@@ -4,12 +4,11 @@ interface Noul { type: 'noul'; noul: number }
 interface Choice { type: 'choice'; choice: string; probabilities: Record<string, number>; confidence: number }
 interface Result { model: string; answers: Record<string, Noul | Choice>; usage: { input_tokens: number; output_tokens: number } }
 interface Assessment { supported: number; conflict: number }
-interface PassageRanking<T> { ranked: Scored<T>[]; hitCount: number }
 interface ScoredBatch<T> { result: Result; scored: Scored<T>[] }
 export interface CitedClaim { text: string; citations: string[] }
 export interface Judge {
   score<T extends Candidate>(query: string, candidates: T[], stage: string): Promise<Scored<T>[]>;
-  rankPassages<T extends Candidate>(query: string, candidates: T[], shortlistSize: number): Promise<PassageRanking<T>>;
+  rankPassages<T extends Candidate>(query: string, candidates: T[], shortlistSize: number): Promise<Scored<T>[]>;
   assess(query: string, evidence: unknown): Promise<Assessment>;
   verify(query: string, evidence: unknown, claims: CitedClaim[]): Promise<{ claims: number[]; complete: number; conflict: number }>;
   trace: Trace[];
@@ -116,7 +115,7 @@ export class Jev implements Judge {
     return scored;
   }
   /** Screen passages and compare the shortlist, combining both judgments when all candidates fit. */
-  async rankPassages<T extends Candidate>(query: string, candidates: T[], shortlistSize: number): Promise<PassageRanking<T>> {
+  async rankPassages<T extends Candidate>(query: string, candidates: T[], shortlistSize: number): Promise<Scored<T>[]> {
     // When no passage would be pruned, both judgments can share one request.
     if (candidates.length >= 2 && candidates.length <= Math.min(shortlistSize, passageBatchSize) &&
       candidates.every(c => c.description.length <= maxCandidateChars) &&
@@ -128,7 +127,7 @@ export class Jev implements Judge {
       const ranked = choiceOrder(binaryScores(candidates, result), result, ids).filter(isRelevant);
       this.trace.push({ stage: 'passage_ranking', candidates: candidates.length, selected: ranked.map(r => r.item.id),
         calls: 1, model: [result.model], ...result.usage, elapsed_ms: Date.now() - start });
-      return { ranked, hitCount: ranked.length };
+      return ranked;
     }
 
     const hits = (await this.score(query, candidates, 'passage_scoring')).filter(isRelevant);
@@ -136,7 +135,7 @@ export class Jev implements Judge {
     let chars = 0;
     const outsideContext = shortlist.findIndex(row => (chars += row.item.description.length) > maxChoiceChars);
     const rerankCount = outsideContext < 0 ? shortlist.length : outsideContext;
-    if (rerankCount < 2) return { ranked: shortlist, hitCount: hits.length };
+    if (rerankCount < 2) return hits;
     const rerank = shortlist.slice(0, rerankCount);
     const start = Date.now();
     const ids = rerank.map((_, i) => passageId(i));
@@ -146,7 +145,7 @@ export class Jev implements Judge {
     const ranked = choiceOrder(rerank, result, ids);
     this.trace.push({ stage: 'choice_rerank', candidates: rerank.length, selected: ranked.map(r => r.item.id),
       calls: 1, model: [result.model], ...result.usage, elapsed_ms: Date.now() - start });
-    return { ranked: [...ranked, ...shortlist.slice(rerankCount)], hitCount: hits.length };
+    return [...ranked, ...hits.slice(rerankCount)];
   }
   /** Assess evidence when there is no draft to verify. */
   async assess(query: string, evidence: unknown): Promise<Assessment> {

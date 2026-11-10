@@ -246,6 +246,46 @@ test('public search and answers keep private and feedback sources out of model r
   } finally { restore(); sqlite.close(); }
 });
 
+test('search and answer return all 31 matches while verification stays bounded', async () => {
+  const { env, sqlite } = fixture();
+  const repo = 'TrainLCD/MobileApp';
+  sqlite.prepare('INSERT INTO repositories(repo,description,default_branch) VALUES(?,?,?)').run(repo, '', 'main');
+  for (let i = 1; i <= 32; i++) {
+    await saveSource(env, { id: `${repo}#${String(i).padStart(2, '0')}`, repo, kind: 'issue', title: `Issue ${i}`,
+      url: `https://github.com/${repo}/issues/${i}`, body: `## Passage ${i}`, metadata: {}, updated_at: '2026-11-10' });
+  }
+  const restore = mockFetch((url, init) => {
+    if (url.endsWith('/chat/completions')) {
+      return Response.json({ choices: [{ message: { content: '{"claims":[{"text":"Relevant evidence.","citations":["p1"]}]}' } }] });
+    }
+    const { state, questions } = JSON.parse(String(init?.body));
+    if (state.draft) assert.equal(state.evidence.length, 20);
+    if (state.passages) assert.equal(Object.keys(state.passages).length, 20);
+    const answers = Object.fromEntries(Object.entries(questions).map(([key, value]) => {
+      if ((value as { type: string }).type === 'choice')
+        return [key, { type: 'choice', choice: 'p0', probabilities: Object.fromEntries(Object.keys(state.passages).map(id => [id, id === 'p0' ? 1 : 0])) }];
+      const irrelevant = state.candidates?.[key]?.includes('## Passage 32');
+      return [key, { type: 'noul', noul: key === 'conflict' || irrelevant ? 0.1 : 0.9 }];
+    }));
+    return Response.json({ model: 'test', answers, usage: { input_tokens: 1, output_tokens: 1 } });
+  });
+  try {
+    for (const path of ['search', 'answer']) {
+      const response = await worker.fetch!(new Request(`https://example.test/${path}`, {
+        method: 'POST', body: JSON.stringify({ query: 'Relevant evidence' }),
+        headers: { Authorization: `Bearer ${env.API_TOKEN}`, 'Content-Type': 'application/json' },
+      }), { ...env, ANSWER_API_KEY: 'test', ANSWER_MODEL: 'test' }, {} as ExecutionContext);
+      assert.equal(response.status, 200);
+      const data = await response.json() as { status: string; hit_count: number; evidence: { citation: string; text: string; text_html: string }[] };
+      assert.equal(data.status, path === 'search' ? 'retrieved' : 'answered');
+      assert.equal(data.hit_count, 31);
+      assert.deepEqual(data.evidence.map(item => item.text), Array.from({ length: 31 }, (_, i) => `## Passage ${i + 1}`));
+      assert.equal(data.evidence[30]?.citation, 'p31');
+      assert.equal(data.evidence[30]?.text_html, '<h2>Passage 31</h2>');
+    }
+  } finally { restore(); sqlite.close(); }
+});
+
 test('atomic snapshot guard prevents stale jobs from erasing newer passages', async () => {
   const { env, sqlite } = fixture();
   sqlite.exec("INSERT INTO repositories(repo,description,default_branch,docs_commit) VALUES('TrainLCD/MobileApp','app','dev','new')");
