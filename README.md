@@ -76,6 +76,38 @@ npm run dev
 
 `npm run dev` で表示されるローカルURLの `/` から公開資料を検索できる。「フィードバックを含める」を選んだときや、ヘッダーのメニューから同期操作をするときは、`API_TOKEN` で接続する。利用キーはページのメモリ内で保持する。
 
+### 本番の自動デプロイ
+
+既存の `trainlcd-decision-rag` Worker を対象にする。有効化の前に、公開中の Worker のソースをデフォルトブランチへ取り込み、D1 と Queues のバインディングが `wrangler.jsonc` と一致することを確認する。
+
+1. GitHub の Settings → Environments → `production` で、Deployment branches and tags を **Selected branches and tags** に設定し、デフォルトブランチ（現在は `main`）だけを Branch ルールに追加する。本番デプロイに承認が必要な場合は、同じ環境で Required reviewers を設定する。同じ環境に `CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` を Secrets として登録する。
+2. 同じ環境の Variables に、既存の本番 D1 の ID を `DECISIONRAG_D1_DATABASE_ID` として登録する。
+3. Cloudflare の本番 Worker の Variables and Secrets で `GITHUB_ORG` が `TrainLCD` に設定されていることを確認する。
+4. リポジトリの Actions Variables に `DECISIONRAG_DEPLOY_ENABLED=true` を設定する。
+
+有効化後は、デフォルトブランチへの push または同ブランチでの手動実行で CI が走る。検証を通過したデプロイジョブは順番に実行され、各ジョブがデプロイ直前にデフォルトブランチの最新コミットかどうかを確認する。自動デプロイは `wrangler.jsonc` の `vars` を除外し、Cloudflare に登録済みの本番変数と Secrets を引き継ぐ。`SUPPORT_THRESHOLD` などの本番値は、Cloudflare の本番 Worker の Variables and Secrets で変更する。
+
+CI は `wrangler versions upload` と `wrangler versions deploy` でコードのバージョンを更新する。`workers.dev`、カスタムドメイン、Cron などの公開経路やトリガーは Cloudflare 側の既存設定を使う。これらを変更する場合は Cloudflare 側で別途設定する。
+
+#### 本番 D1 のマイグレーション
+
+CI のマイグレーションはローカル D1 にのみ適用する。本番のスキーマ変更に依存する PR は、次の順で反映する。
+
+Wrangler はファイル名で適用済みのマイグレーションを記録する。本番に適用したファイルは固定し、修正は新しいマイグレーションとして追加して、同じ手順でマージ前に適用する。
+
+1. 現行 Worker でも動く互換性のあるマイグレーションを用意する。列の削除や名前変更が必要なら、新旧スキーマに対応できる Worker を先にデプロイし、旧スキーマを参照しなくなってから削除する。
+2. マージ前に、対象のマイグレーションファイルを含む作業ツリーのルートで `wrangler.jsonc` を `wrangler.production.jsonc` にコピーする。コピーの `d1_databases` にある `DB` バインディングの `database_id` を、GitHub の `production` 環境に登録した `DECISIONRAG_D1_DATABASE_ID` の値に置き換える。コピーはローカルの作業用に使う。そのパスを指定して未適用のマイグレーションを確認し、適用する。適用後に未適用分がないことと、現行 Worker の `/sync/status` が本番 D1 を読み取れることを確認する。
+
+   ```sh
+   export DECISIONRAG_PROD_CONFIG=./wrangler.production.jsonc
+   npx wrangler d1 migrations list DB --remote --config "$DECISIONRAG_PROD_CONFIG"
+   npx wrangler d1 migrations apply DB --remote --config "$DECISIONRAG_PROD_CONFIG"
+   npx wrangler d1 migrations list DB --remote --config "$DECISIONRAG_PROD_CONFIG"
+   ```
+
+3. 適用と動作確認が成功してから PR をマージし、Worker の自動デプロイへ進む。どちらかが失敗したらマージを保留する。先にマージする必要がある場合は、マージ前に `DECISIONRAG_DEPLOY_ENABLED=false` を設定し、実行待ちの本番デプロイもキャンセルする。複数のマイグレーションの途中で失敗した場合、先に成功した分は適用済みなので、再試行前に未適用分を確認する。
+4. 自動デプロイを停止してマージした場合は、マイグレーションと動作確認が成功してから `DECISIONRAG_DEPLOY_ENABLED=true` に戻す。変数の変更だけでは CI は起動しない。GitHub Actions の `CI` で **Run workflow** を選び、デフォルトブランチ（現在は `main`）を指定する。GitHub CLI なら `gh workflow run ci.yml --ref main` で起動する。
+
 ## API
 
 | Method | Path | 役割 |
