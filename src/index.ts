@@ -15,12 +15,45 @@ async function bodyJson(request: Request): Promise<Record<string, unknown>> {
     return parsed as Record<string, unknown>;
   } catch (e) { if (e instanceof HttpError) throw e; throw new HttpError(400, 'invalid_json'); }
 }
+async function requireToken(request: Request, env: Env): Promise<void> {
+  if (!env.API_TOKEN) throw new HttpError(503, 'authentication_not_configured');
+  if (!await secureEqual(request.headers.get('authorization') || '', `Bearer ${env.API_TOKEN}`)) throw new HttpError(401, 'unauthorized');
+}
+
+async function search(request: Request, env: Env, path: string): Promise<Response> {
+  const body = await bodyJson(request);
+  if (typeof body.query !== 'string' || !body.query.trim() || body.query.length > 1500) throw new HttpError(400, 'query_must_be_1_to_1500_characters');
+  if (body.include_feedback !== undefined && typeof body.include_feedback !== 'boolean')
+    throw new HttpError(400, 'invalid_feedback_scope');
+
+  const hasToken = request.headers.has('authorization');
+  if (hasToken || body.include_feedback === true) await requireToken(request, env);
+  const start = Date.now();
+  if (!hasToken) {
+    if (!env.PUBLIC_SEARCH_RATE_LIMIT) throw new HttpError(503, 'public_search_unavailable');
+    const { success } = await env.PUBLIC_SEARCH_RATE_LIMIT.limit({ key: request.headers.get('CF-Connecting-IP') || 'unknown' });
+    if (!success) throw new HttpError(429, 'public_search_rate_limited');
+  }
+  // Existing Bearer callers that omit the scope retain their authenticated search.
+  const scope = hasToken && body.include_feedback === undefined ? undefined : {
+    publicRepos: await new GitHub(env).publicRepositories(),
+    feedbackRepo: body.include_feedback ? `${env.GITHUB_ORG.toLowerCase()}/issues` : undefined,
+  };
+  const query = body.query.trim();
+  const judge = new Jev(env);
+  const evidence = await retrieve(query, d1Store(env, scope), judge, { ...DEFAULT_BUDGETS,
+    maxDocuments: boundedNumber(env.MAX_SCREENED_DOCUMENTS, 20_000, 1, 100_000) });
+  const result = path === '/answer' ? await answer(query, evidence, env, judge) : { status: evidence.length ? 'retrieved' : 'empty' };
+  return Response.json({ ...result, evidence, trace: judge.trace, elapsed_ms: Date.now() - start,
+    retrieval: 'hierarchical_decision', release_inference: 'disabled' });
+}
+
 async function route(request: Request, env: Env): Promise<Response> {
   const path = new URL(request.url).pathname;
   if (path === '/health' && request.method === 'GET') return Response.json({ ok: true });
   if (path === '/webhooks/github' && request.method === 'POST') return webhook(request, env);
-  if (!env.API_TOKEN) throw new HttpError(503, 'authentication_not_configured');
-  if (!await secureEqual(request.headers.get('authorization') || '', `Bearer ${env.API_TOKEN}`)) throw new HttpError(401, 'unauthorized');
+  if ((path === '/search' || path === '/answer') && request.method === 'POST') return search(request, env, path);
+  await requireToken(request, env);
   if (path === '/sync' && request.method === 'POST') {
     await enqueue(env, { type: 'org', page: 1 });
     return Response.json({ status: 'queued' }, { status: 202 });
@@ -41,18 +74,6 @@ async function route(request: Request, env: Env): Promise<Response> {
     await purgeRepo(env, body.repo);
     return Response.json({ purged: body.repo });
   }
-  if (['/search', '/answer'].includes(path) && request.method === 'POST') {
-    const body = await bodyJson(request);
-    if (typeof body.query !== 'string' || !body.query.trim() || body.query.length > 1500) throw new HttpError(400, 'query_must_be_1_to_1500_characters');
-    const query = body.query.trim();
-    const judge = new Jev(env);
-    const start = Date.now();
-    const evidence = await retrieve(query, d1Store(env), judge, { ...DEFAULT_BUDGETS,
-      maxDocuments: boundedNumber(env.MAX_SCREENED_DOCUMENTS, 20_000, 1, 100_000) });
-    const result = path === '/answer' ? await answer(query, evidence, env, judge) : { status: evidence.length ? 'retrieved' : 'empty' };
-    return Response.json({ ...result, evidence, trace: judge.trace, elapsed_ms: Date.now() - start,
-      retrieval: 'hierarchical_decision', release_inference: 'disabled' });
-  }
   throw new HttpError(404, 'not_found');
 }
 const worker: ExportedHandler<Env, SyncJob> = {
@@ -66,7 +87,8 @@ const worker: ExportedHandler<Env, SyncJob> = {
       const status = e instanceof HttpError ? e.status : 500;
       const code = e instanceof HttpError ? e.code : 'internal_error';
       console.error(JSON.stringify({ event: 'request_error', status, code }));
-      return Response.json({ error: code }, { status, headers: { 'Cache-Control': 'no-store' } });
+      return Response.json({ error: code }, { status, headers: { 'Cache-Control': 'no-store',
+        ...(code === 'public_search_rate_limited' ? { 'Retry-After': '60' } : {}) } });
     }
   },
   async scheduled(_controller, env) { await enqueue(env, { type: 'org', page: 1 }); },

@@ -1,4 +1,4 @@
-import { branches, documentPage, passagesFor, type Branch } from './store.js';
+import { branches, documentPage, passagesFor, type Branch, type SearchScope } from './store.js';
 import { mapConcurrent } from './http.js';
 import type { Judge } from './jev.js';
 import { boundedNumber, HttpError, type Candidate, type Env, type Passage } from './types.js';
@@ -9,9 +9,9 @@ export interface RetrievalStore {
 }
 export interface Budgets { branches: number; documents: number; passages: number; maxDocuments: number; maxPassages: number }
 export const DEFAULT_BUDGETS: Budgets = { branches: 6, documents: 12, passages: 10, maxDocuments: 20_000, maxPassages: 4000 };
-export function d1Store(env: Env): RetrievalStore {
-  return { branches: () => branches(env), documentPage: (branch, after) => documentPage(env, branch, after),
-    passages: ids => passagesFor(env, ids) };
+export function d1Store(env: Env, scope?: SearchScope): RetrievalStore {
+  return { branches: () => branches(env, scope), documentPage: (branch, after) => documentPage(env, branch, after),
+    passages: ids => passagesFor(env, ids, scope) };
 }
 export interface Evidence extends Passage { citation: string; relevance: number }
 export async function retrieve(query: string, store: RetrievalStore, judge: Judge, budget: Budgets = DEFAULT_BUDGETS): Promise<Evidence[]> {

@@ -41,9 +41,15 @@ export async function deleteSource(env: Env, id: string): Promise<void> {
   ]);
 }
 export interface Branch extends Candidate { repo: string; kind: Kind }
-export async function branches(env: Env): Promise<Branch[]> {
+export interface SearchScope { publicRepos: string[]; feedbackRepo?: string }
+const scopedSources = `((s.kind<>'feedback' AND lower(s.repo) IN (SELECT value FROM json_each(?)))
+  OR (s.kind='feedback' AND lower(s.repo)=?))`;
+
+export async function branches(env: Env, scope?: SearchScope): Promise<Branch[]> {
   const result = await env.DB.prepare(`SELECT s.repo,s.kind,r.description,count(*) AS count
-    FROM sources s JOIN repositories r ON s.repo=r.repo GROUP BY s.repo,s.kind ORDER BY s.repo,s.kind`)
+    FROM sources s JOIN repositories r ON s.repo=r.repo ${scope ? `WHERE ${scopedSources}` : ''}
+    GROUP BY s.repo,s.kind ORDER BY s.repo,s.kind`)
+    .bind(...(scope ? [JSON.stringify(scope.publicRepos), scope.feedbackRepo ?? null] : []))
     .all<{ repo: string; kind: Kind; description: string; count: number }>();
   return result.results.map(r => ({ id: `${r.repo}/${r.kind}`, repo: r.repo, kind: r.kind,
     description: `${r.repo}: ${r.description}\n${({ issue: 'Engineering issues and discussions',
@@ -56,11 +62,15 @@ export async function documentPage(env: Env, branch: Branch, after: string, limi
     .bind(branch.repo, branch.kind, after, limit).all<{ id: string; title: string; metadata: string }>();
   return rows.results.map(r => ({ id: r.id, description: `${r.title}\n${r.metadata}` }));
 }
-export async function passagesFor(env: Env, ids: string[]): Promise<Passage[]> {
+export async function passagesFor(env: Env, ids: string[], scope?: SearchScope): Promise<Passage[]> {
   if (!ids.length) return [];
+  // A legacy snapshot can contain a draft review visible only to the sync credential.
+  const scopeFilter = scope ? `AND ${scopedSources}
+    AND (s.kind<>'pr' OR instr(s.body,char(10)||'PENDING'||char(10))=0)` : '';
   const result = await env.DB.prepare(`SELECT p.*,s.repo,s.kind,s.title,s.url,s.metadata,s.updated_at
     FROM passages p JOIN sources s ON s.id=p.source_id
-    WHERE s.id IN (${ids.map(() => '?').join(',')}) ORDER BY s.id,p.ordinal`).bind(...ids)
+    WHERE s.id IN (${ids.map(() => '?').join(',')}) ${scopeFilter} ORDER BY s.id,p.ordinal`)
+    .bind(...ids, ...(scope ? [JSON.stringify(scope.publicRepos), scope.feedbackRepo ?? null] : []))
     .all<Omit<Passage, 'metadata'> & { metadata: string }>();
   return result.results.map(p => ({ ...p, metadata: JSON.parse(p.metadata) as Record<string, unknown> }));
 }

@@ -193,6 +193,8 @@ summary { cursor: pointer; font-weight: 600; }
 }
 .query-tools, .query-row { display: flex; align-items: center; gap: 0.5rem; }
 .query-tools { justify-content: space-between; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.feedback-option { display: flex; align-items: center; gap: 0.375rem; margin-bottom: 0.5rem; font-size: 0.8125rem; }
+.feedback-option input { accent-color: var(--primary); }
 .query-row { align-items: stretch; }
 #search-button { min-width: 4.5rem; }
 .mode-selector {

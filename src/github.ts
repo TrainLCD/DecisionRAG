@@ -24,6 +24,17 @@ export class GitHub {
     }
     throw new HttpError(422, 'github_pagination_budget_exceeded');
   }
+  async publicRepositories(): Promise<string[]> {
+    const org = this.env.GITHUB_ORG;
+    const feedbackRepo = `${org.toLowerCase()}/issues`;
+    const rows = await this.all<{ full_name: string; private: boolean; visibility: string; disabled?: boolean }>(
+      `/orgs/${encodeURIComponent(org)}/repos?type=public`);
+    return rows.filter(repo => repo.private === false && repo.visibility === 'public' && !repo.disabled &&
+      repo.full_name.toLowerCase() !== feedbackRepo).map(repo => {
+      this.assertRepo(repo.full_name);
+      return repo.full_name.toLowerCase();
+    });
+  }
 }
 export function isDocument(path: string): boolean {
   return !/(^|\/)(node_modules|vendor|\.git|dist|build)\//.test(path) &&

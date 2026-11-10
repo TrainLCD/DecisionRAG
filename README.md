@@ -52,14 +52,14 @@ npx wrangler secret put GITHUB_TOKEN
 npx wrangler secret put TYPESAFE_API_KEY
 ```
 
-- `API_TOKEN`: 自分専用APIのBearerトークン。十分長いランダム値を設定する。
+- `API_TOKEN`: フィードバック検索・同期・管理用のBearerトークン。十分長いランダム値を設定する。
 - `WEBHOOK_SECRET`: GitHub Webhookと同じ値。
 - `GITHUB_TOKEN`: org内対象リポジトリのMetadata・Contents・Issues・Pull requestsの読み取り権限が必要。リポジトリ作成・書き込み権限は不要。
 - `TYPESAFE_API_KEY`: Jevのキー。[公式APIドキュメント](https://docs.typesafe.ai/api/system-one)を参照。
 
 既定の文章生成には Cloudflare Workers AI の `AI` バインディングを使う。別の生成サービスを使う場合は、`ANSWER_MODEL`・`ANSWER_BASE_URL` を設定し、`wrangler secret put ANSWER_API_KEY` を実行する。OpenAI互換の `/chat/completions` とJSON object出力に対応するプロバイダーを想定する。根拠の本文はJevと設定された生成サービスに送信される。
 
-`workers_dev` は既定で `false`。利用するホスト名のrouteを設定するか、意図して `true` に変更してから `npm run deploy` を実行する。検索・同期・管理APIはBearer認証が必須。サンプル画面と `/health` は認証なしで開ける。WebhookはHMAC-SHA256署名検証が必須。複数ユーザー向けのACLは実装していないため、このAPIトークンを他者に配布しないこと。
+`workers_dev` は既定で `false`。利用するホスト名のrouteを設定するか、意図して `true` に変更してから `npm run deploy` を実行する。公開資料の検索・要約は認証なしで使える。フィードバック検索、同期、管理APIはBearer認証が必須。WebhookはHMAC-SHA256署名検証が必須。複数ユーザー向けのACLは実装していないため、このAPIトークンを他者に配布しないこと。
 
 ローカル開発:
 
@@ -74,7 +74,7 @@ npm run dev
 
 ## サンプルWebアプリ
 
-`npm run dev` で表示されるローカルURLの `/` を開き、設定した `API_TOKEN` で接続する。サンプルはWorkerと同じオリジンから配信され、利用キーはページのメモリ内でのみ保持する。検索モードは「資料を探す」と「資料から回答する」から選べる。ヘッダーのメニューから取り込み状況を確認できる。
+`npm run dev` で表示されるローカルURLの `/` から公開資料を検索できる。「フィードバックを含める」を選んだときや、ヘッダーのメニューから同期操作をするときは、`API_TOKEN` で接続する。利用キーはページのメモリ内で保持する。
 
 ## API
 
@@ -91,12 +91,11 @@ npm run dev
 ```sh
 curl "$RAG_URL/sync" -X POST -H "Authorization: Bearer $RAG_API_TOKEN"
 curl "$RAG_URL/search" \
-  -H "Authorization: Bearer $RAG_API_TOKEN" \
   -H 'Content-Type: application/json' \
   --data '{"query":"地下で位置更新が止まる問題について、どんな対応が議論された？"}'
 ```
 
-`/search`・`/answer` の入力は `{"query":"..."}` のみ。1〜1,500文字。
+`/search`・`/answer` には1〜1,500文字の `query` と、任意の真偽値 `include_feedback` を指定できる。認証なし、または `include_feedback: false` の場合は、GitHubが現在公開と返すリポジトリの資料だけを検索する。`include_feedback: true` と有効なBearerトークンを送ると、公開資料に `TrainLCD/Issues` のフィードバックを加える。互換性のため、有効なBearerトークンだけを送って `include_feedback` を省略すると、従来どおり認証済みの索引全体を検索する。認証なしの利用はIPアドレスごとに Cloudflare のレート制限を適用する。
 
 レスポンスには `evidence`（引用ID、ソースID、本文区間、URL、repo、状態等のmetadata、関連度）、`trace`（ステージ、候補数、モデル、呼び出し数、使用トークン、時間）、`elapsed_ms` を含む。検索はソース間の網羅的な調査を保証せず、各階層の上位予算により枝刈りする。
 

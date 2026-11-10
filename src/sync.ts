@@ -4,7 +4,7 @@ import { HttpError, type Env, type Source, type SyncJob } from './types.js';
 interface Repository { full_name: string; description: string | null; default_branch: string; archived: boolean; disabled: boolean }
 interface Issue { number: number; title: string; body: string | null; html_url: string; updated_at: string;
   state: string; state_reason: string | null; labels: { name: string }[]; pull_request?: unknown; user: { login: string } }
-interface Comment { id: number; body: string | null; html_url: string; updated_at?: string; submitted_at?: string; user: { login: string }; path?: string; state?: string }
+interface Comment { id: number; body: string | null; html_url: string; updated_at?: string; submitted_at?: string; user: { login: string }; path?: string; state?: string; pull_request_review_id?: number }
 export async function enqueue(env: Env, job: SyncJob): Promise<void> {
   await env.SYNC_QUEUE.send(job);
 }
@@ -65,7 +65,9 @@ export async function sync(env: Env, job: SyncJob): Promise<void> {
       const reviews = await gh.all<Comment>(`${prefix}/pulls/${job.number}/reviews`);
       const inline = await gh.all<Comment>(`${prefix}/pulls/${job.number}/comments`);
       const files = await gh.all<{ filename: string; status: string }>(`${prefix}/pulls/${job.number}/files`);
-      body += discussion(reviews, 'Review') + discussion(inline, 'Inline review') +
+      const pendingReviews = new Set(reviews.filter(review => review.state === 'PENDING').map(review => review.id));
+      body += discussion(reviews.filter(review => !pendingReviews.has(review.id)), 'Review') +
+        discussion(inline.filter(comment => !pendingReviews.has(comment.pull_request_review_id ?? 0)), 'Inline review') +
         '\n\n## Changed files\n' + files.map(f => `${f.status}: ${f.filename}`).join('\n');
       Object.assign(metadata, { merged_at: pr.merged_at, merge_commit_sha: pr.merge_commit_sha,
         draft: pr.draft, base_branch: pr.base.ref, head_branch: pr.head.ref });

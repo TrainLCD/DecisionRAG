@@ -15,8 +15,8 @@
     <h1>TrainLCD DecisionRAG</h1>
     <button id="settings-button" class="menu-button" type="button" aria-haspopup="dialog" aria-controls="settings-dialog">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-      <span class="sr-only">接続・資料の更新</span>
-      <span id="connection-state" class="badge">未接続</span>
+      <span class="sr-only">利用キー・同期設定</span>
+      <span id="connection-state" class="badge">公開資料</span>
     </button>
   </div>
 </header>
@@ -25,7 +25,7 @@
   <div class="shell workspace-inner">
     <div class="workspace-heading">
       <h2>検索結果</h2>
-      <p>TrainLCDのIssue、プルリクエスト、ドキュメント、利用者の報告を横断検索できます。</p>
+      <p>TrainLCDの公開Issue、プルリクエスト、ドキュメントを検索できます。</p>
     </div>
     <p id="notice" class="notice" role="status" aria-live="polite"></p>
     <section id="results" class="surface" aria-label="検索結果" aria-busy="false">
@@ -35,7 +35,6 @@
         </span>
         <p>質問やキーワードで資料を探せます</p>
         <p class="muted">検索結果はここに表示されます。</p>
-        <button id="empty-connect" class="soft-button" type="button" aria-haspopup="dialog" aria-controls="settings-dialog">利用キーで接続</button>
       </div>
       <div id="result-summary" hidden></div>
       <section id="answer-panel" class="answer-panel" hidden></section>
@@ -68,19 +67,20 @@
       </fieldset>
       <span id="query-count" class="muted">0 / 1,500文字</span>
     </div>
+    <label class="feedback-option"><input id="include-feedback" type="checkbox"> フィードバックを含める（利用キーが必要）</label>
     <div class="query-row">
       <div class="query-field">
         <label for="query">質問・キーワード</label>
         <textarea id="query" aria-describedby="query-count" maxlength="1500" rows="2" placeholder="例：地下鉄で位置更新が止まる問題" required></textarea>
       </div>
-      <button id="search-button" class="primary" type="submit" disabled>検索</button>
+      <button id="search-button" class="primary" type="submit">検索</button>
     </div>
   </form>
 </footer>
 
 <dialog id="settings-dialog" aria-labelledby="settings-title">
   <div class="dialog-header">
-    <h2 id="settings-title">接続・資料の更新</h2>
+    <h2 id="settings-title">利用キー・同期設定</h2>
     <form method="dialog">
       <button class="icon-button" type="submit" aria-label="閉じる">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg>
@@ -97,7 +97,7 @@
         </div>
       </form>
       <button id="disconnect-button" type="button" hidden>接続を解除</button>
-      <p id="token-help" class="muted">トークンは保存しません。再読み込みすると入力し直しになります。</p>
+      <p id="token-help" class="muted">フィードバック検索と同期操作に使います。キーはブラウザーのメモリに保持し、再読み込みすると消去されます。</p>
     </section>
     <p id="settings-notice" class="notice" role="status" aria-live="polite"></p>
     <section class="sync-settings" aria-labelledby="sync-title">

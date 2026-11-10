@@ -1,5 +1,6 @@
 export interface Env {
   AI?: Ai;
+  PUBLIC_SEARCH_RATE_LIMIT?: RateLimit;
   DB: D1Database;
   SYNC_QUEUE: Queue<SyncJob>;
   API_TOKEN: string;

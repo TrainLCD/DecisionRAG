@@ -28,8 +28,13 @@ test('PR ingestion retains reviews, file changes, merge scope and unknown releas
   const restore = mockFetch(url => {
     if (url.includes('/issues/1/comments')) return Response.json([]);
     if (url.includes('/issues/1')) return Response.json({ ...issue, pull_request: {}, html_url: 'https://github.com/TrainLCD/MobileApp/pull/1' });
-    if (url.includes('/reviews')) return Response.json([{ id: 2, body: 'Only for dev', state: 'APPROVED', user: { login: 'reviewer' }, html_url: 'https://github.com/TrainLCD/MobileApp/pull/1#pullrequestreview-2' }]);
-    if (url.includes('/comments')) return Response.json([]);
+    if (url.includes('/reviews')) return Response.json([
+      { id: 2, body: 'Only for dev', state: 'APPROVED', user: { login: 'reviewer' }, html_url: issue.html_url },
+      { id: 3, body: 'Pending draft', state: 'PENDING', user: { login: 'reviewer' }, html_url: issue.html_url },
+    ]);
+    if (url.includes('/comments')) return Response.json([
+      { id: 4, body: 'Pending inline draft', pull_request_review_id: 3, user: { login: 'reviewer' }, html_url: issue.html_url },
+    ]);
     if (url.includes('/files')) return Response.json([{ filename: 'src/heartbeat.ts', status: 'modified' }]);
     return Response.json({ merged_at: '2026-11-06', merge_commit_sha: 'abc', draft: false, base: { ref: 'dev' }, head: { ref: 'fix' } });
   });
@@ -37,6 +42,7 @@ test('PR ingestion retains reviews, file changes, merge scope and unknown releas
     await sync(env, { type: 'issue', repo: 'TrainLCD/MobileApp', number: 1 });
     const row = sqlite.prepare('SELECT * FROM sources').get();
     assert.equal(row?.kind, 'pr'); assert.match(String(row?.body), /Only for dev/); assert.match(String(row?.body), /heartbeat.ts/);
+    assert.doesNotMatch(String(row?.body), /Pending .*draft|Pending draft/);
     const metadata = JSON.parse(String(row?.metadata));
     assert.equal(metadata.base_branch, 'dev'); assert.equal(metadata.release_status, 'unknown');
   } finally { restore(); sqlite.close(); }
@@ -91,15 +97,86 @@ test('webhook verifies exact raw body and prevents cross-org ingestion', async (
   sqlite.close();
 });
 
-test('API denies unauthenticated queries and fails closed if token absent', async () => {
+test('feedback and administrative APIs require a configured token', async () => {
   const { env, sqlite } = fixture();
   const context = {} as ExecutionContext;
   const fetch = worker.fetch!;
-  assert.equal((await fetch(new Request('https://example.test/search', { method: 'POST' }), env, context)).status, 401);
-  assert.equal((await fetch(new Request('https://example.test/search', { method: 'POST' }), { ...env, API_TOKEN: '' }, context)).status, 503);
+  const feedback = (path: string) => new Request<unknown, IncomingRequestCfProperties>(`https://example.test/${path}`, { method: 'POST',
+    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: '報告は？', include_feedback: true }) });
+  assert.equal((await fetch(feedback('search'), env, context)).status, 401);
+  assert.equal((await fetch(feedback('answer'), { ...env, API_TOKEN: '' }, context)).status, 503);
+  assert.equal((await fetch(new Request('https://example.test/sync/status'), env, context)).status, 401);
   const valid = await fetch(new Request('https://example.test/search', { method: 'POST', headers: { Authorization: `Bearer ${env.API_TOKEN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ query: '報告は？' }) }), env, context);
   assert.equal(valid.status, 200); assert.equal((await valid.json() as { status: string }).status, 'empty');
   sqlite.close();
+});
+
+test('public search and answers keep private and feedback sources out of model requests', async () => {
+  const { env, sqlite } = fixture();
+  const app = { ...env, PUBLIC_SEARCH_RATE_LIMIT: { limit: async () => ({ success: true }) } };
+  const context = {} as ExecutionContext;
+  const sources = [
+    { repo: 'TrainLCD/MobileApp', kind: 'issue', title: 'Public issue', body: 'Public passage' },
+    { repo: 'TrainLCD/MobileApp', kind: 'pr', title: 'Public PR', body: 'PR text\nPENDING\nUnpublished review' },
+    { repo: 'TrainLCD/Issues', kind: 'feedback', title: 'Private feedback', body: 'Restricted feedback' },
+    { repo: 'TrainLCD/Issues', kind: 'doc', title: 'Private feedback README', body: 'Restricted README' },
+    { repo: 'TrainLCD/Private', kind: 'issue', title: 'Private issue', body: 'Restricted issue' },
+  ] as const;
+  const insertRepo = sqlite.prepare('INSERT OR IGNORE INTO repositories(repo,description,default_branch) VALUES(?,?,?)');
+  for (const [i, source] of sources.entries()) {
+    insertRepo.run(source.repo, source.repo, 'main');
+    await saveSource(app, { ...source, id: `${source.repo}#${i}`, url: `https://github.com/${source.repo}`,
+      metadata: {}, updated_at: '2026-11-10' });
+  }
+  const inputs: string[] = [];
+  let githubAvailable = true;
+  const restore = mockFetch((url, init) => {
+    if (url.includes('api.github.com')) {
+      assert.equal(new URL(url).searchParams.get('type'), 'public');
+      if (!githubAvailable) return Response.json({}, { status: 503 });
+      return Response.json([
+        { full_name: 'TrainLCD/MobileApp', private: false, visibility: 'public' },
+        { full_name: 'TrainLCD/Issues', private: false, visibility: 'public' },
+        { full_name: 'TrainLCD/Private', private: true, visibility: 'private' },
+      ]);
+    }
+    const { state, questions } = JSON.parse(String(init?.body));
+    inputs.push(JSON.stringify(state));
+    return Response.json({ model: 'test', usage: { input_tokens: 1, output_tokens: 1 },
+      answers: Object.fromEntries(Object.entries(questions).map(([id, item]) => {
+        const question = item as { type: string; criteria?: Record<string, string> };
+        const options = Object.keys(question.criteria || {});
+        return [id, question.type === 'choice' ? { type: 'choice', choice: options[0],
+          probabilities: Object.fromEntries(options.map(option => [option, 1 / options.length])) }
+          : { type: 'noul', noul: id === 'conflict' ? 0.1 : 0.99 }];
+      })) });
+  });
+  const request = (path: string, includeFeedback: boolean, token?: string) => new Request<unknown, IncomingRequestCfProperties>(`https://example.test/${path}`, {
+    method: 'POST', body: JSON.stringify({ query: 'reported issues', include_feedback: includeFeedback }),
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  try {
+    for (const path of ['search', 'answer']) {
+      const response = await worker.fetch!(request(path, false), { ...app, API_TOKEN: '' }, context);
+      assert.equal(response.status, 200);
+      const payload = await response.json() as { evidence: { title: string }[] };
+      assert.deepEqual(payload.evidence.map(item => item.title), ['Public issue']);
+      assert.doesNotMatch(JSON.stringify(payload), /TrainLCD\/(Issues|Private)|Unpublished review/);
+    }
+    assert.doesNotMatch(inputs.join('\n'), /TrainLCD\/(Issues|Private)|Restricted|Unpublished review/);
+    const authenticated = await worker.fetch!(request('search', true, env.API_TOKEN), app, context);
+    assert.equal(authenticated.status, 200);
+    const payload = await authenticated.json() as { evidence: { title: string }[] };
+    assert.deepEqual(payload.evidence.map(item => item.title).sort(), ['Private feedback', 'Public issue']);
+
+    const callsBeforeFailure = inputs.length;
+    const limited = await worker.fetch!(request('search', false), { ...app,
+      PUBLIC_SEARCH_RATE_LIMIT: { limit: async () => ({ success: false }) } }, context);
+    assert.equal(limited.status, 429);
+    githubAvailable = false;
+    assert.equal((await worker.fetch!(request('search', false), app, context)).status, 502);
+    assert.equal(inputs.length, callsBeforeFailure);
+  } finally { restore(); sqlite.close(); }
 });
 
 test('atomic snapshot guard prevents stale jobs from erasing newer passages', async () => {

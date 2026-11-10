@@ -45,6 +45,8 @@ const statuses = {
 const errors = {
   unauthorized: "認証に失敗しました。API_TOKENを確認して接続し直してください。",
   authentication_not_configured: "サーバーにAPI_TOKENが設定されていません。",
+  public_search_rate_limited: "検索回数の上限に達しました。少し待ってから再実行してください。",
+  public_search_unavailable: "公開資料の検索は現在利用できません。",
   jev_not_configured: "サーバーにJevのAPIキーが設定されていません。",
   upstream_http_401:
     "外部サービスの認証に失敗しました。サーバーのAPIキーを確認してください。",
@@ -118,11 +120,11 @@ function settingsNotice(message, kind = "") {
   notice(message, kind, $("settings-notice"));
 }
 function controls() {
-  $("empty-connect").hidden = Boolean(token);
   $("connect-button").disabled = connecting;
   $("connect-button").textContent = connecting ? "接続中…" : "接続";
-  $("search-button").disabled = !token || searching;
+  $("search-button").disabled = searching;
   $("search-button").textContent = searching ? "探索中…" : "検索";
+  $("include-feedback").disabled = searching;
   $("sync-button").disabled = !token || syncing;
   $("sync-button").textContent = syncing ? "登録中…" : "GitHubから取り込む";
   $("refresh-button").disabled = !token || refreshing;
@@ -160,7 +162,7 @@ function disconnect(message = "接続を解除しました。") {
   $("token").value = "";
   $("connect-form").hidden = false;
   $("disconnect-button").hidden = true;
-  $("connection-state").textContent = "未接続";
+  $("connection-state").textContent = "公開資料";
   $("connection-state").className = "badge";
   $("repo-count").textContent = "—";
   $("source-count").textContent = "—";
@@ -168,6 +170,7 @@ function disconnect(message = "接続を解除しました。") {
   $("sync-updated").textContent = "";
   $("sync-error-list").replaceChildren();
   $("sync-errors").hidden = true;
+  $("include-feedback").checked = false;
   clearResults();
   controls();
   notice(message);
@@ -185,7 +188,7 @@ async function api(path, options = {}, credential = token) {
       cache: "no-store",
       credentials: "omit",
       headers: {
-        Authorization: "Bearer " + credential,
+        ...(credential ? { Authorization: "Bearer " + credential } : {}),
         ...(options.body ? { "Content-Type": "application/json" } : {}),
       },
     });
@@ -418,7 +421,7 @@ window.addEventListener("hashchange", () => {
 });
 document.querySelectorAll("[data-page-step]").forEach((button) => {
   button.addEventListener("click", () => {
-    if (!token || searching || button.disabled) return;
+    if (searching || button.disabled) return;
     const next = resultPage + Number(button.dataset.pageStep);
     if (next < 0 || next >= Math.ceil(resultEvidence.length / RESULT_PAGE_SIZE)) return;
     resultPage = next;
@@ -427,18 +430,26 @@ document.querySelectorAll("[data-page-step]").forEach((button) => {
     $("evidence-list").focus?.({ preventScroll: true });
   });
 });
-for (const button of [$("settings-button"), $("empty-connect")]) {
-  button.addEventListener("click", () => {
-    settings.showModal();
-    if (!token && !connecting) $("token").focus();
-  });
+function openSettings() {
+  if (!settings.open) settings.showModal();
+  if (!token && !connecting) $("token").focus();
 }
+function askForFeedbackKey() {
+  openSettings();
+  settingsNotice("フィードバックを検索するには、利用キーで接続してください。");
+}
+$("settings-button").addEventListener("click", openSettings);
+$("include-feedback").addEventListener("change", () => {
+  clearResults();
+  notice("");
+  if ($("include-feedback").checked && !token) askForFeedbackKey();
+});
 $("connect-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   if (connecting) return;
   const candidate = $("token").value.trim();
   if (!candidate) return;
-  const current = ++session;
+  const current = session;
   connecting = true;
   controls();
   settingsNotice("接続を確認しています…", "loading");
@@ -474,7 +485,7 @@ $("query").addEventListener("input", () => {
 });
 $("search-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!token || searching) return;
+  if (searching) return;
   const query = $("query").value.trim();
   if (!query) {
     $("query").focus();
@@ -482,6 +493,11 @@ $("search-form").addEventListener("submit", async (event) => {
   }
   const current = session;
   const mode = document.querySelector('input[name="mode"]:checked').value;
+  const includeFeedback = $("include-feedback").checked;
+  if (includeFeedback && !token) {
+    askForFeedbackKey();
+    return;
+  }
   searching = true;
   clearResults();
   controls();
@@ -490,8 +506,8 @@ $("search-form").addEventListener("submit", async (event) => {
   try {
     const data = await api("/" + mode, {
       method: "POST",
-      body: JSON.stringify({ query }),
-    });
+      body: JSON.stringify({ query, include_feedback: includeFeedback }),
+    }, includeFeedback ? token : "");
     if (current === session) renderResult(data, mode);
   } catch (error) {
     if (current === session) notice(error.message, "error");
