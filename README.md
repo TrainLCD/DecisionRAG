@@ -185,3 +185,12 @@ npx wrangler deploy --dry-run --outdir dist
 - [Cloudflare Workers](https://developers.cloudflare.com/workers/)
 - [Cloudflare D1](https://developers.cloudflare.com/d1/)
 - [Cloudflare Queues](https://developers.cloudflare.com/queues/)
+
+
+### PWA
+
+HTTPSで開き、iOSでは共有メニューの「ホーム画面に追加」、Android・PCではブラウザーのインストール操作で追加できます。検索・要約には通信が必要です。初回オンライン起動後は、圏外での起動時に接続案内を表示します。
+
+新バージョンは起動時、画面への復帰時、オンライン復帰時、表示中は1時間ごとに確認します。「更新する」を押した画面だけを再読み込みします。入力内容・検索結果・メモリ上の利用キーは更新時に消去されます。Service Workerはオフライン案内のHTML/CSSのみを保存し、API応答・検索結果・利用キーは保存しません。
+
+`public/offline.html` / `public/offline.css` の変更時は `public/sw.js` のキャッシュバージョンを変更してください。他のフロントエンド変更でも更新を検知できるよう、CIはデプロイ前に公開ファイルの内容からService Workerのリビジョンを生成します。ローカルからデプロイする場合もnpmのdeployスクリプトを使用してください。

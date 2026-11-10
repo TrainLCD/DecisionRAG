@@ -297,3 +297,26 @@ dialog::backdrop { background: rgb(24 24 27 / 0.46); }
   .header-inner { min-height: 3.25rem; padding-block: 0.25rem; }
   .workspace-inner { padding-block: 0.75rem; }
 }
+
+
+.pwa-update {
+  position: fixed;
+  z-index: 20;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, calc(100% - 32px));
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 16px;
+  background: #fff;
+  color: #202124;
+  box-shadow: 0 4px 24px #0002;
+  font-size: 14px;
+}
+.pwa-update[hidden] { display: none; }
+.pwa-update button { flex-shrink: 0; }

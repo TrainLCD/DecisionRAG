@@ -1,0 +1,16 @@
+{
+  "id": "/",
+  "name": "TrainLCD DecisionRAG",
+  "short_name": "DecisionRAG",
+  "description": "TrainLCDのIssue、プルリクエスト、ドキュメント、利用者の報告を横断検索。",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
