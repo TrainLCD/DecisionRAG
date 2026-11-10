@@ -68,7 +68,8 @@ test('verified partial summaries are returned, but unsupported claims and unknow
     kind: 'pr' as const, metadata: { merged_at: null }, updated_at: '2026-11-06', url: 'https://github.com/TrainLCD/MobileApp/pull/1', citation: 'p1', relevance: 0.9 }];
   let calls = 0;
   let support = 0.99;
-  let citation = 'p1';
+  let citations = ['p1'];
+  let claimText = 'A change was proposed.';
   const restore = mockFetch((url, init) => {
     if (url.includes('typesafe')) {
       const { questions, state } = JSON.parse(String(init?.body));
@@ -78,7 +79,7 @@ test('verified partial summaries are returned, but unsupported claims and unknow
     }
     calls++;
     return Response.json({ model: 'test-generator', usage: { prompt_tokens: 100, completion_tokens: 20 }, choices: [{ message: { content: JSON.stringify({
-      claims: [{ text: 'A change was proposed.', citations: [citation] }, { text: 'The change was released.', citations: ['p1'] }],
+      claims: [{ text: claimText, citations }, { text: 'The change was released.', citations: ['p1'] }],
     }) } }] });
   });
   try {
@@ -97,9 +98,16 @@ test('verified partial summaries are returned, but unsupported claims and unknow
     const rejected = await answer('Released?', evidence, configured, new Jev(env));
     assert.equal(rejected.status, 'verification_failed');
     assert.equal(rejected.answer, null);
-    citation = 'p999';
+    citations = ['p999'];
     support = 0.99;
     assert.equal((await answer('Released?', evidence, configured, new Jev(env))).answer, null);
+    const withSecondSource = [...evidence, { ...evidence[0]!, citation: 'p2' }];
+    citations = ['p1', 'p2'];
+    claimText = 'A change was proposed [p1, p2].';
+    const normalized = await answer('Released?', withSecondSource, configured, new Jev(env));
+    assert.equal(normalized.answer, 'A change was proposed. [p1] [p2]');
+    citations = ['p1'];
+    assert.equal((await answer('Released?', withSecondSource, configured, new Jev(env))).answer, null);
   } finally { restore(); sqlite.close(); }
 });
 
