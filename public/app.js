@@ -410,8 +410,10 @@ function renderEvidencePage() {
     ]
       .filter(Boolean)
       .join(" · ");
+    const body = (item.text ?? "").trim();
+    const preview = !body || /^\((?:no body|empty document)\)$/i.test(body) ? "内容なし" : body;
     const excerpt = element("div", "evidence-text");
-    excerpt.append(element("p", "evidence-excerpt", item.text ?? ""));
+    excerpt.append(element("p", "evidence-excerpt", preview));
     card.append(
       top,
       heading,
