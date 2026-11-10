@@ -65,6 +65,8 @@ jobs:
           latest=$(gh api "repos/$GITHUB_REPOSITORY/commits/$DEFAULT_BRANCH" --jq .sha)
           if [[ "$latest" == "$GITHUB_SHA" ]]; then
             echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Skipping deploy of $GITHUB_SHA because the head of $DEFAULT_BRANCH is $latest."
           fi
       - name: Deploy Worker
         if: steps.head.outputs.current == 'true'

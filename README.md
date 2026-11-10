@@ -80,11 +80,12 @@ npm run dev
 
 既存の `trainlcd-decision-rag` Worker を対象にする。有効化の前に、公開中の Worker のソースをデフォルトブランチへ取り込み、D1、Queues、Cron の設定が `wrangler.jsonc` と一致することを確認する。
 
-1. GitHub Actions の `production` 環境に `CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` を Secrets として登録する。デプロイ先ブランチはデフォルトブランチに限定する。
+1. GitHub の Settings → Environments → `production` で、Deployment branches and tags を **Selected branches and tags** に設定し、デフォルトブランチ（現在は `main`）だけを Branch ルールに追加する。同じ環境に `CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` を Secrets として登録する。
 2. 同じ環境の Variables に、既存の本番 D1 の ID を `DECISIONRAG_D1_DATABASE_ID` として登録する。
-3. リポジトリの Actions Variables に `DECISIONRAG_DEPLOY_ENABLED=true` を設定する。
+3. Cloudflare の本番 Worker の Variables and Secrets で `GITHUB_ORG` が `TrainLCD` に設定されていることを確認する。
+4. リポジトリの Actions Variables に `DECISIONRAG_DEPLOY_ENABLED=true` を設定する。
 
-有効化後は、デフォルトブランチが更新されると CI を実行し、成功した最新コミットを Wrangler でデプロイする。Worker に登録済みの環境変数と Secrets を使用する。
+有効化後は、デフォルトブランチが更新されると CI を実行し、成功した最新コミットを Wrangler でデプロイする。自動デプロイは `wrangler.jsonc` の `vars` を除外し、Cloudflare に登録済みの本番変数と Secrets を引き継ぐ。`SUPPORT_THRESHOLD` などの本番値は、Cloudflare の本番 Worker の Variables and Secrets で変更する。
 
 ## API
 
