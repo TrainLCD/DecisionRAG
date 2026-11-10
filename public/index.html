@@ -63,17 +63,19 @@
       <textarea id="query" aria-describedby="query-count" maxlength="1500" rows="2" placeholder="例：地下鉄で位置更新が止まる問題" required></textarea>
       <div class="query-actions">
         <div class="query-options" role="group" aria-label="検索オプション">
-          <label class="query-option" title="要約を含める">
-            <input id="include-summary" class="sr-only" type="checkbox" aria-label="要約を含める" checked>
+          <label class="query-option">
+            <input id="include-summary" class="sr-only" type="checkbox" checked>
             <span class="query-option-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6m-6 4h6m-6 4h3"/></svg>
             </span>
+            <span>要約する</span>
           </label>
           <label class="query-option" title="フィードバックを含める（利用キーが必要）">
-            <input id="include-feedback" class="sr-only" type="checkbox" aria-label="フィードバックを含める（利用キーが必要）">
+            <input id="include-feedback" class="sr-only" type="checkbox" aria-label="FBを含む（フィードバック検索。利用キーが必要）">
             <span class="query-option-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 15a2 2 0 0 1-2 2H9l-5 4V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2Z"/><path d="M8 9h8m-8 4h5"/></svg>
             </span>
+            <span>FBを含む</span>
           </label>
         </div>
         <button id="search-button" class="primary" type="submit" aria-label="検索" title="検索">
