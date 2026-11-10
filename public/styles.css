@@ -210,8 +210,10 @@ summary { cursor: pointer; font-weight: 600; }
 .query-options { display: flex; flex-wrap: wrap; column-gap: 0.5rem; }
 .query-option {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.125rem;
+  min-width: 3.25rem;
   min-height: 2.75rem;
   color: var(--muted);
   font-size: 0.6875rem;
