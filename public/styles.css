@@ -206,14 +206,12 @@ summary { cursor: pointer; font-weight: 600; }
 }
 .query-field:focus-within { border-color: #71717a; }
 .query-field > label, .connection label { display: block; font-size: 0.8125rem; font-weight: 600; }
-.query-actions { display: flex; align-items: flex-end; justify-content: space-between; gap: 0.5rem; margin-top: 0.25rem; }
-.query-options { display: flex; gap: 0.25rem; }
+.query-actions { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.25rem; }
+.query-options { display: flex; flex-wrap: wrap; column-gap: 0.5rem; }
 .query-option {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.125rem;
-  min-width: 3.25rem;
+  gap: 0.25rem;
   color: var(--muted);
   font-size: 0.6875rem;
   line-height: 1.2;
@@ -232,7 +230,7 @@ summary { cursor: pointer; font-weight: 600; }
 .query-option input:checked + .query-option-icon { color: var(--primary); background: var(--primary-soft); }
 .query-option input:focus-visible + .query-option-icon { outline: 2px solid var(--primary); outline-offset: 2px; }
 .query-option input:disabled ~ span { opacity: 0.55; cursor: not-allowed; }
-#search-button { width: 2.75rem; height: 2.75rem; padding: 0; border-radius: 50%; }
+#search-button { flex-shrink: 0; width: 2.75rem; height: 2.75rem; padding: 0; border-radius: 50%; }
 textarea {
   display: block;
   width: 100%;
