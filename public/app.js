@@ -125,6 +125,7 @@ function controls() {
   const searchButton = $("search-button");
   searchButton.disabled = searching;
   searchButton.setAttribute("aria-label", searching ? "検索中" : "検索");
+  $("include-summary").disabled = searching;
   $("include-feedback").disabled = searching;
   $("sync-button").disabled = !token || syncing;
   $("sync-button").textContent = syncing ? "登録中…" : "GitHubから取り込む";
@@ -493,7 +494,7 @@ $("search-form").addEventListener("submit", async (event) => {
     return;
   }
   const current = session;
-  const mode = document.querySelector('input[name="mode"]:checked').value;
+  const mode = $("include-summary").checked ? "answer" : "search";
   const includeFeedback = $("include-feedback").checked;
   if (includeFeedback && !token) {
     askForFeedbackKey();

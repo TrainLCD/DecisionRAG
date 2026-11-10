@@ -60,14 +60,10 @@
 <footer class="search-dock">
   <form id="search-form" class="shell">
     <div class="query-tools">
-      <fieldset class="mode-selector">
-        <legend class="sr-only">検索モード</legend>
-        <label><input class="sr-only" type="radio" name="mode" value="search" checked><span>資料を探す</span></label>
-        <label><input class="sr-only" type="radio" name="mode" value="answer"><span>資料から回答する</span></label>
-      </fieldset>
+      <label class="query-option"><input id="include-summary" type="checkbox"> 要約を含める</label>
       <span id="query-count" class="muted">0 / 1,500文字</span>
     </div>
-    <label class="feedback-option"><input id="include-feedback" type="checkbox"> フィードバックを含める（利用キーが必要）</label>
+    <label class="query-option feedback-option"><input id="include-feedback" type="checkbox"> フィードバックを含める（利用キーが必要）</label>
     <div class="query-field">
       <label for="query">質問・キーワード</label>
       <textarea id="query" aria-describedby="query-count" maxlength="1500" rows="2" placeholder="例：地下鉄で位置更新が止まる問題" required></textarea>
