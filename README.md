@@ -80,16 +80,18 @@ npm run dev
 
 既存の `trainlcd-decision-rag` Worker を対象にする。有効化の前に、公開中の Worker のソースをデフォルトブランチへ取り込み、D1、Queues、Cron の設定が `wrangler.jsonc` と一致することを確認する。
 
-1. GitHub の Settings → Environments → `production` で、Deployment branches and tags を **Selected branches and tags** に設定し、デフォルトブランチ（現在は `main`）だけを Branch ルールに追加する。同じ環境に `CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` を Secrets として登録する。
+1. GitHub の Settings → Environments → `production` で、Deployment branches and tags を **Selected branches and tags** に設定し、デフォルトブランチ（現在は `main`）だけを Branch ルールに追加する。本番デプロイに承認が必要な場合は、同じ環境で Required reviewers を設定する。同じ環境に `CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` を Secrets として登録する。
 2. 同じ環境の Variables に、既存の本番 D1 の ID を `DECISIONRAG_D1_DATABASE_ID` として登録する。
 3. Cloudflare の本番 Worker の Variables and Secrets で `GITHUB_ORG` が `TrainLCD` に設定されていることを確認する。
 4. リポジトリの Actions Variables に `DECISIONRAG_DEPLOY_ENABLED=true` を設定する。
 
-有効化後は、デフォルトブランチへの push または同ブランチでの手動実行で CI が走り、検証を通過した最新コミットを Wrangler でデプロイする。自動デプロイは `wrangler.jsonc` の `vars` を除外し、Cloudflare に登録済みの本番変数と Secrets を引き継ぐ。`SUPPORT_THRESHOLD` などの本番値は、Cloudflare の本番 Worker の Variables and Secrets で変更する。
+有効化後は、デフォルトブランチへの push または同ブランチでの手動実行で CI が走る。検証を通過したデプロイジョブは順番に実行され、各ジョブがデプロイ直前にデフォルトブランチの最新コミットかどうかを確認する。自動デプロイは `wrangler.jsonc` の `vars` を除外し、Cloudflare に登録済みの本番変数と Secrets を引き継ぐ。`SUPPORT_THRESHOLD` などの本番値は、Cloudflare の本番 Worker の Variables and Secrets で変更する。
 
 #### 本番 D1 のマイグレーション
 
 CI のマイグレーションはローカル D1 にのみ適用する。本番のスキーマ変更に依存する PR は、次の順で反映する。
+
+Wrangler はファイル名で適用済みのマイグレーションを記録する。本番に適用したファイルは固定し、修正は新しいマイグレーションとして追加して、同じ手順でマージ前に適用する。
 
 1. 現行 Worker でも動く互換性のあるマイグレーションを用意する。列の削除や名前変更が必要なら、新旧スキーマに対応できる Worker を先にデプロイし、旧スキーマを参照しなくなってから削除する。
 2. マージ前に、対象のマイグレーションファイルを含む作業ツリーのルートで `wrangler.jsonc` を `wrangler.production.jsonc` にコピーする。コピーの `d1_databases` にある `DB` バインディングの `database_id` を、GitHub の `production` 環境に登録した `DECISIONRAG_D1_DATABASE_ID` の値に置き換える。コピーはローカルの作業用に使う。そのパスを指定して未適用のマイグレーションを確認し、適用する。適用後に未適用分がないことと、現行 Worker の `/sync/status` が本番 D1 を読み取れることを確認する。

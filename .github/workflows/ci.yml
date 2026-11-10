@@ -31,7 +31,7 @@ jobs:
     environment: production
     concurrency:
       group: decisionrag-production
-      cancel-in-progress: false
+      queue: max
     steps:
       - uses: actions/checkout@v4
         with:
