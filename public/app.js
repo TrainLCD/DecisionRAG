@@ -309,7 +309,7 @@ function linkAnswerCitations(content) {
   }
   return content;
 }
-function renderResult(data, mode) {
+function renderResult(data, mode, query) {
   clearResults();
   $("empty-state").hidden = true;
   const evidence = Array.isArray(data.evidence) ? data.evidence : [];
@@ -321,7 +321,9 @@ function renderResult(data, mode) {
     element("span", "muted", (mode === "answer" ? "回答時間：" : "検索時間：") + (Number(data.elapsed_ms) / 1000).toFixed(2) + "秒"),
   );
   summary.hidden = false;
-  if (data.status === "verification_failed") {
+  if (data.status === "summarized") {
+    notice("質問: " + query);
+  } else if (data.status === "verification_failed") {
     notice("");
   } else {
     notice(label[0] + (label[1] ? "。" + label[1] : "。"));
@@ -538,7 +540,7 @@ $("search-form").addEventListener("submit", async (event) => {
       body: JSON.stringify({ query, include_feedback: includeFeedback }),
     }, includeFeedback ? token : "");
     if (current === session) {
-      renderResult(data, mode);
+      renderResult(data, mode, query);
       if (queryField.value === submittedText) {
         queryField.value = "";
         updateQueryCount();
