@@ -423,11 +423,25 @@ function renderEvidencePage() {
       item.repo,
       ({ open: "未完了", closed: "完了" })[metadata.state] || metadata.state,
       metadata.base_branch ? "→ " + metadata.base_branch : "",
-      metadata.merged_at ? "マージ済み" : "",
-      "リリース状況：未確認",
+      item.kind === "pr" ? (metadata.merged_at ? "マージ済み" : "未マージ") : "",
     ]
       .filter(Boolean)
       .join(" · ");
+    const details = element("div", "evidence-meta", meta);
+    if (item.kind === "pr" && metadata.merged_at) {
+      const release = metadata.github_release;
+      const releaseUrl = safeSourceUrl(release?.url);
+      details.append(" · ");
+      if (releaseUrl && typeof release.tag === "string") {
+        const link = element("a", "", "GitHubリリース " + release.tag + " に収録");
+        link.href = releaseUrl;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        details.append(link);
+      } else {
+        details.append("GitHubリリースへの収録未確認");
+      }
+    }
     const body = (item.text ?? "").trim();
     const preview = !body || /^\((?:no body|empty document)\)$/i.test(body) ? "内容なし" : body;
     const excerpt = element("div", "evidence-text");
@@ -437,7 +451,7 @@ function renderEvidencePage() {
     card.append(
       top,
       heading,
-      element("div", "evidence-meta", meta),
+      details,
       excerpt,
     );
     $("evidence-list").append(card);

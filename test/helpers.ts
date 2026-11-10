@@ -1,10 +1,12 @@
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import type { Env, SyncJob } from '../src/types.js';
 export function fixture() {
   const sqlite = new DatabaseSync(':memory:');
   sqlite.exec('PRAGMA foreign_keys=ON');
-  sqlite.exec(readFileSync(new URL('../../migrations/0001_initial.sql', import.meta.url), 'utf8'));
+  const migrations = new URL('../../migrations/', import.meta.url);
+  for (const file of readdirSync(migrations).filter(name => name.endsWith('.sql')).sort())
+    sqlite.exec(readFileSync(new URL(file, migrations), 'utf8'));
   class Statement {
     values: (string | number | null)[] = [];
     constructor(readonly sql: string) {}

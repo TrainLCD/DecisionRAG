@@ -38,6 +38,7 @@ export type SyncJob =
   | { type: 'repo'; repo: string }
   | { type: 'issues'; repo: string; page: number; since?: string; started: string }
   | { type: 'issue'; repo: string; number: number }
+  | { type: 'releases'; repo: string }
   | { type: 'docs'; repo: string }
   | { type: 'doc'; repo: string; path: string; sha: string; commit: string };
 export interface RepoRow { repo: string; description: string; default_branch: string; docs_commit: string | null }

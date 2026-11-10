@@ -1,4 +1,4 @@
-import { taggedJsonRequest, type TaggedJson } from './http.js';
+import { jsonRequest, taggedJsonRequest, type TaggedJson } from './http.js';
 import { HttpError, type Env } from './types.js';
 
 interface RepositoryVisibility { full_name: string; private: boolean; visibility: string; disabled?: boolean }
@@ -22,6 +22,17 @@ export class GitHub {
   }
   async get<T>(path: string): Promise<T> {
     return (await this.request<T>(path)).value;
+  }
+  /** Query the Git graph without downloading commit messages or file changes. */
+  async graph<T>(query: string, variables: Record<string, unknown>): Promise<T> {
+    if (!this.env.GITHUB_TOKEN) throw new HttpError(503, 'github_not_configured');
+    const response = await jsonRequest<{ data?: T; errors?: unknown[] }>('https://api.github.com/graphql', {
+      method: 'POST', headers: { Authorization: `Bearer ${this.env.GITHUB_TOKEN}`,
+        'Content-Type': 'application/json', 'User-Agent': 'TrainLCD-DecisionRAG' },
+      body: JSON.stringify({ query, variables }),
+    });
+    if (!response.data || response.errors?.length) throw new HttpError(502, 'github_graphql_failed');
+    return response.data;
   }
   /** Read every page in a collection or report that the pagination budget was exceeded. */
   async all<T>(path: string, getPage = (pagePath: string) => this.get<T[]>(pagePath)): Promise<T[]> {

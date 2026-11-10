@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { sync } from '../src/sync.js';
-import { saveSource } from '../src/store.js';
+import { passagesFor, saveSource } from '../src/store.js';
 import { verifySignature, webhook } from '../src/webhook.js';
 import worker from '../src/index.js';
 import { fixture, mockFetch } from './helpers.js';
@@ -45,6 +45,54 @@ test('PR ingestion retains reviews, file changes, merge scope and unknown releas
     assert.doesNotMatch(String(row?.body), /Pending .*draft|Pending draft/);
     const metadata = JSON.parse(String(row?.metadata));
     assert.equal(metadata.base_branch, 'dev'); assert.equal(metadata.release_status, 'unknown');
+  } finally { restore(); sqlite.close(); }
+});
+
+test('a published GitHub release is linked only to merged PRs whose commits it contains', async () => {
+  const { env, sqlite } = fixture();
+  const repo = 'TrainLCD/MobileApp';
+  const tip = 'a'.repeat(40), ancestor = 'b'.repeat(40), missing = 'c'.repeat(40);
+  sqlite.prepare('INSERT INTO repositories(repo,description,default_branch) VALUES(?,?,?)').run(repo, 'app', 'main');
+  const sources = [
+    { sha: ancestor, merged: '2026-11-03', kind: 'pr' },
+    { sha: missing, merged: '2026-11-03', kind: 'pr' },
+    { sha: ancestor, merged: null, kind: 'pr' },
+    { sha: ancestor, merged: '2026-11-03', kind: 'issue' },
+  ] as const;
+  for (const [i, source] of sources.entries()) await saveSource(env, { id: `${repo}#${i}`, repo, kind: source.kind,
+    title: `Source ${i}`, url: `https://github.com/${repo}/pull/${i}`, body: 'source text', updated_at: '2026-11-04',
+    metadata: { merged_at: source.merged, merge_commit_sha: source.sha, release_status: 'unknown' } });
+  const ids = sources.map((_, i) => `${repo}#${i}`);
+  const publishedAt = '2026-11-06T00:00:00Z';
+  const url = `https://github.com/${repo}/releases/tag/v1.2.3`;
+  let published = true;
+  let historyCalls = 0;
+  const restore = mockFetch((endpoint, init) => {
+    assert.equal(endpoint, 'https://api.github.com/graphql');
+    const { query, variables } = JSON.parse(String(init?.body));
+    if (query.includes('latestRelease')) return Response.json({ data: { repository: {
+      latestRelease: published ? { tagName: 'v1.2.3', url, publishedAt, isDraft: false,
+        isPrerelease: false, tagCommit: { oid: tip } } : null,
+    } } });
+    historyCalls++;
+    assert.equal(variables.commit, tip);
+    const first = variables.after === null;
+    return Response.json({ data: { repository: { object: { history: { totalCount: 2,
+      nodes: [{ oid: first ? tip : ancestor }], pageInfo: { hasNextPage: first, endCursor: first ? 'next' : null },
+    } } } } });
+  });
+  try {
+    await sync(env, { type: 'releases', repo });
+    await sync(env, { type: 'releases', repo });
+    assert.equal(historyCalls, 2);
+    const passages = await passagesFor(env, ids, 10);
+    assert.equal(passages[0]?.metadata.release_status, 'included_in_github_release');
+    assert.deepEqual(passages[0]?.metadata.github_release, { tag: 'v1.2.3', url, published_at: publishedAt });
+    assert.deepEqual(passages.slice(1).map(passage => passage.metadata.release_status), ['unknown', 'unknown', 'unknown']);
+    published = false;
+    await sync(env, { type: 'releases', repo });
+    assert.equal((await passagesFor(env, ids, 10))[0]?.metadata.release_status, 'unknown');
+    assert.equal(sqlite.prepare('SELECT count(*) AS n FROM github_release_commits').get()?.n, 0);
   } finally { restore(); sqlite.close(); }
 });
 

@@ -1,4 +1,5 @@
 import { GitHub, isDocument } from './github.js';
+import { syncRelease } from './releases.js';
 import { deleteSource, repoRow, saveSource } from './store.js';
 import { HttpError, type Env, type Source, type SyncJob } from './types.js';
 interface Repository { full_name: string; description: string | null; default_branch: string; archived: boolean; disabled: boolean }
@@ -40,6 +41,7 @@ export async function sync(env: Env, job: SyncJob): Promise<void> {
     const since = row?.issues_dispatched_at ? new Date(Date.parse(row.issues_dispatched_at) - 600_000).toISOString() : undefined;
     await enqueue(env, { type: 'issues', repo: job.repo, page: 1, ...(since ? { since } : {}), started: new Date().toISOString() });
     await enqueue(env, { type: 'docs', repo: job.repo });
+    await enqueue(env, { type: 'releases', repo: job.repo });
     return;
   }
   if (job.type === 'issues') {
@@ -57,7 +59,7 @@ export async function sync(env: Env, job: SyncJob): Promise<void> {
     let body = `${issue.body || ''}${discussion(comments, 'Comment')}`;
     const metadata: Record<string, unknown> = { number: issue.number, state: issue.state,
       state_reason: issue.state_reason, labels: issue.labels.map(l => l.name), author: issue.user.login,
-      // A release is deliberately unknown, regardless of PR merge status.
+      // Release membership is joined from the independently synced Git history.
       release_status: 'unknown' };
     if (issue.pull_request) {
       const pr = await gh.get<{ changed_files: number; merged_at: string | null; merge_commit_sha: string | null; draft: boolean;
@@ -80,6 +82,7 @@ export async function sync(env: Env, job: SyncJob): Promise<void> {
   }
   const repo = await repoRow(env, job.repo);
   if (!repo) throw new HttpError(503, 'repository_not_synced');
+  if (job.type === 'releases') return syncRelease(env, gh, job.repo);
   if (job.type === 'docs') {
     const commit = await gh.get<{ sha: string; commit: { tree: { sha: string } } }>(`${prefix}/commits/${encodeURIComponent(repo.default_branch)}`);
     const tree = await gh.get<{ truncated: boolean; tree: { path: string; type: string; sha: string; size?: number }[] }>(`${prefix}/git/trees/${commit.commit.tree.sha}?recursive=1`);
