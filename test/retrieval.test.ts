@@ -34,7 +34,7 @@ test('retrieves by shared-context hierarchy without lexical or vector filtering'
     assert.equal(evidence[0]?.source_id, 'TrainLCD/MobileApp#1');
     assert.ok(states.some(s => Object.values(s.candidates || {}).some(t => t.includes('Restore continuous heartbeat')) &&
       Object.values(s.candidates || {}).some(t => t.includes('地下鉄の駅名を修正'))));
-    assert.deepEqual(judge.trace.map(t => t.stage), ['branch_screening', 'document_screening', 'passage_ranking']);
+    assert.deepEqual(judge.trace.map(t => t.stage), ['document_screening', 'passage_ranking']);
     assert.equal(evidence[0]?.metadata.release_status, 'unknown');
   } finally { restore(); sqlite.close(); }
 });
@@ -48,6 +48,7 @@ test('screening budget never returns silently incomplete evidence', async () => 
   });
   try {
     await assert.rejects(retrieve('query', {
+      documents: async () => [{ id: 'd1', description: 'one' }, { id: 'd2', description: 'two' }],
       branches: async () => [{ id: 'b', repo: 'TrainLCD/MobileApp', kind: 'pr', description: 'branch' }],
       documentPages: async () => [[{ id: 'd1', description: 'one' }, { id: 'd2', description: 'two' }]],
       passages: async () => { throw new Error('Must not expand partial corpus'); },
@@ -71,7 +72,8 @@ test('batched document pages retain branch order and screen the tail of a full p
     return items.map(item => ({ item, probability: 1 }));
   };
   try {
-    await retrieve('query', { ...store, documentPages: cursors => {
+    await retrieve('query', { ...store, documents: async limit => Array.from({ length: limit }, () => ({ id: 'overflow', description: 'overflow' })),
+      documentPages: cursors => {
       cursorBatches.push(cursors.map(({ branch }) => branch.kind));
       return store.documentPages(cursors);
     } }, judge);
@@ -79,6 +81,44 @@ test('batched document pages retain branch order and screen the tail of a full p
     assert.equal(documentIds.length, DOCUMENT_PAGE_SIZE + 2);
     assert.deepEqual(documentIds.slice(-2), [`issue${String(DOCUMENT_PAGE_SIZE).padStart(4, '0')}`, 'pr']);
   } finally { sqlite.close(); }
+});
+
+test('direct title screening expands relevant documents beyond the fallback shortlist', async () => {
+  const { env, sqlite } = fixture();
+  const documents = Array.from({ length: 16 }, (_, i) => ({ id: `doc${i}`, description: `title ${i}` }));
+  const judge = new Jev(env);
+  judge.score = async (_query, items) => items.map(item => ({ item, probability: item.id === 'doc15' ? 0.4 : 0.6 }));
+  try {
+    await retrieve('query', {
+      documents: async () => documents,
+      branches: async () => { throw new Error('Small collections should not use branch routing'); },
+      documentPages: async () => { throw new Error('Small collections should not use branch cursors'); },
+      passages: async ids => {
+        assert.deepEqual(ids, documents.slice(0, 15).map(doc => doc.id));
+        return [];
+      },
+    }, judge, { ...DEFAULT_BUDGETS, documents: 12 });
+  } finally { sqlite.close(); }
+});
+
+test('Jev retries only the overlong batch without losing candidates', async () => {
+  const { env, sqlite } = fixture();
+  const batches: string[][] = [];
+  const restore = mockFetch((_url, init) => {
+    const { state } = JSON.parse(String(init?.body));
+    const entries = Object.entries<string>(state.candidates);
+    batches.push(entries.map(([, value]) => value));
+    if (entries.length > 2) return Response.json({ error: { code: 'max_tokens_exceeded' } }, { status: 400 });
+    return Response.json({ model: 'test', usage: { input_tokens: 1, output_tokens: 1 },
+      answers: Object.fromEntries(entries.map(([id]) => [id, { type: 'noul', noul: 0.8 }])) });
+  });
+  try {
+    const judge = new Jev(env);
+    const items = ['one', 'two', 'three', 'four'].map(id => ({ id, description: id }));
+    assert.deepEqual((await judge.score('query', items, 'document_screening')).map(row => row.item.id), items.map(item => item.id));
+    assert.deepEqual(batches, [['one', 'two', 'three', 'four'], ['one', 'two'], ['three', 'four']]);
+    assert.equal(judge.trace[0]?.calls, 3);
+  } finally { restore(); sqlite.close(); }
 });
 
 test('passage ranking counts all matches before limiting the Choice shortlist', async () => {
