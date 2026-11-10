@@ -405,7 +405,9 @@ function renderEvidencePage() {
     const numberSuffix = (item.kind === "issue" || item.kind === "pr") &&
       Number.isSafeInteger(metadata.number) && metadata.number > 0 ? " #" + metadata.number : "";
     const top = element("div", "evidence-top");
-    top.append(element("span", "evidence-kind", kindLabel + numberSuffix));
+    const kindPill = element("span", "evidence-kind", kindLabel + numberSuffix);
+    kindPill.dataset.kind = item.kind;
+    top.append(kindPill);
     const heading = element("h3");
     const url = safeSourceUrl(item.url);
     if (url) {
