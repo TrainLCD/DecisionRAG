@@ -32,7 +32,7 @@ test('retrieves by shared-context hierarchy without lexical or vector filtering'
     assert.equal(evidence[0]?.source_id, 'TrainLCD/MobileApp#1');
     assert.ok(states.some(s => Object.values(s.candidates || {}).some(t => t.includes('Restore continuous heartbeat')) &&
       Object.values(s.candidates || {}).some(t => t.includes('地下鉄の駅名を修正'))));
-    assert.deepEqual(judge.trace.map(t => t.stage), ['branch_screening', 'document_screening', 'passage_scoring', 'shared_shortlist', 'choice_rerank']);
+    assert.deepEqual(judge.trace.map(t => t.stage), ['branch_screening', 'document_screening', 'passage_scoring', 'choice_rerank']);
     assert.equal(evidence[0]?.metadata.release_status, 'unknown');
   } finally { restore(); sqlite.close(); }
 });
@@ -62,23 +62,40 @@ test('support and conflict gates fail closed and validate thresholds', () => {
   sqlite.close();
 });
 
-test('insufficient evidence never reaches generation, and unknown citations are rejected', async () => {
+test('verified partial summaries are returned, but unsupported claims and unknown citations are withheld', async () => {
   const { env, sqlite } = fixture();
   const evidence = [{ id: 'p', source_id: 's', ordinal: 0, text: 'proposed change', title: 'Proposal', repo: 'TrainLCD/MobileApp',
     kind: 'pr' as const, metadata: { merged_at: null }, updated_at: '2026-11-06', url: 'https://github.com/TrainLCD/MobileApp/pull/1', citation: 'p1', relevance: 0.9 }];
   let calls = 0;
-  let support = 0.2;
-  const restore = mockFetch((url) => {
-    if (url.includes('typesafe')) return Response.json({ model: 'test', answers: { supported: { type: 'noul', noul: support }, conflict: { type: 'noul', noul: 0.1 } }, usage: { input_tokens: 1, output_tokens: 1 } });
+  let support = 0.99;
+  let citation = 'p1';
+  const restore = mockFetch((url, init) => {
+    if (url.includes('typesafe')) {
+      const { questions, state } = JSON.parse(String(init?.body));
+      const answers = Object.fromEntries(Object.keys(questions).map(key => [key, { type: 'noul',
+        noul: key === 'supported' || state.draft?.[key]?.text === 'A change was proposed.' ? support : 0.1 }]));
+      return Response.json({ model: 'test', answers, usage: { input_tokens: 1, output_tokens: 1 } });
+    }
     calls++;
-    return Response.json({ choices: [{ message: { content: JSON.stringify({ answer: 'Released [p999]', citations: ['p999'] }) } }] });
+    return Response.json({ choices: [{ message: { content: JSON.stringify({
+      claims: [{ text: 'A change was proposed.', citations: [citation] }, { text: 'The change was released.', citations: ['p1'] }],
+    }) } }] });
   });
   try {
     const configured = { ...env, ANSWER_API_KEY: 'test', ANSWER_MODEL: 'test' };
-    assert.equal((await answer('Released?', evidence, configured, new Jev(env))).status, 'insufficient_evidence');
+    assert.equal((await answer('Released?', evidence, env, new Jev(env))).status, 'evidence_ready');
     assert.equal(calls, 0);
+    const summary = await answer('Released?', evidence, configured, new Jev(env));
+    assert.equal(summary.status, 'summarized');
+    assert.deepEqual(summary.citations, ['p1']);
+    assert.equal(summary.answer, 'A change was proposed. [p1]');
+    support = 0.2;
+    const rejected = await answer('Released?', evidence, configured, new Jev(env));
+    assert.equal(rejected.status, 'verification_failed');
+    assert.equal(rejected.answer, null);
+    citation = 'p999';
     support = 0.99;
-    await assert.rejects(answer('Released?', evidence, configured, new Jev(env)), /invalid_citations/);
+    assert.equal((await answer('Released?', evidence, configured, new Jev(env))).answer, null);
   } finally { restore(); sqlite.close(); }
 });
 

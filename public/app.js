@@ -23,13 +23,14 @@ const statuses = {
     "質問を変えるか、同期状況を確認してください。",
   ],
   answered: ["検証済みの回答", ""],
+  summarized: ["確認できた内容の要約", ""],
   evidence_ready: [
     "回答に使える根拠があります",
     "回答生成モデルは未設定です。以下の根拠を確認してください。",
   ],
   insufficient_evidence: [
     "回答に十分な根拠がありません",
-    "関連する資料はありますが、回答を裏付けるには不十分です。",
+    "資料から質問に答えられる内容を確認できませんでした。",
   ],
   conflicting_evidence: [
     "根拠に矛盾があります",
@@ -39,6 +40,7 @@ const statuses = {
     "回答の検証を通過しませんでした",
     "生成した回答は表示せず、参照した根拠を表示します。",
   ],
+  generation_unavailable: ["要約を生成できませんでした", "検索で見つかった資料を表示します。"],
 };
 const errors = {
   unauthorized: "認証に失敗しました。API_TOKENを確認して接続し直してください。",
@@ -300,7 +302,7 @@ function linkAnswerCitations(content) {
   }
   return content;
 }
-function renderResult(data) {
+function renderResult(data, mode) {
   clearResults();
   $("empty-state").hidden = true;
   const evidence = Array.isArray(data.evidence) ? data.evidence : [];
@@ -309,7 +311,7 @@ function renderResult(data) {
   const summary = $("result-summary");
   summary.replaceChildren(
     element("strong", "", "関連する本文：" + number(evidence.length) + "件"),
-    element("span", "muted", "検索時間：" + (Number(data.elapsed_ms) / 1000).toFixed(2) + "秒"),
+    element("span", "muted", (mode === "answer" ? "回答時間：" : "検索時間：") + (Number(data.elapsed_ms) / 1000).toFixed(2) + "秒"),
   );
   summary.hidden = false;
   notice(label[0] + (label[1] ? "。" + label[1] : "。"));
@@ -317,7 +319,7 @@ function renderResult(data) {
     const panel = $("answer-panel");
     panel.hidden = false;
     panel.append(element("h3", "", label[0]));
-    panel.append(data.status === "answered" && typeof data.answer === "string"
+    panel.append(["answered", "summarized"].includes(data.status) && typeof data.answer === "string"
       ? linkAnswerCitations(markdownContent(data.answer, data.answer_html))
       : element("p", "", label[1]));
   }
@@ -490,7 +492,7 @@ $("search-form").addEventListener("submit", async (event) => {
       method: "POST",
       body: JSON.stringify({ query }),
     });
-    if (current === session) renderResult(data);
+    if (current === session) renderResult(data, mode);
   } catch (error) {
     if (current === session) notice(error.message, "error");
   } finally {

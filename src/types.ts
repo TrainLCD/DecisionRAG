@@ -1,4 +1,5 @@
 export interface Env {
+  AI?: Ai;
   DB: D1Database;
   SYNC_QUEUE: Queue<SyncJob>;
   API_TOKEN: string;

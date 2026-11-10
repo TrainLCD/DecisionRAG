@@ -50,7 +50,7 @@ export async function branches(env: Env): Promise<Branch[]> {
       pr: 'Pull requests, implementation decisions and reviews', feedback: 'User feedback and bug reports',
       doc: 'Repository documentation and specifications' })[r.kind]} (${r.count} documents)` }));
 }
-export async function documentPage(env: Env, branch: Branch, after: string, limit = 60): Promise<Candidate[]> {
+export async function documentPage(env: Env, branch: Branch, after: string, limit = 180): Promise<Candidate[]> {
   const rows = await env.DB.prepare(`SELECT id,title,metadata FROM sources
     WHERE repo=? AND kind=? AND id>? ORDER BY id LIMIT ?`)
     .bind(branch.repo, branch.kind, after, limit).all<{ id: string; title: string; metadata: string }>();

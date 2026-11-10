@@ -3,10 +3,13 @@ import { HttpError, type Candidate, type Env, type Scored, type Trace } from './
 interface Noul { type: 'noul'; noul: number }
 interface Choice { type: 'choice'; choice: string; probabilities: Record<string, number>; confidence: number }
 interface Result { model: string; answers: Record<string, Noul | Choice>; usage: { input_tokens: number; output_tokens: number } }
+interface Assessment { supported: number; conflict: number }
+export interface CitedClaim { text: string; citations: string[] }
 export interface Judge {
   score<T extends Candidate>(query: string, candidates: T[], stage: string): Promise<Scored<T>[]>;
   rerank<T extends Candidate>(query: string, candidates: Scored<T>[]): Promise<Scored<T>[]>;
-  assess(query: string, evidence: unknown, answer?: string): Promise<{ supported: number; conflict: number }>;
+  assess(query: string, evidence: unknown): Promise<Assessment>;
+  verify(query: string, evidence: unknown, claims: CitedClaim[]): Promise<{ claims: number[]; complete: number }>;
   trace: Trace[];
 }
 export function probability(value: unknown): number {
@@ -33,17 +36,18 @@ export class Jev implements Judge {
     if (!candidates.length) return [];
     const start = Date.now();
     // Candidates within a request share the full context; this is not one request per item.
+    const batchLimit = stage === 'document_screening' ? 180 : stage === 'branch_screening' ? 120 : 60;
     const batches: T[][] = [];
     let batch: T[] = [], chars = 0;
     for (const c of candidates) {
       if (c.description.length > 24_000) throw new HttpError(503, 'candidate_too_large');
-      if (batch.length && (batch.length >= 60 || chars + c.description.length > 70_000)) {
+      if (batch.length && (batch.length >= batchLimit || chars + c.description.length > 70_000)) {
         batches.push(batch); batch = []; chars = 0;
       }
       batch.push(c); chars += c.description.length;
     }
     if (batch.length) batches.push(batch);
-    const responses = await mapConcurrent(batches, 4, async items => {
+    const responses = await mapConcurrent(batches, stage === 'document_screening' ? 6 : 4, async items => {
       const questions = Object.fromEntries(items.map((_, i) => [`c${i}`, { type: 'noul',
         instructions: rule + `Is candidate c${i} worth exploring for evidence that answers the query, considering all candidates in this shared context?` }]));
       const result = await this.call({ query, candidates: Object.fromEntries(items.map((c, i) => [`c${i}`, c.description])) }, questions);
@@ -77,18 +81,33 @@ export class Jev implements Judge {
       calls: 1, model: [result.model], ...result.usage, elapsed_ms: Date.now() - start });
     return ranked;
   }
-  async assess(query: string, evidence: unknown, answer?: string): Promise<{ supported: number; conflict: number }> {
+  async assess(query: string, evidence: unknown): Promise<Assessment> {
     const start = Date.now();
-    const result = await this.call({ query, evidence, ...(answer ? { draft_answer: answer } : {}) }, {
-      supported: { type: 'noul', instructions: rule + (answer
-        ? 'Is every factual assertion in draft_answer directly supported by the evidence, with correct citations and scope?'
-        : 'Does the evidence directly support a complete answer to the query? A merged PR alone does not establish a released fix. A reported behavior does not establish a confirmed cause.') },
+    const result = await this.call({ query, evidence }, {
+      supported: { type: 'noul', instructions: rule + 'Does the evidence directly support a complete answer to the query? A merged PR alone does not establish a released fix. A reported behavior does not establish a confirmed cause.' },
       conflict: { type: 'noul', instructions: rule + 'Does the evidence contain an unresolved contradiction about the answer for the same version, branch and time? Historical changes alone are not a contradiction.' },
     });
     const supported = result.answers.supported, conflict = result.answers.conflict;
     if (supported?.type !== 'noul' || conflict?.type !== 'noul') throw new HttpError(502, 'invalid_jev_answer');
-    this.trace.push({ stage: answer ? 'verify_answer' : 'assess_evidence', candidates: 1, selected: [], calls: 1,
+    this.trace.push({ stage: 'assess_evidence', candidates: 1, selected: [], calls: 1,
       model: [result.model], ...result.usage, elapsed_ms: Date.now() - start });
     return { supported: probability(supported.noul), conflict: probability(conflict.noul) };
+  }
+  async verify(query: string, evidence: unknown, claims: CitedClaim[]) {
+    const start = Date.now();
+    const draft = Object.fromEntries(claims.map((claim, i) => [`claim${i}`, claim]));
+    const checks = Object.fromEntries(Object.keys(draft).map(id => [id, { type: 'noul', instructions: rule +
+      `Is ${id} relevant to the query, fully supported by its own cited sources, and free of unresolved contradictions about the same version or time? Judge this claim independently. A report can establish what was reported. A PR can establish what was proposed or merged, but does not establish release.` }]));
+    const result = await this.call({ query, evidence, draft }, { ...checks,
+      complete: { type: 'noul', instructions: rule + 'Together, do the claims directly and fully answer the query? Answer no for a partial summary or if a requested fact is unknown.' },
+    });
+    const score = (id: string) => {
+      const decision = result.answers[id];
+      if (decision?.type !== 'noul') throw new HttpError(502, 'invalid_jev_answer');
+      return probability(decision.noul);
+    };
+    this.trace.push({ stage: 'verify_answer', candidates: claims.length, selected: [], calls: 1,
+      model: [result.model], ...result.usage, elapsed_ms: Date.now() - start });
+    return { claims: Object.keys(draft).map(score), complete: score('complete') };
   }
 }

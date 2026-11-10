@@ -1,6 +1,7 @@
 import { branches, documentPage, passagesFor, type Branch } from './store.js';
+import { mapConcurrent } from './http.js';
 import type { Judge } from './jev.js';
-import { boundedNumber, HttpError, type Candidate, type Env, type Passage, type Scored } from './types.js';
+import { boundedNumber, HttpError, type Candidate, type Env, type Passage } from './types.js';
 export interface RetrievalStore {
   branches(): Promise<Branch[]>;
   documentPage(branch: Branch, after: string): Promise<Candidate[]>;
@@ -17,34 +18,32 @@ export async function retrieve(query: string, store: RetrievalStore, judge: Judg
   const roots = await store.branches();
   if (!roots.length) return [];
   const selected = (await judge.score(query, roots, 'branch_screening')).slice(0, budget.branches);
-  const documentScores: Scored<Candidate>[] = [];
   let screened = 0;
   // No lexical/vector prefilter: every document title in each retained branch is evaluated.
-  for (const branch of selected) {
+  const pages = await mapConcurrent(selected, 4, async branch => {
+    const documents: Candidate[] = [];
     let after = '';
     for (;;) {
       const page = await store.documentPage(branch.item, after);
-      if (!page.length) break;
+      if (!page.length) return documents;
       screened += page.length;
       if (screened > budget.maxDocuments) throw new HttpError(422, 'document_screening_budget_exceeded');
-      documentScores.push(...await judge.score(query, page, 'document_screening'));
+      documents.push(...page);
       const cursor = page.at(-1)!.id;
       if (cursor <= after) throw new HttpError(503, 'invalid_document_cursor');
       after = cursor;
     }
-  }
-  documentScores.sort((a, b) => b.probability - a.probability);
+  });
+  const documentScores = await judge.score(query, pages.flat(), 'document_screening');
   const selectedDocs = documentScores.slice(0, budget.documents).map(r => r.item.id);
   const passages = await store.passages(selectedDocs);
   if (passages.length > budget.maxPassages) throw new HttpError(422, 'passage_screening_budget_exceeded');
   const candidates = passages.map(p => ({ ...p,
     description: `${p.title}\nRepository: ${p.repo}\nMetadata: ${JSON.stringify(p.metadata)}\n${p.text}` }));
   const scored = await judge.score(query, candidates, 'passage_scoring');
-  // Rescore the shortlist together before Choice: scores from separate batches aren't
-  // assumed to have the same calibration. Keep one shared final context (<=20 passages).
-  const shortlist = scored.slice(0, Math.min(20, budget.passages * 2)).map(r => r.item);
-  const jointly = await judge.score(query, shortlist, 'shared_shortlist');
-  const ranked = await judge.rerank(query, jointly);
+  // Choice compares the entire shortlist in one shared context.
+  const shortlist = scored.slice(0, Math.min(20, budget.passages * 2));
+  const ranked = await judge.rerank(query, shortlist);
   return ranked.slice(0, budget.passages).map((r, i) => {
     const { description: _, ...passage } = r.item;
     return { ...passage, citation: `p${i + 1}`, relevance: r.probability };
