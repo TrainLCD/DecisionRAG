@@ -77,7 +77,7 @@ test('verified partial summaries are returned, but unsupported claims and unknow
       return Response.json({ model: 'test', answers, usage: { input_tokens: 1, output_tokens: 1 } });
     }
     calls++;
-    return Response.json({ choices: [{ message: { content: JSON.stringify({
+    return Response.json({ model: 'test-generator', usage: { prompt_tokens: 100, completion_tokens: 20 }, choices: [{ message: { content: JSON.stringify({
       claims: [{ text: 'A change was proposed.', citations: [citation] }, { text: 'The change was released.', citations: ['p1'] }],
     }) } }] });
   });
@@ -85,10 +85,14 @@ test('verified partial summaries are returned, but unsupported claims and unknow
     const configured = { ...env, ANSWER_API_KEY: 'test', ANSWER_MODEL: 'test' };
     assert.equal((await answer('Released?', evidence, env, new Jev(env))).status, 'evidence_ready');
     assert.equal(calls, 0);
-    const summary = await answer('Released?', evidence, configured, new Jev(env));
+    const judge = new Jev(env);
+    const summary = await answer('Released?', evidence, configured, judge);
     assert.equal(summary.status, 'summarized');
     assert.deepEqual(summary.citations, ['p1']);
     assert.equal(summary.answer, 'A change was proposed. [p1]');
+    assert.equal(calls, 1);
+    assert.deepEqual(judge.trace.map(step => step.stage), ['generate_answer', 'verify_answer']);
+    assert.equal(judge.trace[0]?.output_tokens, 20);
     support = 0.2;
     const rejected = await answer('Released?', evidence, configured, new Jev(env));
     assert.equal(rejected.status, 'verification_failed');

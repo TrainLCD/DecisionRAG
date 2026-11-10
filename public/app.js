@@ -332,7 +332,7 @@ function renderResult(data, mode) {
     $("trace-list").append(row);
   }
   for (const step of trace) {
-    const stageNames = { branch_screening: "検索する分野の選択", document_screening: "文書の選択", passage_scoring: "本文の評価", passage_ranking: "本文の評価と表示順の決定", shared_shortlist: "本文の再評価", choice_rerank: "表示順の決定", assess_evidence: "回答できるかの確認", verify_answer: "回答の検証" };
+    const stageNames = { branch_screening: "検索する分野の選択", document_screening: "文書の選択", passage_scoring: "本文の評価", passage_ranking: "本文の評価と表示順の決定", shared_shortlist: "本文の再評価", choice_rerank: "表示順の決定", assess_evidence: "回答できるかの確認", generate_answer: "要約の生成", verify_answer: "回答の検証" };
     const row = element("div", "trace-row", stageNames[step.stage] || step.stage);
     row.append(
       element(
