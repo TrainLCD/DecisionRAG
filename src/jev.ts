@@ -97,7 +97,7 @@ export class Jev implements Judge {
     const start = Date.now();
     const draft = Object.fromEntries(claims.map((claim, i) => [`claim${i}`, claim]));
     const checks = Object.fromEntries(Object.keys(draft).map(id => [id, { type: 'noul', instructions: rule +
-      `Is ${id} relevant to the query, fully supported by its own cited sources, and free of unresolved contradictions about the same version or time? Judge this claim independently. A report can establish what was reported. A PR can establish what was proposed or merged, but does not establish release.` }]));
+      `Do the titles, text, or metadata of the sources cited by ${id} directly support what it says about a relevant part of the query? Judge this claim independently. Accept faithful paraphrases and claims limited to what an issue reported or a PR changed. A claim need not answer the whole query. Reject unsupported details, claims of a release based only on a PR, and unresolved contradictions about the same version or time.` }]));
     const result = await this.call({ query, evidence, draft }, { ...checks,
       complete: { type: 'noul', instructions: rule + 'Together, do the claims directly and fully answer the query? Answer no for a partial summary or if a requested fact is unknown.' },
     });
