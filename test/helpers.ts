@@ -15,7 +15,7 @@ export function fixture() {
   }
   const db = { prepare: (sql: string) => new Statement(sql), async batch(statements: Statement[]) {
     sqlite.exec('BEGIN');
-    try { const results = []; for (const s of statements) results.push(await s.run()); sqlite.exec('COMMIT'); return results; }
+    try { const results = []; for (const s of statements) results.push(await s.all()); sqlite.exec('COMMIT'); return results; }
     catch (e) { sqlite.exec('ROLLBACK'); throw e; }
   } } as unknown as D1Database;
   const jobs: SyncJob[] = [];

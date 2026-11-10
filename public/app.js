@@ -2,6 +2,7 @@
 const $ = (id) => document.getElementById(id);
 const settings = $("settings-dialog");
 let token = "";
+let feedbackRequested = false;
 let session = 0;
 let searching = false;
 let connecting = false;
@@ -23,26 +24,30 @@ const statuses = {
     "質問を変えるか、同期状況を確認してください。",
   ],
   answered: ["検証済みの回答", ""],
+  summarized: ["確認できた内容の要約", ""],
   evidence_ready: [
     "回答に使える根拠があります",
     "回答生成モデルは未設定です。以下の根拠を確認してください。",
   ],
   insufficient_evidence: [
     "回答に十分な根拠がありません",
-    "関連する資料はありますが、回答を裏付けるには不十分です。",
+    "資料から質問に答えられる内容を確認できませんでした。",
   ],
   conflicting_evidence: [
     "根拠に矛盾があります",
     "同じ対象・時点について異なる記述があるため、回答を保留しました。",
   ],
   verification_failed: [
-    "回答の検証を通過しませんでした",
-    "生成した回答は表示せず、参照した根拠を表示します。",
+    "回答が資料の内容に沿っているか確認できませんでした",
+    "検索で見つかった関連資料は、下の一覧からご覧いただけます。",
   ],
+  generation_unavailable: ["要約を生成できませんでした", "検索で見つかった資料を表示します。"],
 };
 const errors = {
   unauthorized: "認証に失敗しました。API_TOKENを確認して接続し直してください。",
   authentication_not_configured: "サーバーにAPI_TOKENが設定されていません。",
+  public_search_rate_limited: "検索回数の上限に達しました。少し待ってから再実行してください。",
+  public_search_unavailable: "公開資料の検索は現在利用できません。",
   jev_not_configured: "サーバーにJevのAPIキーが設定されていません。",
   upstream_http_401:
     "外部サービスの認証に失敗しました。サーバーのAPIキーを確認してください。",
@@ -64,6 +69,7 @@ function element(tag, className, text) {
   if (text !== undefined) node.textContent = String(text);
   return node;
 }
+/** Render text or rebuild pre-rendered markup with a restricted set of elements. */
 function markdownContent(text, html, className = "") {
   const root = element("div", className + " markdown-body");
   if (typeof html !== "string") {
@@ -116,11 +122,13 @@ function settingsNotice(message, kind = "") {
   notice(message, kind, $("settings-notice"));
 }
 function controls() {
-  $("empty-connect").hidden = Boolean(token);
   $("connect-button").disabled = connecting;
   $("connect-button").textContent = connecting ? "接続中…" : "接続";
-  $("search-button").disabled = !token || searching;
-  $("search-button").textContent = searching ? "探索中…" : "検索";
+  const searchButton = $("search-button");
+  searchButton.disabled = searching;
+  searchButton.setAttribute("aria-label", searching ? "検索中" : "検索");
+  $("include-summary").disabled = searching;
+  $("include-feedback").disabled = searching;
   $("sync-button").disabled = !token || syncing;
   $("sync-button").textContent = syncing ? "登録中…" : "GitHubから取り込む";
   $("refresh-button").disabled = !token || refreshing;
@@ -151,6 +159,7 @@ function disconnect(message = "接続を解除しました。") {
   for (const controller of requests) controller.abort();
   requests.clear();
   token = "";
+  feedbackRequested = false;
   searching = false;
   connecting = false;
   syncing = false;
@@ -158,7 +167,7 @@ function disconnect(message = "接続を解除しました。") {
   $("token").value = "";
   $("connect-form").hidden = false;
   $("disconnect-button").hidden = true;
-  $("connection-state").textContent = "未接続";
+  $("connection-state").textContent = "公開資料のみ";
   $("connection-state").className = "badge";
   $("repo-count").textContent = "—";
   $("source-count").textContent = "—";
@@ -166,6 +175,7 @@ function disconnect(message = "接続を解除しました。") {
   $("sync-updated").textContent = "";
   $("sync-error-list").replaceChildren();
   $("sync-errors").hidden = true;
+  $("include-feedback").checked = false;
   clearResults();
   controls();
   notice(message);
@@ -183,7 +193,7 @@ async function api(path, options = {}, credential = token) {
       cache: "no-store",
       credentials: "omit",
       headers: {
-        Authorization: "Bearer " + credential,
+        ...(credential ? { Authorization: "Bearer " + credential } : {}),
         ...(options.body ? { "Content-Type": "application/json" } : {}),
       },
     });
@@ -269,6 +279,7 @@ function showEvidence(index) {
   card.focus({ preventScroll: true });
   card.scrollIntoView({ block: "start" });
 }
+/** Link citations to their evidence cards, including cards on other pages. */
 function linkAnswerCitations(content) {
   const citationIndices = new Map(resultEvidence.map((item, index) => [item.citation, index]));
   const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
@@ -300,7 +311,8 @@ function linkAnswerCitations(content) {
   }
   return content;
 }
-function renderResult(data) {
+/** Render the response with the question captured when the search was submitted. */
+function renderResult(data, mode, query) {
   clearResults();
   $("empty-state").hidden = true;
   const evidence = Array.isArray(data.evidence) ? data.evidence : [];
@@ -309,15 +321,21 @@ function renderResult(data) {
   const summary = $("result-summary");
   summary.replaceChildren(
     element("strong", "", "関連する本文：" + number(evidence.length) + "件"),
-    element("span", "muted", "検索時間：" + (Number(data.elapsed_ms) / 1000).toFixed(2) + "秒"),
+    element("span", "muted", (mode === "answer" ? "回答時間：" : "検索時間：") + (Number(data.elapsed_ms) / 1000).toFixed(2) + "秒"),
   );
   summary.hidden = false;
-  notice(label[0] + (label[1] ? "。" + label[1] : "。"));
+  if (data.status === "summarized") {
+    notice("質問: " + query);
+  } else if (data.status === "verification_failed") {
+    notice("");
+  } else {
+    notice(label[0] + (label[1] ? "。" + label[1] : "。"));
+  }
   if (data.status !== "retrieved") {
     const panel = $("answer-panel");
     panel.hidden = false;
     panel.append(element("h3", "", label[0]));
-    panel.append(data.status === "answered" && typeof data.answer === "string"
+    panel.append(["answered", "summarized"].includes(data.status) && typeof data.answer === "string"
       ? linkAnswerCitations(markdownContent(data.answer, data.answer_html))
       : element("p", "", label[1]));
   }
@@ -326,11 +344,15 @@ function renderResult(data) {
   $("trace-panel").hidden = !trace.length;
   if (data.timings) {
     const row = element("div", "trace-row", "所要時間の内訳");
-    row.append(element("span", "", "DBから取得：" + number(data.timings.storage_ms) + " ms / Jev判定：" + number(data.timings.model_ms) + " ms / その他：" + number(data.timings.other_ms) + " ms"));
+    const { scope_ms, storage_ms, model_ms, generation_ms } = data.timings;
+    const parts = ["DB取得 " + number(storage_ms) + " ms", "Jev判定 " + number(model_ms) + " ms"];
+    if (scope_ms) parts.unshift("公開範囲の確認 " + number(scope_ms) + " ms");
+    if (generation_ms) parts.push("要約生成 " + number(generation_ms) + " ms");
+    row.append(element("span", "", parts.join(" / ")));
     $("trace-list").append(row);
   }
   for (const step of trace) {
-    const stageNames = { branch_screening: "検索する分野の選択", document_screening: "文書の選択", passage_scoring: "本文の評価", passage_ranking: "本文の評価と表示順の決定", shared_shortlist: "本文の再評価", choice_rerank: "表示順の決定", assess_evidence: "回答できるかの確認", verify_answer: "回答の検証" };
+    const stageNames = { branch_screening: "検索する分野の選択", document_screening: "文書の選択", passage_scoring: "本文の評価", passage_ranking: "本文の評価と表示順の決定", shared_shortlist: "本文の再評価", choice_rerank: "表示順の決定", assess_evidence: "回答できるかの確認", generate_answer: "要約の生成", verify_answer: "回答の検証" };
     const row = element("div", "trace-row", stageNames[step.stage] || step.stage);
     row.append(
       element(
@@ -351,6 +373,7 @@ function renderResult(data) {
     $("trace-list").append(row);
   }
 }
+/** Render a page of evidence with the full text of each retrieved passage. */
 function renderEvidencePage() {
   const start = resultPage * RESULT_PAGE_SIZE;
   const end = Math.min(start + RESULT_PAGE_SIZE, resultEvidence.length);
@@ -401,11 +424,17 @@ function renderEvidencePage() {
     ]
       .filter(Boolean)
       .join(" · ");
+    const body = (item.text ?? "").trim();
+    const preview = !body || /^\((?:no body|empty document)\)$/i.test(body) ? "内容なし" : body;
+    const excerpt = element("div", "evidence-text");
+    const passage = element("p", "evidence-excerpt", preview);
+    passage.tabIndex = 0;
+    excerpt.append(passage);
     card.append(
       top,
       heading,
       element("div", "evidence-meta", meta),
-      markdownContent(item.text, item.text_html, "evidence-text"),
+      excerpt,
     );
     $("evidence-list").append(card);
   }
@@ -416,7 +445,7 @@ window.addEventListener("hashchange", () => {
 });
 document.querySelectorAll("[data-page-step]").forEach((button) => {
   button.addEventListener("click", () => {
-    if (!token || searching || button.disabled) return;
+    if (searching || button.disabled) return;
     const next = resultPage + Number(button.dataset.pageStep);
     if (next < 0 || next >= Math.ceil(resultEvidence.length / RESULT_PAGE_SIZE)) return;
     resultPage = next;
@@ -425,18 +454,32 @@ document.querySelectorAll("[data-page-step]").forEach((button) => {
     $("evidence-list").focus?.({ preventScroll: true });
   });
 });
-for (const button of [$("settings-button"), $("empty-connect")]) {
-  button.addEventListener("click", () => {
-    settings.showModal();
-    if (!token && !connecting) $("token").focus();
-  });
+function openSettings() {
+  if (!settings.open) settings.showModal();
+  if (!token && !connecting) $("token").focus();
 }
+function askForFeedbackKey() {
+  $("include-feedback").checked = false;
+  feedbackRequested = true;
+  openSettings();
+  settingsNotice("フィードバックを検索するには、利用キーで接続してください。");
+}
+$("settings-button").addEventListener("click", openSettings);
+settings.addEventListener("close", () => { feedbackRequested = false; });
+$("include-feedback").addEventListener("change", () => {
+  if ($("include-feedback").checked && !token) {
+    askForFeedbackKey();
+    return;
+  }
+  clearResults();
+  notice("");
+});
 $("connect-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   if (connecting) return;
   const candidate = $("token").value.trim();
   if (!candidate) return;
-  const current = ++session;
+  const current = session;
   connecting = true;
   controls();
   settingsNotice("接続を確認しています…", "loading");
@@ -444,6 +487,10 @@ $("connect-form").addEventListener("submit", async (event) => {
     const data = await api("/sync/status", {}, candidate);
     if (current !== session) return;
     token = candidate;
+    if (feedbackRequested && settings.open) {
+      $("include-feedback").checked = true;
+      clearResults();
+    }
     $("token").value = "";
     $("connect-form").hidden = true;
     $("disconnect-button").hidden = false;
@@ -467,30 +514,44 @@ $("connect-form").addEventListener("submit", async (event) => {
   }
 });
 $("disconnect-button").addEventListener("click", () => disconnect());
-$("query").addEventListener("input", () => {
+function updateQueryCount() {
   $("query-count").textContent = number($("query").value.length) + " / 1,500文字";
-});
+}
+$("query").addEventListener("input", updateQueryCount);
 $("search-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!token || searching) return;
-  const query = $("query").value.trim();
+  if (searching) return;
+  const queryField = $("query");
+  const submittedText = queryField.value;
+  const query = submittedText.trim();
   if (!query) {
-    $("query").focus();
+    queryField.focus();
     return;
   }
   const current = session;
-  const mode = document.querySelector('input[name="mode"]:checked').value;
+  const mode = $("include-summary").checked ? "answer" : "search";
+  const includeFeedback = $("include-feedback").checked;
+  if (includeFeedback && !token) {
+    askForFeedbackKey();
+    return;
+  }
   searching = true;
   clearResults();
   controls();
   $("workspace").scrollTop = 0;
-  notice("文書の階層を探索しています。しばらくお待ちください…", "loading");
+  notice("検索しています。しばらくお待ちください…", "loading");
   try {
     const data = await api("/" + mode, {
       method: "POST",
-      body: JSON.stringify({ query }),
-    });
-    if (current === session) renderResult(data);
+      body: JSON.stringify({ query, include_feedback: includeFeedback }),
+    }, includeFeedback ? token : "");
+    if (current === session) {
+      renderResult(data, mode, query);
+      if (queryField.value === submittedText) {
+        queryField.value = "";
+        updateQueryCount();
+      }
+    }
   } catch (error) {
     if (current === session) notice(error.message, "error");
   } finally {
