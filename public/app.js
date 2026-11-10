@@ -400,10 +400,12 @@ function renderEvidencePage() {
     const card = element("article", "evidence-card");
     card.id = evidenceId(item.citation);
     card.tabIndex = -1;
+    const metadata = item.metadata || {};
+    const kindLabel = ({ pr: "PR", issue: "Issue", feedback: "利用者の報告", doc: "文書" })[item.kind] || item.kind;
+    const numberSuffix = (item.kind === "issue" || item.kind === "pr") &&
+      Number.isSafeInteger(metadata.number) && metadata.number > 0 ? " #" + metadata.number : "";
     const top = element("div", "evidence-top");
-    top.append(
-      element("span", "evidence-kind", ({ pr: "プルリクエスト", issue: "Issue", feedback: "利用者の報告", doc: "文書" })[item.kind] || item.kind),
-    );
+    top.append(element("span", "evidence-kind", kindLabel + numberSuffix));
     const heading = element("h3");
     const url = safeSourceUrl(item.url);
     if (url) {
@@ -413,7 +415,6 @@ function renderEvidencePage() {
       link.rel = "noopener noreferrer";
       heading.append(link);
     } else heading.textContent = item.title;
-    const metadata = item.metadata || {};
     const meta = [
       item.repo,
       ({ open: "未完了", closed: "完了" })[metadata.state] || metadata.state,
