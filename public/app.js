@@ -410,11 +410,13 @@ function renderEvidencePage() {
     ]
       .filter(Boolean)
       .join(" · ");
+    const excerpt = element("div", "evidence-text");
+    excerpt.append(element("p", "evidence-excerpt", item.text ?? ""));
     card.append(
       top,
       heading,
       element("div", "evidence-meta", meta),
-      markdownContent(item.text, item.text_html, "evidence-text"),
+      excerpt,
     );
     $("evidence-list").append(card);
   }

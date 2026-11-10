@@ -147,13 +147,19 @@ svg { width: 1.25rem; height: 1.25rem; flex: none; }
 .citation { background: var(--primary-soft); color: #004b9e; font-family: ui-monospace, monospace; }
 .evidence-kind { background: var(--field); color: var(--muted); }
 .evidence-text {
-  max-height: 20rem;
-  overflow: auto;
-  margin-top: 0.75rem;
-  padding: 0.75rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 8px;
   background: #fafafa;
   font-size: 0.875rem;
+}
+.evidence-excerpt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  max-height: 3.2em;
+  overflow: hidden;
+  line-height: 1.6;
 }
 #evidence-list > p { padding-block: 1rem; }
 .evidence-card:last-child { border-bottom: 0; }
