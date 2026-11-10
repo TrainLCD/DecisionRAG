@@ -191,10 +191,10 @@ summary { cursor: pointer; font-weight: 600; }
   background: var(--surface);
   box-shadow: 0 -2px 8px rgb(0 0 0 / 0.04);
 }
-.query-tools { display: flex; align-items: center; gap: 0.5rem; justify-content: space-between; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.query-tools { display: grid; gap: 0.25rem; margin-bottom: 0.5rem; }
 .query-option { display: flex; align-items: center; gap: 0.375rem; font-size: 0.8125rem; }
 .query-option input { accent-color: var(--primary); }
-.feedback-option { margin-bottom: 0.5rem; }
+#query-count { justify-self: end; }
 .query-field {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
