@@ -3,6 +3,8 @@
   "name": "trainlcd-decision-rag",
   "main": "src/index.ts",
   "assets": { "directory": "./public" },
+  "ai": { "binding": "AI" },
+  "ratelimits": [{ "name": "PUBLIC_SEARCH_RATE_LIMIT", "namespace_id": "1745962043", "simple": { "limit": 6, "period": 60 } }],
   "compatibility_date": "2026-11-06",
   "workers_dev": false,
   "vars": {

@@ -8,13 +8,13 @@ TrainLCD org の Issue・PR・リポジトリ文書・ユーザーフィード�
 
 1. `リポジトリ × 種類` の枝を、説明付きでJevに提示する。
 2. 同じコンテキスト内で各枝をNoul質問として評価し、上位6枝を展開する。
-3. 選んだ枝の**全ての文書タイトル**をページ単位で評価し、全体の上位12文書を残す。
+3. 選んだ枝の**全ての文書タイトル**をまとめ、複数のバッチを並列で評価し、全体の上位12文書を残す。
 4. 文書の本文区間を共有コンテキストで評価し、上位20区間を残す。
 5. 最終候補を同じコンテキストで再評価し、Choiceの確率で並べ替えて上位10区間を返す。
 
-これは論文手法をGitHubの構造に適用した初期実装であり、論文ベンチマークの再現ではない。大きな候補集合は最大60候補・70,000文字単位に分割する。候補間の比較条件を揃えるため、最終候補を共有コンテキストで再評価する。本文は見出し・段落を優先し、最大2,400文字の区間に分割する。論文の公開コーパスに対する精度・時間をTrainLCDに対して保証するものではない。
+これは論文手法をGitHubの構造に適用した初期実装であり、論文ベンチマークの再現ではない。候補集合は枝120件、文書180件、本文区間60件を上限とし、説明文が合計70,000文字を超えないように分割する。候補間の比較条件を揃えるため、最終候補は共有コンテキストでChoiceにかける。本文は見出し・段落を優先し、最大2,400文字の区間に分割する。
 
-`/answer` では検索後に別途Jevで根拠の十分性・矛盾を判定する。これは検索本体とは別の追加機能。十分な根拠がある場合だけ任意の生成モデルに渡し、引用ID検査とJevによる生成結果検査を通った文章を返す。生成モデル未設定なら `evidence_ready` と根拠だけ返す。
+`/answer` は検索で見つかった資料から、出典付きの回答または要約を作る。引用IDを照合し、Jevで主張ごとの裏付け、回答の十分性、根拠間の矛盾を判定する。質問に完全には答えられなくても、出典で確認できる内容を要約として返せる。矛盾の確率が `CONFLICT_THRESHOLD` に達した場合は回答を保留する。
 
 ## 情報源と同期
 
@@ -52,14 +52,14 @@ npx wrangler secret put GITHUB_TOKEN
 npx wrangler secret put TYPESAFE_API_KEY
 ```
 
-- `API_TOKEN`: 自分専用APIのBearerトークン。十分長いランダム値を設定する。
+- `API_TOKEN`: フィードバック検索・同期・管理用のBearerトークン。十分長いランダム値を設定する。
 - `WEBHOOK_SECRET`: GitHub Webhookと同じ値。
 - `GITHUB_TOKEN`: org内対象リポジトリのMetadata・Contents・Issues・Pull requestsの読み取り権限が必要。リポジトリ作成・書き込み権限は不要。
 - `TYPESAFE_API_KEY`: Jevのキー。[公式APIドキュメント](https://docs.typesafe.ai/api/system-one)を参照。
 
-任意の文章生成を使う場合は、`ANSWER_MODEL`・`ANSWER_BASE_URL` を設定し、`wrangler secret put ANSWER_API_KEY` を実行する。OpenAI互換の `/chat/completions` とJSON object出力に対応するプロバイダーを想定する。根拠の本文がJevへ、生成有効時は生成プロバイダーにも送信される。
+既定の文章生成には Cloudflare Workers AI の `AI` バインディングを使う。別の生成サービスを使う場合は、`ANSWER_MODEL`・`ANSWER_BASE_URL` を設定し、`wrangler secret put ANSWER_API_KEY` を実行する。OpenAI互換の `/chat/completions` とJSON object出力に対応するプロバイダーを想定する。根拠の本文はJevと設定された生成サービスに送信される。
 
-`workers_dev` は既定で `false`。利用するホスト名のrouteを設定するか、意図して `true` に変更してから `npm run deploy` を実行する。検索・同期・管理APIはBearer認証が必須。サンプル画面と `/health` は認証なしで開ける。WebhookはHMAC-SHA256署名検証が必須。複数ユーザー向けのACLは実装していないため、このAPIトークンを他者に配布しないこと。
+`workers_dev` は既定で `false`。利用するホスト名のrouteを設定するか、意図して `true` に変更してから `npm run deploy` を実行する。公開資料の検索・要約は認証なしで使える。フィードバック検索、同期、管理APIはBearer認証が必須。WebhookはHMAC-SHA256署名検証が必須。複数ユーザー向けのACLは実装していないため、このAPIトークンを他者に配布しないこと。
 
 ローカル開発:
 
@@ -74,7 +74,7 @@ npm run dev
 
 ## サンプルWebアプリ
 
-`npm run dev` で表示されるローカルURLの `/` を開き、設定した `API_TOKEN` で接続する。サンプルはWorkerと同じオリジンから配信され、利用キーはページのメモリ内でのみ保持する。検索モードは「資料を探す」と「資料から回答する」から選べる。ヘッダーのメニューから取り込み状況を確認できる。
+`npm run dev` で表示されるローカルURLの `/` から公開資料を検索できる。「フィードバックを含める」を選んだときや、ヘッダーのメニューから同期操作をするときは、`API_TOKEN` で接続する。利用キーはページのメモリ内で保持する。
 
 ## API
 
@@ -84,31 +84,36 @@ npm run dev
 | POST | `/sync` | 全リポジトリの同期をキューに登録 |
 | GET | `/sync/status` | 同期ジョブ、失敗、ソース数、最終同期カーソル |
 | POST | `/search` | 階層探索による根拠・出典・Jev判定トレース |
-| POST | `/answer` | 根拠の評価と、任意の生成・検証 |
+| POST | `/answer` | 根拠を検索し、生成モデルがあれば出典付きの主張を生成・検証する。モデルがなければ根拠を評価する |
 | POST | `/admin/purge` | `{"repo":"TrainLCD/Example"}` の索引を削除 |
 | POST | `/webhooks/github` | GitHubイベント受信。署名必須 |
 
 ```sh
 curl "$RAG_URL/sync" -X POST -H "Authorization: Bearer $RAG_API_TOKEN"
 curl "$RAG_URL/search" \
-  -H "Authorization: Bearer $RAG_API_TOKEN" \
   -H 'Content-Type: application/json' \
   --data '{"query":"地下で位置更新が止まる問題について、どんな対応が議論された？"}'
 ```
 
-`/search`・`/answer` の入力は `{"query":"..."}` のみ。1〜1,500文字。
+`/search`・`/answer` には1〜1,500文字の `query` と、任意の真偽値 `include_feedback` を指定できる。認証なし、または `include_feedback: false` の場合は、GitHubが現在公開と返すリポジトリの資料だけを検索する。`include_feedback: true` と有効なBearerトークンを送ると、公開資料に `TrainLCD/Issues` のフィードバックを加える。互換性のため、有効なBearerトークンだけを送って `include_feedback` を省略すると、従来どおり認証済みの索引全体を検索する。認証なしの利用はIPアドレスごとに Cloudflare のレート制限を適用する。
 
-レスポンスには `evidence`（引用ID、ソースID、本文区間、URL、repo、状態等のmetadata、関連度）、`trace`（ステージ、候補数、モデル、呼び出し数、使用トークン、時間）、`elapsed_ms` を含む。検索はソース間の網羅的な調査を保証せず、各階層の上位予算により枝刈りする。
+公開範囲は検索ごとに GitHub で再確認し、ETag に対して `304 Not Modified` が返った場合はリポジトリ一覧の応答を再利用する。確認に失敗した場合は検索を中止する。
+
+レスポンスには `evidence`（引用ID、ソースID、本文区間、URL、repo、状態等のmetadata、関連度）、`trace`（ステージ、候補数、モデル、呼び出し数、使用トークン、時間）、`elapsed_ms` を含む。`timings` には公開範囲の確認、D1取得、Jev判定、要約生成、検索完了までの時間をミリ秒で記録する。公開範囲の確認と最初のD1取得は並行するため、工程別の時間には重複がある。検索はソース間の網羅的な調査を保証せず、各階層の上位予算により枝刈りする。
+
+既定の生成モデルは1回の呼び出しで最大2文を生成する。`generate_answer` ステージには、生成モデルと所要時間、プロバイダーが返した入出力トークン数を記録する。
 
 `/answer` のstatus:
 
-- `answered`: 文章と引用IDを返した。
+- `answered`: 質問に答える文章と引用IDを返した。
+- `summarized`: 質問の一部について、資料で確認できた内容を引用ID付きで返した。
 - `evidence_ready`: 根拠は十分と判定したが、生成モデルは未設定。
 - `insufficient_evidence`: 根拠不足。回答はnull。
-- `conflicting_evidence`: 同じ対象・時点について矛盾。回答はnull。
+- `conflicting_evidence`: 同じ対象・時点について根拠が矛盾し、回答を検証できなかった。回答はnull。
 - `verification_failed`: 生成結果を根拠検査で却下。回答はnull。
+- `generation_unavailable`: 既定の生成モデルから利用できる要約を得られなかった。検索で得た資料は返す。
 
-外部APIの失敗はHTTP 502。検索予算超過はHTTP 422。これらを根拠不足や成功と置き換えない。
+Jevや別途設定した生成サービスの失敗はHTTP 502。検索予算超過はHTTP 422。
 
 ## GitHub Webhook
 
@@ -122,8 +127,8 @@ Org Webhookまたは各リポジトリのWebhookを、デプロイ先の `/webho
 
 ## 制限と次の評価
 
-- Jevキーと実データを使った精度・速度・料金の評価は未実施。テストのJev・生成・GitHub通信はモック。しきい値は暫定値であり、日本語の実質問で調整する。
-- 既定で選択枝内20,000文書、選択文書内4,000本文区間まで。超過は明示的に失敗する。文書候補はページ単位で評価するため、大きい枝ほどAPI呼び出し数が増える。論文の実験と同じ速度は見込まない。
+- 自動テストのJev・生成・GitHub通信はモック。検索精度と応答時間は質問やデータ量によって変わる。
+- 既定で選択枝内20,000文書、選択文書内4,000本文区間まで。超過は明示的に失敗する。文書候補をバッチ単位で評価するため、選択された文書が多いほどAPI呼び出し数が増える。
 - `MAX_SCREENED_DOCUMENTS`（最大100,000）、`SUPPORT_THRESHOLD`、`CONFLICT_THRESHOLD` を環境変数で変更可能。
 - 1ソース600KB、GitHubコメント等のページネーション100ページが上限。切り捨てず同期エラーにする。Gitツリーがtruncatedの場合も同期エラーにする。非常に大きい文書群・スレッドは追加の分割取り込みが必要。
 - PR差分コード全体、GitHub Wiki、添付画像・PDF・外部リンク先、Releaseは取り込まない。
@@ -140,7 +145,7 @@ npx wrangler d1 migrations apply trainlcd-decision-rag --local
 npx wrangler deploy --dry-run --outdir dist
 ```
 
-テストは階層探索、共有候補コンテキスト、予算超過、根拠不足での生成停止、引用検証、PR状態、フィードバックの重複排除、文書削除、Webhook署名・org境界、API認証を検証する。
+テストは階層探索、共有コンテキストでの順位付け、予算超過、要約の引用と矛盾の検証、PR状態、フィードバックの重複排除、文書削除、Webhook署名・org境界、API認証と公開範囲の再検証を確認する。
 
 ## 参考
 
