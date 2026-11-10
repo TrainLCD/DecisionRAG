@@ -16,7 +16,14 @@ export async function readText(response: Response, maxBytes = 2_000_000): Promis
   } finally { await reader.cancel().catch(() => {}); }
 }
 export async function jsonRequest<T>(url: string, init: RequestInit = {}, maxBytes?: number): Promise<T> {
-  const response = await fetch(url, { ...init, signal: AbortSignal.timeout(25_000), redirect: 'error' });
+  let response: Response;
+  try {
+    // Workers supports manual redirects. Reject 3xx below before credentials can be forwarded.
+    response = await fetch(url, { ...init, signal: AbortSignal.timeout(25_000), redirect: 'manual' });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'TimeoutError') throw new HttpError(502, 'upstream_timeout');
+    throw new HttpError(502, 'upstream_network_error');
+  }
   if (!response.ok) {
     await response.body?.cancel();
     // Never echo upstream bodies, headers, credentials or retrieved private text.
