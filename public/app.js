@@ -122,8 +122,9 @@ function settingsNotice(message, kind = "") {
 function controls() {
   $("connect-button").disabled = connecting;
   $("connect-button").textContent = connecting ? "接続中…" : "接続";
-  $("search-button").disabled = searching;
-  $("search-button").textContent = searching ? "探索中…" : "検索";
+  const searchButton = $("search-button");
+  searchButton.disabled = searching;
+  searchButton.setAttribute("aria-label", searching ? "検索中" : "検索");
   $("include-feedback").disabled = searching;
   $("sync-button").disabled = !token || syncing;
   $("sync-button").textContent = syncing ? "登録中…" : "GitHubから取り込む";

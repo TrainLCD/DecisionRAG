@@ -68,12 +68,12 @@
       <span id="query-count" class="muted">0 / 1,500文字</span>
     </div>
     <label class="feedback-option"><input id="include-feedback" type="checkbox"> フィードバックを含める（利用キーが必要）</label>
-    <div class="query-row">
-      <div class="query-field">
-        <label for="query">質問・キーワード</label>
-        <textarea id="query" aria-describedby="query-count" maxlength="1500" rows="2" placeholder="例：地下鉄で位置更新が止まる問題" required></textarea>
-      </div>
-      <button id="search-button" class="primary" type="submit">検索</button>
+    <div class="query-field">
+      <label for="query">質問・キーワード</label>
+      <textarea id="query" aria-describedby="query-count" maxlength="1500" rows="2" placeholder="例：地下鉄で位置更新が止まる問題" required></textarea>
+      <button id="search-button" class="primary" type="submit" aria-label="検索" title="検索">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg>
+      </button>
     </div>
   </form>
 </footer>
