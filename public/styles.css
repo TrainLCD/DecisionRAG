@@ -225,19 +225,19 @@ summary { cursor: pointer; font-weight: 600; }
   border-radius: var(--radius);
   background: var(--field);
 }
-.query-field:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+.query-field:focus-within { border-color: #71717a; }
 .query-field label, .connection label { display: block; font-size: 0.8125rem; font-weight: 600; }
 textarea {
   display: block;
   width: 100%;
   padding: 0;
   border: 0;
-  outline: none;
   background: transparent;
   color: inherit;
   resize: none;
   line-height: 1.45;
 }
+textarea:focus { outline: none; }
 textarea::placeholder { color: #60606a; }
 
 dialog {
