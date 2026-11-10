@@ -2,6 +2,7 @@
 const $ = (id) => document.getElementById(id);
 const settings = $("settings-dialog");
 let token = "";
+let feedbackRequested = false;
 let session = 0;
 let searching = false;
 let connecting = false;
@@ -157,6 +158,7 @@ function disconnect(message = "接続を解除しました。") {
   for (const controller of requests) controller.abort();
   requests.clear();
   token = "";
+  feedbackRequested = false;
   searching = false;
   connecting = false;
   syncing = false;
@@ -437,14 +439,20 @@ function openSettings() {
   if (!token && !connecting) $("token").focus();
 }
 function askForFeedbackKey() {
+  $("include-feedback").checked = false;
+  feedbackRequested = true;
   openSettings();
   settingsNotice("フィードバックを検索するには、利用キーで接続してください。");
 }
 $("settings-button").addEventListener("click", openSettings);
+settings.addEventListener("close", () => { feedbackRequested = false; });
 $("include-feedback").addEventListener("change", () => {
+  if ($("include-feedback").checked && !token) {
+    askForFeedbackKey();
+    return;
+  }
   clearResults();
   notice("");
-  if ($("include-feedback").checked && !token) askForFeedbackKey();
 });
 $("connect-form").addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -459,6 +467,10 @@ $("connect-form").addEventListener("submit", async (event) => {
     const data = await api("/sync/status", {}, candidate);
     if (current !== session) return;
     token = candidate;
+    if (feedbackRequested && settings.open) {
+      $("include-feedback").checked = true;
+      clearResults();
+    }
     $("token").value = "";
     $("connect-form").hidden = true;
     $("disconnect-button").hidden = false;
