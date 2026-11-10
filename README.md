@@ -97,7 +97,7 @@ curl "$RAG_URL/search" \
 
 `/search`・`/answer` には1〜1,500文字の `query` と、任意の真偽値 `include_feedback` を指定できる。認証なし、または `include_feedback: false` の場合は、GitHubが現在公開と返すリポジトリの資料だけを検索する。`include_feedback: true` と有効なBearerトークンを送ると、公開資料に `TrainLCD/Issues` のフィードバックを加える。互換性のため、有効なBearerトークンだけを送って `include_feedback` を省略すると、従来どおり認証済みの索引全体を検索する。認証なしの利用はIPアドレスごとに Cloudflare のレート制限を適用する。
 
-レスポンスには `evidence`（引用ID、ソースID、本文区間、URL、repo、状態等のmetadata、関連度）、`trace`（ステージ、候補数、モデル、呼び出し数、使用トークン、時間）、`elapsed_ms` を含む。検索はソース間の網羅的な調査を保証せず、各階層の上位予算により枝刈りする。
+レスポンスには `evidence`（引用ID、ソースID、本文区間、URL、repo、状態等のmetadata、関連度）、`trace`（ステージ、候補数、モデル、呼び出し数、使用トークン、時間）、`elapsed_ms` を含む。`timings` には公開範囲の確認、D1取得、Jev判定、要約生成、検索完了までの時間をミリ秒で記録する。公開範囲の確認と最初のD1取得は並行するため、工程別の時間には重複がある。検索はソース間の網羅的な調査を保証せず、各階層の上位予算により枝刈りする。
 
 既定の生成モデルは1回の呼び出しで最大2文を生成する。`generate_answer` ステージには、生成モデルと所要時間、プロバイダーが返した入出力トークン数を記録する。
 

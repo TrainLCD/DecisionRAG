@@ -339,7 +339,11 @@ function renderResult(data, mode) {
   $("trace-panel").hidden = !trace.length;
   if (data.timings) {
     const row = element("div", "trace-row", "所要時間の内訳");
-    row.append(element("span", "", "DBから取得：" + number(data.timings.storage_ms) + " ms / Jev判定：" + number(data.timings.model_ms) + " ms / その他：" + number(data.timings.other_ms) + " ms"));
+    const { scope_ms, storage_ms, model_ms, generation_ms } = data.timings;
+    const parts = ["DB取得 " + number(storage_ms) + " ms", "Jev判定 " + number(model_ms) + " ms"];
+    if (scope_ms) parts.unshift("公開範囲の確認 " + number(scope_ms) + " ms");
+    if (generation_ms) parts.push("要約生成 " + number(generation_ms) + " ms");
+    row.append(element("span", "", parts.join(" / ")));
     $("trace-list").append(row);
   }
   for (const step of trace) {

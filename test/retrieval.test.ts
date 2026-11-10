@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Jev, probability } from '../src/jev.js';
 import { retrieve, d1Store, DEFAULT_BUDGETS, gate } from '../src/retrieval.js';
-import { saveSource, splitPassages } from '../src/store.js';
+import { DOCUMENT_PAGE_SIZE, saveSource, splitPassages } from '../src/store.js';
 import { answer } from '../src/answer.js';
 import { fixture, mockFetch } from './helpers.js';
 
@@ -20,7 +20,7 @@ test('retrieves by shared-context hierarchy without lexical or vector filtering'
     const req = JSON.parse(String(init?.body));
     states.push(req.state);
     const answers = Object.fromEntries(Object.entries(req.questions).map(([key, value]) => {
-      if ((value as { type: string }).type === 'choice') return [key, { type: 'choice', choice: 'p0', probabilities: { p0: 0.99, p1: 0.01 }, confidence: 0.99 }];
+      if ((value as { type: string }).type === 'choice') return [key, { type: 'choice', choice: 'c0', probabilities: { c0: 0.99, c1: 0.01 }, confidence: 0.99 }];
       const text = req.state.candidates[key] as string;
       return [key, { type: 'noul', noul: /heartbeat|ハートビート|implementation/.test(text) ? 0.95 : 0.1 }];
     }));
@@ -32,7 +32,7 @@ test('retrieves by shared-context hierarchy without lexical or vector filtering'
     assert.equal(evidence[0]?.source_id, 'TrainLCD/MobileApp#1');
     assert.ok(states.some(s => Object.values(s.candidates || {}).some(t => t.includes('Restore continuous heartbeat')) &&
       Object.values(s.candidates || {}).some(t => t.includes('地下鉄の駅名を修正'))));
-    assert.deepEqual(judge.trace.map(t => t.stage), ['branch_screening', 'document_screening', 'passage_scoring', 'choice_rerank']);
+    assert.deepEqual(judge.trace.map(t => t.stage), ['branch_screening', 'document_screening', 'passage_ranking']);
     assert.equal(evidence[0]?.metadata.release_status, 'unknown');
   } finally { restore(); sqlite.close(); }
 });
@@ -47,9 +47,55 @@ test('screening budget never returns silently incomplete evidence', async () => 
   try {
     await assert.rejects(retrieve('query', {
       branches: async () => [{ id: 'b', repo: 'TrainLCD/MobileApp', kind: 'pr', description: 'branch' }],
-      documentPage: async () => [{ id: 'd1', description: 'one' }, { id: 'd2', description: 'two' }],
+      documentPages: async () => [[{ id: 'd1', description: 'one' }, { id: 'd2', description: 'two' }]],
       passages: async () => { throw new Error('Must not expand partial corpus'); },
     }, judge, { ...DEFAULT_BUDGETS, maxDocuments: 1 }), /document_screening_budget_exceeded/);
+  } finally { restore(); sqlite.close(); }
+});
+
+test('batched document pages retain branch order and screen the tail of a full page', async () => {
+  const { env, sqlite } = fixture();
+  sqlite.exec(`INSERT INTO repositories(repo,description,default_branch) VALUES('TrainLCD/App','App','main');
+    WITH RECURSIVE n(i) AS (SELECT 0 UNION ALL SELECT i+1 FROM n WHERE i<${DOCUMENT_PAGE_SIZE})
+    INSERT INTO sources(id,repo,kind,title,url,body,metadata,updated_at)
+    SELECT printf('issue%04d',i),'TrainLCD/App','issue',printf('issue%04d',i),'url','','{}','today' FROM n
+    UNION ALL SELECT 'pr','TrainLCD/App','pr','pr','url','','{}','today'`);
+  const store = d1Store(env);
+  const cursorBatches: string[][] = [];
+  const documentIds: string[] = [];
+  const judge = new Jev(env);
+  judge.score = async (_query, items, stage) => {
+    if (stage === 'document_screening') documentIds.push(...items.map(item => item.id));
+    return items.map(item => ({ item, probability: 1 }));
+  };
+  try {
+    await retrieve('query', { ...store, documentPages: cursors => {
+      cursorBatches.push(cursors.map(({ branch }) => branch.kind));
+      return store.documentPages(cursors);
+    } }, judge);
+    assert.deepEqual(cursorBatches, [['issue', 'pr'], ['issue']]);
+    assert.equal(documentIds.length, DOCUMENT_PAGE_SIZE + 2);
+    assert.deepEqual(documentIds.slice(-2), [`issue${String(DOCUMENT_PAGE_SIZE).padStart(4, '0')}`, 'pr']);
+  } finally { sqlite.close(); }
+});
+
+test('passage ranking still screens before Choice when the shortlist would prune candidates', async () => {
+  const { env, sqlite } = fixture();
+  const calls: string[][] = [];
+  const restore = mockFetch((_url, init) => {
+    const { state } = JSON.parse(String(init?.body));
+    const options = Object.values<string>(state.candidates ?? state.passages);
+    calls.push(options);
+    const answers = state.candidates
+      ? Object.fromEntries(Object.keys(state.candidates).map((id, i) => [id, { type: 'noul', noul: i / 10 }]))
+      : { best: { type: 'choice', choice: 'p1', probabilities: { p0: 0.1, p1: 0.9 } } };
+    return Response.json({ model: 'test', answers, usage: { input_tokens: 1, output_tokens: 1 } });
+  });
+  try {
+    const judge = new Jev(env);
+    const ranked = await judge.rankPassages('query', ['one', 'two', 'three'].map(id => ({ id, description: id })), 2);
+    assert.deepEqual(calls, [['one', 'two', 'three'], ['three', 'two']]);
+    assert.deepEqual(ranked.map(({ item, probability }) => [item.id, probability]), [['two', 0.1], ['three', 0.2]]);
   } finally { restore(); sqlite.close(); }
 });
 

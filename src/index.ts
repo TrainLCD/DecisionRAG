@@ -34,17 +34,24 @@ async function search(request: Request, env: Env, path: string): Promise<Respons
     const { success } = await env.PUBLIC_SEARCH_RATE_LIMIT.limit({ key: request.headers.get('CF-Connecting-IP') || 'unknown' });
     if (!success) throw new HttpError(429, 'public_search_rate_limited');
   }
+  const maxDocuments = boundedNumber(env.MAX_SCREENED_DOCUMENTS, 20_000, 1, 100_000);
   // Existing Bearer callers that omit the scope retain their authenticated search.
-  const scope = hasToken && body.include_feedback === undefined ? undefined : {
-    publicRepos: await new GitHub(env).publicRepositories(),
-    feedbackRepo: body.include_feedback ? `${env.GITHUB_ORG.toLowerCase()}/issues` : undefined,
-  };
+  const timings = { scope_ms: 0, storage_ms: 0, model_ms: 0, generation_ms: 0, retrieval_ms: 0 };
+  const scopeStart = Date.now();
+  const scope = hasToken && body.include_feedback === undefined ? undefined : new GitHub(env).publicRepositories().then(publicRepos => {
+    timings.scope_ms = Date.now() - scopeStart;
+    return { publicRepos, feedbackRepo: body.include_feedback ? `${env.GITHUB_ORG.toLowerCase()}/issues` : undefined };
+  });
   const query = body.query.trim();
   const judge = new Jev(env);
-  const evidence = await retrieve(query, d1Store(env, scope), judge, { ...DEFAULT_BUDGETS,
-    maxDocuments: boundedNumber(env.MAX_SCREENED_DOCUMENTS, 20_000, 1, 100_000) });
+  const evidence = await retrieve(query, d1Store(env, scope, timings), judge, { ...DEFAULT_BUDGETS, maxDocuments });
+  timings.retrieval_ms = Date.now() - start;
   const result = path === '/answer' ? await answer(query, evidence, env, judge) : { status: evidence.length ? 'retrieved' : 'empty' };
-  return Response.json({ ...result, evidence, trace: judge.trace, elapsed_ms: Date.now() - start,
+  for (const step of judge.trace) {
+    if (step.stage === 'generate_answer') timings.generation_ms += step.elapsed_ms;
+    else timings.model_ms += step.elapsed_ms;
+  }
+  return Response.json({ ...result, evidence, trace: judge.trace, timings, elapsed_ms: Date.now() - start,
     retrieval: 'hierarchical_decision', release_inference: 'disabled' });
 }
 
