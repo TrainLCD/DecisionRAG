@@ -402,7 +402,6 @@ function renderEvidencePage() {
     card.tabIndex = -1;
     const top = element("div", "evidence-top");
     top.append(
-      element("span", "citation", "[" + item.citation + "]"),
       element("span", "evidence-kind", ({ pr: "プルリクエスト", issue: "Issue", feedback: "利用者の報告", doc: "文書" })[item.kind] || item.kind),
     );
     const heading = element("h3");
