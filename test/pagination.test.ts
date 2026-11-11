@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { encodeCursor, decodeCursor } from '../src/search-cursor.js';
 import { fixture, mockFetch } from './helpers.js';
-import { saveSource, documentsFor, localReferences } from '../src/store.js';
+import { saveSource, documentsFor, documentPages, localReferences } from '../src/store.js';
 import worker from '../src/index.js';
 import { planRetrieval, retrievePlannedPage } from '../src/retrieval.js';
 import { Jev } from '../src/jev.js';
@@ -134,5 +134,18 @@ test('linked passage context contains scoped body evidence and does not alter re
       { ids: ['TrainLCD/App#2', 'TrainLCD/App#1'] });
     assert.equal(page.evidence[0]!.text, 'related: #1 and #3');
     assert.ok(!('description' in page.evidence[0]!));
+  } finally { sqlite.close(); }
+});
+
+test('references inside the loaded introduction survive both document loading paths', async () => {
+  const { env, sqlite } = fixture();
+  sqlite.exec("INSERT INTO repositories(repo,description,default_branch) VALUES('TrainLCD/App','App','main')");
+  try {
+    await saveSource(env, { id: 'TrainLCD/App#2', repo: 'TrainLCD/App', kind: 'pr', title: 'Fix',
+      body: 'x'.repeat(180) + '\nrelated: #123\n' + 'y'.repeat(600), url: 'https://example.test', metadata: {}, updated_at: 'now' });
+    const direct = await documentsFor(env, 10);
+    const [page] = await documentPages(env, [{ branch: { id: 'TrainLCD/App/pr', repo: 'TrainLCD/App', kind: 'pr', description: 'PRs' }, after: '' }]);
+    assert.deepEqual(direct[0]!.references, ['TrainLCD/App#123']);
+    assert.deepEqual(page![0]!.references, ['TrainLCD/App#123']);
   } finally { sqlite.close(); }
 });

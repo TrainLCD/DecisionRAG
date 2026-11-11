@@ -115,7 +115,8 @@
             "clef"
           ]
         }
-      ]
+      ],
+      "wall_ms": 17807
     },
     {
       "query_case": "underground",
@@ -229,7 +230,8 @@
             "clef"
           ]
         }
-      ]
+      ],
+      "wall_ms": 15308
     },
     {
       "query_case": "underground",
@@ -279,7 +281,8 @@
             "clef"
           ]
         }
-      ]
+      ],
+      "wall_ms": 8275
     },
     {
       "query_case": "underground",
@@ -339,7 +342,8 @@
             "clef"
           ]
         }
-      ]
+      ],
+      "wall_ms": 8580
     },
     {
       "query_case": "underground",
@@ -404,7 +408,8 @@
             "clef"
           ]
         }
-      ]
+      ],
+      "wall_ms": 8711
     },
     {
       "query_case": "underground",
@@ -449,7 +454,8 @@
             "clef"
           ]
         }
-      ]
+      ],
+      "wall_ms": 8768
     },
     {
       "query_case": "metro",
@@ -528,7 +534,8 @@
             "clef"
           ]
         }
-      ]
+      ],
+      "wall_ms": 15479
     },
     {
       "query_case": "metro",
@@ -647,7 +654,8 @@
             "clef"
           ]
         }
-      ]
+      ],
+      "wall_ms": 13623
     },
     {
       "query_case": "metro",
@@ -697,7 +705,8 @@
             "clef"
           ]
         }
-      ]
+      ],
+      "wall_ms": 8178
     },
     {
       "query_case": "metro",
@@ -742,7 +751,8 @@
             "clef"
           ]
         }
-      ]
+      ],
+      "wall_ms": 7838
     },
     {
       "query_case": "through",
@@ -816,7 +826,8 @@
             "clef"
           ]
         }
-      ]
+      ],
+      "wall_ms": 16027
     },
     {
       "query_case": "through",
@@ -885,7 +896,8 @@
             "clef"
           ]
         }
-      ]
+      ],
+      "wall_ms": 14226
     },
     {
       "query_case": "through",
@@ -916,7 +928,8 @@
             "clef"
           ]
         }
-      ]
+      ],
+      "wall_ms": 8092
     },
     {
       "query_case": "through",
@@ -947,7 +960,8 @@
             "clef"
           ]
         }
-      ]
+      ],
+      "wall_ms": 7599
     },
     {
       "query_case": "through",
@@ -972,7 +986,8 @@
             "clef"
           ]
         }
-      ]
+      ],
+      "wall_ms": 7916
     },
     {
       "query_case": "through",
@@ -997,7 +1012,8 @@
             "clef"
           ]
         }
-      ]
+      ],
+      "wall_ms": 7682
     }
   ],
   "repeat_runs": [
