@@ -102,3 +102,79 @@ jobs:
           npx --no-install wrangler versions deploy "${version_id}@100%" \
             --config wrangler.production.json --message "Deploy $GITHUB_SHA" --yes
 
+  preview:
+    name: Preview PR
+    needs: check
+    permissions:
+      contents: read
+      pull-requests: read
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]' &&
+      vars.DECISIONRAG_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    # Reuse the existing Cloudflare credentials; this job never deploys traffic.
+    environment: production
+    concurrency:
+      group: decisionrag-preview-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run build:pwa
+      - name: Prepare read-only preview
+        env:
+          DECISIONRAG_D1_DATABASE_ID: ${{ vars.DECISIONRAG_D1_DATABASE_ID }}
+        run: node scripts/prepare-preview.mjs
+      - name: Upload preview version
+        id: upload
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          : "${CLOUDFLARE_API_TOKEN:?Set the production CLOUDFLARE_API_TOKEN secret}"
+          : "${CLOUDFLARE_ACCOUNT_ID:?Set the production CLOUDFLARE_ACCOUNT_ID secret}"
+          current=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq '[.state, .head.sha] | join(" ")')
+          if [[ "$current" != "open $PR_HEAD_SHA" ]]; then
+            echo "::notice::Skipping outdated or closed PR preview."
+            exit 0
+          fi
+          output=$(mktemp)
+          trap 'rm -f "$output"' EXIT
+          WRANGLER_OUTPUT_FILE_PATH="$output" npx --no-install wrangler versions upload \
+            --config wrangler.preview.json --strict --tag "pr-$PR_NUMBER" \
+            --preview-alias "pr-$PR_NUMBER"
+          node --input-type=module - "$output" <<'JS'
+          import { readFileSync, appendFileSync } from 'node:fs';
+          const records = readFileSync(process.argv[2], 'utf8').trim().split('\n').map(line => JSON.parse(line));
+          const uploaded = records.find(record => record.type === 'version-upload');
+          const url = uploaded?.preview_url;
+          if (!url || !/^https:\/\/[a-z0-9.-]+\.workers\.dev\/?$/.test(url)) {
+            throw new Error('No preview URL returned. Enable Version URLs on the existing Worker in Cloudflare.');
+          }
+          appendFileSync(process.env.GITHUB_OUTPUT, `url=${url}\n`);
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+            `### PR #${process.env.PR_NUMBER} preview\n\n[Open preview](${url})\n\nHead: \`${process.env.PR_HEAD_SHA}\`\n\nProduction data and models; synchronization and deletion are disabled.\n`);
+          JS
+      - name: Smoke test preview
+        if: steps.upload.outputs.url != ''
+        env:
+          PREVIEW_URL: ${{ steps.upload.outputs.url }}
+        run: |
+          curl --fail --silent --show-error --retry 5 --retry-all-errors --retry-delay 3 "$PREVIEW_URL/health"
+          for path in sync admin/purge webhooks/github; do
+            status=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+              --request POST "$PREVIEW_URL/$path")
+            test "$status" = 403
+          done
+
