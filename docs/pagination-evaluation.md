@@ -1,16 +1,36 @@
-# Pagination evaluation checkpoint — 2026-11-11
-Status: NOT READY FOR PR OR MERGE. Real API tests work; GitHub quota recovered. No new PR created.
-Branch head evaluated: c82203f49d9190ba45e87ab2b5734038831c2ac2.
-Question: 地下鉄で位置更新が止まる問題, public only, /search, no generation timing included.
-Latest concurrent same-query run:
-- main: 11.717 s, 14 passages, includes MobileApp #420, #423, #267.
-- paged flash: page 1 9.041 s / 7 passages; page 2 2.800 s / 2 passages; page 3 1.557 s / 4 passages. #420 and #423 now page 1. #267 absent from all pages.
-- paged Clef: page 1 13.461 s / 6 passages; page 2 1.599 s / 1 passage. #420/#423 page 1, #267 absent. Other relevant sources also differ.
-These are single-query measurements, not statistical performance or recall guarantees.
-Earlier full-size Clef was accidentally split at flash's byte budget. Fixed to choose the actual model budget. Calls fell from 40+55 to 12+23 but latency did not materially improve.
-Retained-candidate diagnostics now use existing trace.selected: page_screening lists retained group member IDs, document_screening lists final document IDs. Remove diagnostic change or formalize its semantics before PR (UI and docs may expect group IDs/top 12).
-Trace isolated missing #267 to individual document screening, not group pruning. #267 title is 位置情報精度設定と開発者モード有効化, body related: #263. Need consider linked issue context; title/excerpts alone omit why this matters. Do not add query-specific whitelist.
-Document instructions now explicitly include partial evidence (symptoms, fixes, causes, diagnostics; excerpts incomplete). This restored #423 page-one placement in flash but not all recall.
-Cloud-browser tested PRE latest prompt revision: actual provisional summary visible before verification; final direct answer then ticket summaries; next-page generation and previous cached page restoration worked. Final answer 31.83 s on first Clef page, 7.74 s second. Browser error recovery still needs testing. New code must be revalidated before PR.
-Latest CI and preview upload succeeded. Existing 38 local tests passed before prompt revision; remote has additional preview tests and latest workflow succeeded.
-Next: resolve remaining retrieval losses based on actual current code/data, broaden representative queries, verify current browser/SSE/error paths, add meaningful regression checks, remove temporary src/preview-clef.ts and .github/workflows/verify-pages.yml plus diagnostics before PR, update formal docs, then CR/CI and squash merge with expected SHA; verify deploy. Preserve fresh public visibility checks. Do not claim completion.
+# ページ分割の実データ検証（2026-11-11）
+
+検証版: `d922036fc26dc91d01fe5a6eb79179d05a9c51e0`。本番比較対象: `e625932ac90202a02fd3d5c7ff96d40b70532c9e`。
+同じ本番D1の公開資料2,713文書、フィードバックなし。`/search` のサーバー処理時間を比較した。試作側は `paginated: true`、本番側は従来の全本文評価。
+[測定値と出典一覧](evaluation/pagination-2026-11-11.json) を保存した。これは限られた質問の比較であり、網羅的な検索精度の保証ではない。
+
+## 検索時間
+
+| 質問 | 本番 | ページ分割の初ページ | 続きの各ページ |
+|---|---:|---:|---:|
+| 地下鉄で位置更新が止まる問題（3回の中央値） | 11.580秒 | 9.206秒 | 1.996〜2.548秒（初回測定の2〜5ページ） |
+| 東京メトロ固有の問題はある？ | 9.226秒 | 8.109秒 | 1.436〜1.832秒 |
+| 直通情報がすぐに反映されない問題 | 9.646秒 | 7.488秒 | 1.354〜1.873秒 |
+
+地下鉄の3回: 本番11.580 / 11.750 / 10.596秒、試作8.774 / 9.255 / 9.206秒。中央値で約20.5%短縮。同じ3回のHTTP往復込みの中央値は、本番17.807秒、試作15.612秒（約12.3%短縮）だった。生成時間はこの表に含めない。全ページを読む合計時間を短縮する設計ではない。
+初回のモデル呼び出し数は、本番75回に対して試作126回。本文を含む判定と並列実行を増やしており、API呼び出し数・使用量を削減する変更ではない。
+
+## 資料の回収
+
+- 地下鉄: 本番の8種類の出典を、試作の全5ページでも取得。#420、#423、#267は初ページ。`location-simulation.md` は4ページ目にも関連区間が出る。本文区間単位では本番14区間中12区間が共通で、GPX導入説明と一部の再生設定の区間は一致しなかった。出典単位の一致を完全な本文再現率とは扱わない。
+- 東京メトロ: 本番7出典のうち6出典を取得。#268、#258、#261など既知の不具合を確認。非一致の#256はテーマのデザイン変更提案で、不具合報告ではない。試作には地下鉄一般の資料など広めの候補も混じるため、適合率が常に上がるとは主張しない。
+- 直通情報: 該当するMobileApp #1022を初ページで取得し、関連PR #1023も取得。本番だけに出たWebsite #108 / #113はWebステータス配信・Redis TTLの資料で、列車の直通案内に関する根拠ではなかった。
+
+タイトルと短い抜粋だけでは短い修正PR・長文資料を落とすため、本文の参照関係、複数位置の抜粋、ドキュメントに対する通常Clefを使用する。本文は5区間ずつで独立した関連性を判定し、その後Choiceで並べる。候補の採否は依然モデルに依存する。
+
+## モデル比較と動作確認
+
+通常Clefだけに切り替えた試作では、同じ地下鉄の初ページが11.7〜13.5秒、メトロが10.1〜13.3秒で、取りこぼしも残った。既定はグループ・Issue・PRにflash、ドキュメント個別判定と本文以降に通常Clefとした。`SCREENING_MODEL=clef` による全通常Clefの比較は可能。
+
+実ブラウザーで、実データの検索、生成途中の仮表示、検証後の回答・資料表示、次ページ、前ページのキャッシュ復帰を確認した。429時に前の結果が残り、制限解除後の再試行が成功した。最終候補版でも次・前ページが動作した。
+
+SSEを実通信でも計測した。試作のsources→最初のdraftは0.513秒、最初のdraft→resultは22.595秒で、検証終了を待たずに内容を送信している。同時比較した本番もストリーミングは動作していた。実行環境のHTTP往復込みでは試作sources 16.847秒 / result 39.955秒、本番sources 16.903秒 / result 40.584秒。この測定だけで利用者端末の表示時間が20%短縮するとは言えない。
+
+生成・根拠検証自体の待ち時間は残る。比較した要約では本番・試作とも直接回答は保留、検証済み要約2件となった。今回、根拠検証を緩める変更はしていない。
+
+ローカル43テストと型検査、GitHub CI・プレビューのアップロードが成功。自動テストはモデル・外部通信をモックしており、上記実データ検証と区別する。

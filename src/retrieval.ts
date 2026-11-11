@@ -77,8 +77,6 @@ export async function planRetrieval(query: string, store: RetrievalStore, judge:
     }
     const scoredGroups = await judge.score(query, groups, 'page_screening');
     documents = scoredGroups.filter((row, index) => index < 4 || row.probability > 0.2).flatMap(row => row.item.members);
-    const groupTrace = judge.trace.at(-1);
-    if (groupTrace?.stage === 'page_screening') groupTrace.selected = documents.map(item => item.id);
   }
   const documentScores = await judge.score(query, documents, 'document_screening');
   // Keep the strongest candidates even when their excerpt-level scores are uncertain.
@@ -98,8 +96,6 @@ export async function planRetrieval(query: string, store: RetrievalStore, judge:
   }
   // Keep a terse fix beside its matching issue, not after every unrelated seed.
   const orderedIds = [...new Set(selectedDocs.flatMap(id => [id, ...neighbors.get(id) ?? []]))];
-  const documentTrace = judge.trace.at(-1);
-  if (documentTrace?.stage === 'document_screening') documentTrace.selected = orderedIds;
   return { ids: orderedIds };
 }
 /** Evaluate only this page's passages; planning can be reused across requests. */
