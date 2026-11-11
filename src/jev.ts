@@ -141,7 +141,7 @@ export class Jev implements Judge {
         return [...await scoreBatch(items.slice(0, middle)), ...await scoreBatch(items.slice(middle))];
       }
     };
-    const responses = (await mapConcurrent(batches, stage === 'page_screening' ? 12 : stage === 'branch_screening' ? 4 : 6, scoreBatch)).flat();
+    const responses = (await mapConcurrent(batches, stage === 'branch_screening' ? 4 : navigation ? 12 : 6, scoreBatch)).flat();
     const scored = responses.flatMap(r => r.scored).sort((a, b) => b.probability - a.probability);
     this.trace.push({ stage, candidates: candidates.length, selected: scored.slice(0, 12).map(r => r.item.id),
       calls, model: [...new Set(responses.map(r => r.result.model))],

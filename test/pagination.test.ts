@@ -81,3 +81,17 @@ test('coarse routing considers body-only evidence and retains uncertain groups',
     assert.ok(plan.ids.includes('d239'));
   } finally { sqlite.close(); }
 });
+
+ test('explicit references retain terse fixes without crossing the loaded search scope', async () => {
+  const { env, sqlite } = fixture();
+  const judge = new Jev(env);
+  const docs = [{ id: 'TrainLCD/App#1', description: 'underground failure', references: [] },
+    { id: 'TrainLCD/App#2', description: 'fix', references: ['TrainLCD/App#1', 'TrainLCD/Private#3'] },
+    { id: 'TrainLCD/App#4', description: 'unrelated', references: [] }];
+  judge.score = async (_query, items) => items.map(item => ({ item, probability: item.id.endsWith('#1') ? 0.9 : 0.01 }));
+  try {
+    const plan = await planRetrieval('underground', { documents: async () => docs, branches: async () => [], documentPages: async () => [], passages: async () => [] }, judge,
+      { branches: 6, documents: 1, maxDocuments: 100, maxPassages: 4000 });
+    assert.deepEqual(plan.ids, ['TrainLCD/App#1', 'TrainLCD/App#2']);
+  } finally { sqlite.close(); }
+});

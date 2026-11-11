@@ -1,4 +1,4 @@
-import { branches, DOCUMENT_PAGE_SIZE, documentPages, documentsFor, passagesFor, type Branch, type DocumentCursor, type SearchScope } from './store.js';
+import { branches, DOCUMENT_PAGE_SIZE, documentPages, documentsFor, passagesFor, localReferences, type Branch, type DocumentCursor, type SearchScope } from './store.js';
 import type { Judge } from './jev.js';
 import { boundedNumber, HttpError, type Candidate, type Env, type Passage } from './types.js';
 export interface RetrievalStore {
@@ -66,6 +66,7 @@ export async function planRetrieval(query: string, store: RetrievalStore, judge:
   const directLimit = Math.min(directDocumentLimit, Math.floor(budget.maxDocuments));
   const direct = await store.documents(directLimit + 1);
   let documents = direct.length <= directLimit ? direct : await routedDocuments(query, store, judge, budget);
+  const scopedDocuments = documents;
   if (documents.length > 128) {
     const groups = [];
     for (let i = 0; i < documents.length; i += 24) {
@@ -82,6 +83,12 @@ export async function planRetrieval(query: string, store: RetrievalStore, judge:
   const documentScores = await judge.score(query, documents, 'document_screening');
   // Keep the strongest candidates even when title-level scores are uncertain.
   const selectedDocs = documentScores.filter((r, index) => index < budget.documents || r.probability > 0.5).map(r => r.item.id);
+  // Explicit links preserve the context of terse fix PRs. One hop only, scoped on both ends.
+  const seeds = new Set(selectedDocs);
+  const related = new Set(scopedDocuments.filter(doc => seeds.has(doc.id)).flatMap(doc => doc.references ?? []));
+  for (const doc of scopedDocuments) {
+    if (!seeds.has(doc.id) && (related.has(doc.id) || doc.references?.some(id => seeds.has(id)))) selectedDocs.push(doc.id);
+  }
   const documentTrace = judge.trace.at(-1);
   if (documentTrace?.stage === 'document_screening') documentTrace.selected = selectedDocs;
   return { ids: selectedDocs };
@@ -96,8 +103,9 @@ export async function retrievePlannedPage(query: string, store: RetrievalStore, 
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(passages)));
   const revision = Array.from(new Uint8Array(digest), value => value.toString(16).padStart(2, '0')).join('');
   if (expectedRevision && revision !== expectedRevision) throw new HttpError(409, 'search_results_changed');
+  const sourceTitles = new Map(passages.map(p => [p.source_id, p.title]));
   const candidates = passages.slice(offset, offset + pageSize).map(p => ({ ...p,
-    description: `${p.title}\nRepository: ${p.repo}\nMetadata: ${JSON.stringify(p.metadata)}\n${p.text}` }));
+    description: `${p.title}\nRepository: ${p.repo}\nMetadata: ${JSON.stringify(p.metadata)}\n${p.text}\nExplicitly linked issues: ${localReferences(p.source_id, p.text).filter(id => sourceTitles.has(id)).map(id => `${id}: ${sourceTitles.get(id)}`).join("; ")}` }));
   const ranked = await judge.rankPassages(query, candidates, choiceShortlistSize);
   const evidence = ranked.map((r, i) => {
     const { description: _, ...passage } = r.item;

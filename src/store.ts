@@ -67,7 +67,7 @@ export async function documentsFor(env: Env, limit: number, scope?: SearchScope)
     .bind(...(scope ? [JSON.stringify(scope.publicRepos), scope.feedbackRepo ?? null] : []), limit)
     .all<{ id: string; kind: Kind; title: string; metadata: string; introduction: string; sample: string }>();
   return result.results.map(({ id, kind, title, metadata, introduction, sample }) => ({
-    id, overview: `${title} (${kind})\n${sample}`, description: `${title}\n${id} (${kind})\n${metadata}\nBody excerpts: ${sample}${introduction ? '\n' + introduction : ''}`,
+    id, references: localReferences(id, sample), overview: `${title} (${kind})\n${sample}`, description: `${title}\n${id} (${kind})\n${metadata}\nBody excerpts: ${sample}${introduction ? '\n' + introduction : ''}`,
   }));
 }
 /** Advance each branch's document cursor in one D1 round trip. */
@@ -75,7 +75,7 @@ export async function documentPages(env: Env, cursors: DocumentCursor[]): Promis
   const results = await env.DB.batch<{ id: string; title: string; metadata: string; sample: string }>(cursors.map(({ branch, after }) =>
     env.DB.prepare(`SELECT id,title,metadata,substr(body,1,60)||' … '||substr(body,max(1,length(body)/2-20),40)||' … '||substr(body,-40) AS sample FROM sources
       WHERE repo=? AND kind=? AND id>? AND (kind<>'pr' OR instr(body,char(10)||'PENDING'||char(10))=0) ORDER BY id LIMIT ?`).bind(branch.repo, branch.kind, after, DOCUMENT_PAGE_SIZE)));
-  return results.map(result => result.results.map(r => ({ id: r.id, overview: `${r.title}\n${r.sample}`, description: `${r.title}\n${r.metadata}\nBody excerpts: ${r.sample}` })));
+  return results.map(result => result.results.map(r => ({ id: r.id, references: localReferences(r.id, r.sample), overview: `${r.title}\n${r.sample}`, description: `${r.title}\n${r.metadata}\nBody excerpts: ${r.sample}` })));
 }
 /** Load passage text after reapplying the search scope to the selected sources. */
 export async function passagesFor(env: Env, ids: string[], limit: number, scope?: SearchScope): Promise<Passage[]> {
@@ -105,3 +105,9 @@ export async function repoRow(env: Env, repo: string): Promise<RepoRow | null> {
   return env.DB.prepare('SELECT * FROM repositories WHERE repo=?').bind(repo).first<RepoRow>();
 }
 
+
+/** Resolve explicit same-repository issue references; callers intersect them with scoped sources. */
+export function localReferences(id: string, text: string): string[] {
+  const repo = id.split(/[#:]/u)[0]!;
+  return [...new Set([...text.matchAll(/(?<![\w/])#([1-9][0-9]*)\b/gu)].map(match => `${repo}#${match[1]}`))];
+}
