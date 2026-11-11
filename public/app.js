@@ -504,7 +504,7 @@ function renderEvidencePage() {
   document.querySelectorAll(".result-pagination").forEach((nav) => {
     nav.hidden = serverPagination ? serverPagination.total_pages <= 1 : pages <= 1;
     nav.querySelector("[data-page-label]").textContent = serverPagination
-      ? number(serverPagination.page) + " / " + number(serverPagination.total_pages) + "ページ（関連本文 " + number(resultEvidence.length) + "件）"
+      ? number(serverPagination.page) + "ページ目（このページの関連本文 " + number(resultEvidence.length) + "件）"
       : resultEvidence.length
       ? number(resultPage + 1) + " / " + number(pages) + "ページ（" + number(start + 1) + "〜" + number(end) + "件 / " + number(resultEvidence.length) + "件）"
       : "";
