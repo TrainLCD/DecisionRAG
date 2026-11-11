@@ -1,5 +1,5 @@
 API_TOKEN=replace-with-a-random-private-api-token
 WEBHOOK_SECRET=replace-with-a-github-webhook-secret
 GITHUB_TOKEN=replace-with-a-read-only-token
-TYPESAFE_API_KEY=replace-with-a-typesafe-key
 ANSWER_API_KEY=replace-with-a-generation-provider-key
+

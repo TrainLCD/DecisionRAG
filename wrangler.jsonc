@@ -9,7 +9,6 @@
   "workers_dev": false,
   "vars": {
     "GITHUB_ORG": "TrainLCD",
-    "JEV_MODEL": "jev-latest",
     "ANSWER_MODEL": "",
     "ANSWER_BASE_URL": "https://api.openai.com/v1",
     "SUPPORT_THRESHOLD": "0.85",

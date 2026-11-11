@@ -1,19 +1,19 @@
 # TrainLCD DecisionRAG
 
-TrainLCD org の Issue・PR・リポジトリ文書・ユーザーフィードバックを、Jevで階層的に探索するヘッドレスAPI。Cloudflare Workers + D1 + Queues、TypeScript製。
+TrainLCD org の Issue・PR・リポジトリ文書・ユーザーフィードバックを、Clefで階層的に探索するヘッドレスAPI。Cloudflare Workers + D1 + Queues、TypeScript製。
 
 検索方式は **[Retriever-Free Retrieval: Navigating Documents with Decision Models](https://arxiv.org/abs/2610.35868) の §3・Algorithm 1 に基づく階層ナビゲーション**。Embedding、ベクトルDB、BM25、FTSによる候補の事前絞り込みは行わない。D1は文書・階層・本文区間の保存に用いる。
 
 ## 検索方法
 
-1. 検索範囲が5,000文書以下で設定された上限内なら、全ての文書タイトルをJevで評価する。超える場合は `リポジトリ × 種類` の枝をJevで評価して、上位6枝の全タイトルに進む。
+1. 検索範囲が5,000文書以下で設定された上限内なら、全ての文書タイトルをClefで評価する。超える場合は `リポジトリ × 種類` の枝をClefで評価して、上位6枝の全タイトルに進む。
 2. 文書タイトルを共有コンテキストのバッチに分け、並列で評価する。上位30文書に加え、NoulのYes確率が50%を超えた文書の本文も評価する。
 3. 選んだ文書の本文区間を評価し、関連あり（NoulのYes確率が50%を超える）と判定した全区間を数える。
 4. 関連ありの全区間を返す。上位20区間のうち入力上限に収まるものをChoiceで並べ替え、残りはNoulの順位を使う。本文候補全体が20区間以内で一つのリクエストに収まる場合は、関連性の判定とChoiceをまとめて行う。
 
-候補集合は枝120件、文書240件、本文区間60件を上限とし、1バッチの説明文は枝と文書で70,000文字、本文で38,000文字以内に分ける。Jevがコンテキスト超過を返したバッチは分割して評価する。Choiceに渡す説明文は28,000文字以内とする。本文は見出し・段落を優先し、最大2,400文字の区間に分割する。
+候補集合は枝64件、文書64件、本文区間60件を上限とし、1バッチの説明文は枝と文書で70,000文字、本文で38,000文字以内に分ける。各リクエストは64問以内に制限する。Choiceに渡す説明文は28,000文字以内とする。本文は見出し・段落を優先し、最大2,400文字の区間に分割する。
 
-`/answer` は検索で見つかった資料から、出典付きの回答または要約を作る。引用IDを照合し、上位20区間を使ってJevで主張ごとの裏付け、回答の十分性、根拠間の矛盾を判定する。質問に完全には答えられなくても、出典で確認できる内容を要約として返せる。矛盾の確率が `CONFLICT_THRESHOLD` に達した場合は回答を保留する。
+`/answer` は検索で見つかった資料から、出典付きの回答または要約を作る。引用IDを照合し、上位20区間を使ってClefで主張ごとの裏付け、回答の十分性、根拠間の矛盾を判定する。質問に完全には答えられなくても、出典で確認できる内容を要約として返せる。矛盾の確率が `CONFLICT_THRESHOLD` に達した場合は回答を保留する。
 
 ## 情報源と同期
 
@@ -48,15 +48,14 @@ npm run db:remote
 npx wrangler secret put API_TOKEN
 npx wrangler secret put WEBHOOK_SECRET
 npx wrangler secret put GITHUB_TOKEN
-npx wrangler secret put TYPESAFE_API_KEY
 ```
 
 - `API_TOKEN`: フィードバック検索・同期・管理用のBearerトークン。十分長いランダム値を設定する。
 - `WEBHOOK_SECRET`: GitHub Webhookと同じ値。
 - `GITHUB_TOKEN`: org内対象リポジトリのMetadata・Contents・Issues・Pull requestsの読み取り権限が必要。リポジトリ作成・書き込み権限は不要。
-- `TYPESAFE_API_KEY`: Jevのキー。[公式APIドキュメント](https://docs.typesafe.ai/api/system-one)を参照。
+- 判定は既存の `AI` バインディングから Cloudflare Workers AI の `@cf/cloudflare/clef` を呼び出す。TypesafeのAPIキーは不要。既存の `TYPESAFE_API_KEY`・`JEV_MODEL` 設定は参照しない。
 
-既定の文章生成には Cloudflare Workers AI の `AI` バインディングを使う。別の生成サービスを使う場合は、`ANSWER_MODEL`・`ANSWER_BASE_URL` を設定し、`wrangler secret put ANSWER_API_KEY` を実行する。OpenAI互換の `/chat/completions` とJSON object出力に対応するプロバイダーを想定する。サンプルWebアプリではSSEストリーミング（`stream: true`、`stream_options.include_usage: true`）への対応も必要となる。非ストリーミングへのフォールバックはなく、未対応のプロバイダーではWebアプリの要約が失敗する場合がある。Acceptヘッダーを省略したJSON APIは引き続き非ストリーミングで動作する。根拠の本文はJevと設定された生成サービスに送信される。
+既定の文章生成には Cloudflare Workers AI の `AI` バインディングを使う。別の生成サービスを使う場合は、`ANSWER_MODEL`・`ANSWER_BASE_URL` を設定し、`wrangler secret put ANSWER_API_KEY` を実行する。OpenAI互換の `/chat/completions` とJSON object出力に対応するプロバイダーを想定する。サンプルWebアプリではSSEストリーミング（`stream: true`、`stream_options.include_usage: true`）への対応も必要となる。非ストリーミングへのフォールバックはなく、未対応のプロバイダーではWebアプリの要約が失敗する場合がある。Acceptヘッダーを省略したJSON APIは引き続き非ストリーミングで動作する。根拠の本文はClefと設定された生成サービスに送信される。
 
 `workers_dev` は既定で `false`。利用するホスト名のrouteを設定するか、意図して `true` に変更してから `npm run deploy` を実行する。公開資料の検索・要約は認証なしで使える。フィードバック検索、同期、管理APIはBearer認証が必須。WebhookはHMAC-SHA256署名検証が必須。複数ユーザー向けのACLは実装していないため、このAPIトークンを他者に配布しないこと。
 
@@ -92,7 +91,7 @@ CI は `wrangler versions upload` と `wrangler versions deploy` でコードの
 
 同一リポジトリの PR は CI 成功後、`Preview PR` ジョブで本番 Worker の未公開バージョンをアップロードする。Actions のジョブ Summary にある **Open preview** から確認できる。URL は各アップロードに固定され、`pr-番号` のエイリアスも発行する。本番トラフィックの切り替えは行わない。
 
-本番 D1、Cloudflare 登録済みの変数・Secrets、Jev、生成 AI を共有する。画面は PR のコードと静的ファイルで動作する。プレビュー専用の `src/preview.ts` は検索・回答・ヘルスチェック・認証済み同期状況の参照だけを許可し、同期、削除、Webhook は 403 を返す。Queue バインディングと Cron を除外し、既存 Worker の検証に必要なバックグラウンドハンドラーは処理を実行せず拒否する。リモートマイグレーションは実行しない。未適用のスキーマ変更に依存する PR は、本番スキーマとの互換性が必要になる。
+本番 D1、Cloudflare 登録済みの変数・Secrets、Clef、生成 AI を共有する。画面は PR のコードと静的ファイルで動作する。プレビュー専用の `src/preview.ts` は検索・回答・ヘルスチェック・認証済み同期状況の参照だけを許可し、同期、削除、Webhook は 403 を返す。Queue バインディングと Cron を除外し、既存 Worker の検証に必要なバックグラウンドハンドラーは処理を実行せず拒否する。リモートマイグレーションは実行しない。未適用のスキーマ変更に依存する PR は、本番スキーマとの互換性が必要になる。
 
 既存の `production` GitHub Environment の Cloudflare Secrets と D1 ID、および `DECISIONRAG_DEPLOY_ENABLED=true` を再利用するため、キーの複製は不要。Environment のブランチ制限を設定する場合は、プレビュー対象の `refs/pull/*/merge` も許可する必要がある。本番ジョブ自体は引き続きデフォルトブランチだけで実行する。Cloudflare の既存 Worker では Version URLs（旧 Preview URLs）を有効にする。無効な場合、URL が取得できずジョブは失敗する。
 
@@ -124,7 +123,7 @@ Wrangler はファイル名で適用済みのマイグレーションを記録�
 | GET | `/health` | プロセスの生存確認。外部サービス疎通は確認しない |
 | POST | `/sync` | 全リポジトリの同期をキューに登録 |
 | GET | `/sync/status` | 同期ジョブ、失敗、ソース数、最終同期カーソル |
-| POST | `/search` | 階層探索による根拠・出典・Jev判定トレース |
+| POST | `/search` | 階層探索による根拠・出典・Clef判定トレース |
 | POST | `/answer` | 根拠を検索し、生成モデルがあれば出典付きの主張を生成・検証する。モデルがなければ根拠を評価する |
 | POST | `/admin/purge` | `{"repo":"TrainLCD/Example"}` の索引を削除 |
 | POST | `/webhooks/github` | GitHubイベント受信。署名必須 |
@@ -140,7 +139,7 @@ curl "$RAG_URL/search" \
 
 公開範囲は検索ごとに GitHub で再確認し、ETag に対して `304 Not Modified` が返った場合はリポジトリ一覧の応答を再利用する。確認に失敗した場合は検索を中止する。
 
-レスポンスには `evidence`（引用ID、ソースID、本文区間、URL、repo、状態等のmetadata、関連度）、`hit_count`（選択文書の中で関連ありと判定した本文区間の総数）、`trace`（ステージ、候補数、モデル、呼び出し数、使用トークン、時間）、`elapsed_ms` を含む。`timings` には公開範囲の確認、D1取得、Jev判定、要約生成、検索完了までの時間をミリ秒で記録する。公開範囲の確認と最初のD1取得は並行するため、工程別の時間には重複がある。検索はソース間の網羅的な調査を保証せず、各階層の上位予算により枝刈りする。
+レスポンスには `evidence`（引用ID、ソースID、本文区間、URL、repo、状態等のmetadata、関連度）、`hit_count`（選択文書の中で関連ありと判定した本文区間の総数）、`trace`（ステージ、候補数、モデル、呼び出し数、使用トークン、時間）、`elapsed_ms` を含む。`timings` には公開範囲の確認、D1取得、Clef判定、要約生成、検索完了までの時間をミリ秒で記録する。公開範囲の確認と最初のD1取得は並行するため、工程別の時間には重複がある。検索はソース間の網羅的な調査を保証せず、各階層の上位予算により枝刈りする。
 
 既定の生成モデルは1回の呼び出しで、質問への直接の回答（最大3文）、続いて資料ごとの要約を生成する。`answer` に回答、`ticket_summaries` に出典ID・本文・引用IDを持つ検証済みの要約を返す。同じチケットの本文区間はまとめ、生成対象は上位20区間に限る。回答と各要約はいずれも根拠検証を通過したものだけを表示する。`generate_answer` ステージには、生成モデルと所要時間、プロバイダーが返した入出力トークン数を記録する。
 
@@ -156,7 +155,7 @@ curl "$RAG_URL/search" \
 - `verification_failed`: 生成結果を根拠検査で却下。回答はnull。
 - `generation_unavailable`: 既定の生成モデルから利用できる要約を得られなかった。検索で得た資料は返す。
 
-JSON応答では、Jevや別途設定した生成サービスの失敗はHTTP 502、検索予算超過はHTTP 422。SSE応答でも開始前のエラーは同じHTTPステータスを返す。SSE開始後に回答処理が例外を送出した場合は、HTTP 200のストリーム内で `error` イベントを通知する。既定の生成モデルを利用できない場合は、`result` の `generation_unavailable` で通知する。
+JSON応答では、Clefや別途設定した生成サービスの失敗はHTTP 502、検索予算超過はHTTP 422。SSE応答でも開始前のエラーは同じHTTPステータスを返す。SSE開始後に回答処理が例外を送出した場合は、HTTP 200のストリーム内で `error` イベントを通知する。既定の生成モデルを利用できない場合は、`result` の `generation_unavailable` で通知する。
 
 ## GitHub Webhook
 
@@ -170,7 +169,7 @@ Org Webhookまたは各リポジトリのWebhookを、デプロイ先の `/webho
 
 ## 制限と次の評価
 
-- 自動テストのJev・生成・GitHub通信はモック。検索精度と応答時間は質問やデータ量によって変わる。
+- 自動テストのClef・生成・GitHub通信はモック。検索精度と応答時間は質問やデータ量によって変わる。
 - 既定で選択枝内20,000文書、選択文書内4,000本文区間まで。超過は明示的に失敗する。文書候補をバッチ単位で評価するため、選択された文書が多いほどAPI呼び出し数が増える。
 - `MAX_SCREENED_DOCUMENTS`（最大100,000）、`SUPPORT_THRESHOLD`、`CONFLICT_THRESHOLD` を環境変数で変更可能。
 - 1ソース600KB、GitHubコメント等のページネーション100ページが上限。切り捨てず同期エラーにする。Gitツリーがtruncatedの場合も同期エラーにする。非常に大きい文書群・スレッドは追加の分割取り込みが必要。
