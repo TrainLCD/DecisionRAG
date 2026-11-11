@@ -1,0 +1,1205 @@
+{
+  "tested_head": "d922036fc26dc91d01fe5a6eb79179d05a9c51e0",
+  "production_head": "e625932ac90202a02fd3d5c7ff96d40b70532c9e",
+  "public_only": true,
+  "rows": [
+    {
+      "query_case": "underground",
+      "model": "main",
+      "page": 1,
+      "elapsed_ms": 11580,
+      "timings": {
+        "scope_ms": 1112,
+        "storage_ms": 1032,
+        "model_ms": 9436,
+        "generation_ms": 0,
+        "retrieval_ms": 11580
+      },
+      "evidence": [
+        {
+          "id": "TrainLCD/MobileApp#423:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/423",
+          "title": "位置情報更新をiosで止めないようにした"
+        },
+        {
+          "id": "TrainLCD/MobileApp#420:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/420",
+          "title": "iOS版 トンネル通過時間が長いと移動していないとカウントされて位置情報追跡が切れる"
+        },
+        {
+          "id": "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+          "url": "https://github.com/TrainLCD/THQ/blob/37208ef7dbac9af640a41cf85c205474377dc277/docs/location-freeze-regression.md",
+          "title": "docs/location-freeze-regression.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/background-location-diagnostics.md",
+          "title": "docs/background-location-diagnostics.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp#402:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/402",
+          "title": "地下鉄ではBestForNavigation&メイン画面行かない限り位置を取り続けない"
+        },
+        {
+          "id": "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+          "url": "https://github.com/TrainLCD/THQ/blob/37208ef7dbac9af640a41cf85c205474377dc277/docs/location-freeze-regression.md",
+          "title": "docs/location-freeze-regression.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp:docs/location-simulation.md:4",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+          "title": "docs/location-simulation.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp#263:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/263",
+          "title": "バックグラウンドに移しているとき地下鉄でも正常に動作する理由を調べる"
+        },
+        {
+          "id": "TrainLCD/MobileApp:docs/location-simulation.md:0",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+          "title": "docs/location-simulation.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp:docs/location-simulation.md:3",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+          "title": "docs/location-simulation.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp:docs/location-simulation.md:6",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+          "title": "docs/location-simulation.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp:docs/location-simulation.md:5",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+          "title": "docs/location-simulation.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp:docs/location-simulation.md:2",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+          "title": "docs/location-simulation.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp#267:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/267",
+          "title": "位置情報精度設定と開発者モード有効化"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "document_screening",
+          "calls": 71,
+          "candidates": 2713,
+          "elapsed_ms": 5606,
+          "model": [
+            "clef-flash"
+          ]
+        },
+        {
+          "stage": "passage_scoring",
+          "calls": 3,
+          "candidates": 53,
+          "elapsed_ms": 2487,
+          "model": [
+            "clef"
+          ]
+        },
+        {
+          "stage": "choice_rerank",
+          "calls": 1,
+          "candidates": 14,
+          "elapsed_ms": 1343,
+          "model": [
+            "clef"
+          ]
+        }
+      ],
+      "wall_ms": 17807
+    },
+    {
+      "query_case": "underground",
+      "model": "flash",
+      "page": 1,
+      "elapsed_ms": 8774,
+      "timings": {
+        "scope_ms": 924,
+        "storage_ms": 1215,
+        "model_ms": 6635,
+        "generation_ms": 0,
+        "retrieval_ms": 8774
+      },
+      "evidence": [
+        {
+          "id": "TrainLCD/MobileApp#545:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/545",
+          "title": "Location.Accuracy.BestForNavigationは使わないべきなのでは？"
+        },
+        {
+          "id": "TrainLCD/MobileApp#402:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/402",
+          "title": "地下鉄ではBestForNavigation&メイン画面行かない限り位置を取り続けない"
+        },
+        {
+          "id": "TrainLCD/MobileApp:docs/changelog.md:0",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+          "title": "docs/changelog.md"
+        },
+        {
+          "id": "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+          "url": "https://github.com/TrainLCD/THQ/blob/37208ef7dbac9af640a41cf85c205474377dc277/docs/location-freeze-regression.md",
+          "title": "docs/location-freeze-regression.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp#546:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/546",
+          "title": "Location.Accuracy.BestForNavigationを使わないようにした"
+        },
+        {
+          "id": "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/background-location-diagnostics.md",
+          "title": "docs/background-location-diagnostics.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp#423:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/423",
+          "title": "位置情報更新をiosで止めないようにした"
+        },
+        {
+          "id": "TrainLCD/MobileApp#263:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/263",
+          "title": "バックグラウンドに移しているとき地下鉄でも正常に動作する理由を調べる"
+        },
+        {
+          "id": "TrainLCD/MobileApp#416:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/416",
+          "title": "位置情報精度改善"
+        },
+        {
+          "id": "TrainLCD/MobileApp#401:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/401",
+          "title": "地下鉄に乗っている時だけBestForNavigationに精度を上げる"
+        },
+        {
+          "id": "TrainLCD/MobileApp#420:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/420",
+          "title": "iOS版 トンネル通過時間が長いと移動していないとカウントされて位置情報追跡が切れる"
+        },
+        {
+          "id": "TrainLCD/MobileApp#267:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/267",
+          "title": "位置情報精度設定と開発者モード有効化"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "page_screening",
+          "calls": 40,
+          "candidates": 114,
+          "elapsed_ms": 1406,
+          "model": [
+            "clef-flash"
+          ]
+        },
+        {
+          "stage": "document_screening",
+          "calls": 81,
+          "candidates": 1152,
+          "elapsed_ms": 3933,
+          "model": [
+            "clef-flash",
+            "clef"
+          ]
+        },
+        {
+          "stage": "passage_scoring",
+          "calls": 4,
+          "candidates": 20,
+          "elapsed_ms": 663,
+          "model": [
+            "clef"
+          ]
+        },
+        {
+          "stage": "choice_rerank",
+          "calls": 1,
+          "candidates": 12,
+          "elapsed_ms": 633,
+          "model": [
+            "clef"
+          ]
+        }
+      ],
+      "wall_ms": 15308
+    },
+    {
+      "query_case": "underground",
+      "model": "flash",
+      "page": 2,
+      "elapsed_ms": 1996,
+      "timings": {
+        "scope_ms": 897,
+        "storage_ms": 207,
+        "model_ms": 892,
+        "generation_ms": 0,
+        "retrieval_ms": 1996
+      },
+      "evidence": [
+        {
+          "id": "TrainLCD/MobileApp#1:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/1",
+          "title": "電波の悪い状況での対応強化"
+        },
+        {
+          "id": "TrainLCD/MobileApp#348:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/348",
+          "title": "v1.5"
+        },
+        {
+          "id": "TrainLCD/MobileApp#1032:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/1032",
+          "title": "起動の高速化"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "passage_scoring",
+          "calls": 4,
+          "candidates": 20,
+          "elapsed_ms": 631,
+          "model": [
+            "clef"
+          ]
+        },
+        {
+          "stage": "choice_rerank",
+          "calls": 1,
+          "candidates": 3,
+          "elapsed_ms": 261,
+          "model": [
+            "clef"
+          ]
+        }
+      ],
+      "wall_ms": 8275
+    },
+    {
+      "query_case": "underground",
+      "model": "flash",
+      "page": 3,
+      "elapsed_ms": 2338,
+      "timings": {
+        "scope_ms": 977,
+        "storage_ms": 154,
+        "model_ms": 1207,
+        "generation_ms": 0,
+        "retrieval_ms": 2338
+      },
+      "evidence": [
+        {
+          "id": "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+          "url": "https://github.com/TrainLCD/THQ/blob/37208ef7dbac9af640a41cf85c205474377dc277/docs/location-freeze-regression.md",
+          "title": "docs/location-freeze-regression.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp#764:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/764",
+          "title": "強制位置情報更新"
+        },
+        {
+          "id": "TrainLCD/MobileApp#761:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/761",
+          "title": "強制位置情報更新機能を実装する"
+        },
+        {
+          "id": "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/background-location-diagnostics.md",
+          "title": "docs/background-location-diagnostics.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp#851:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/851",
+          "title": "位置情報取得失敗時の文言変更"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "passage_scoring",
+          "calls": 4,
+          "candidates": 20,
+          "elapsed_ms": 730,
+          "model": [
+            "clef"
+          ]
+        },
+        {
+          "stage": "choice_rerank",
+          "calls": 1,
+          "candidates": 5,
+          "elapsed_ms": 477,
+          "model": [
+            "clef"
+          ]
+        }
+      ],
+      "wall_ms": 8580
+    },
+    {
+      "query_case": "underground",
+      "model": "flash",
+      "page": 4,
+      "elapsed_ms": 2548,
+      "timings": {
+        "scope_ms": 853,
+        "storage_ms": 156,
+        "model_ms": 1539,
+        "generation_ms": 0,
+        "retrieval_ms": 2548
+      },
+      "evidence": [
+        {
+          "id": "TrainLCD/MobileApp:docs/changelog.md:3",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+          "title": "docs/changelog.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp:docs/location-simulation.md:6",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+          "title": "docs/location-simulation.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp:docs/changelog.md:2",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+          "title": "docs/changelog.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp:docs/location-simulation.md:5",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+          "title": "docs/location-simulation.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp:docs/location-simulation.md:2",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+          "title": "docs/location-simulation.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp:docs/location-simulation.md:4",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+          "title": "docs/location-simulation.md"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "passage_scoring",
+          "calls": 4,
+          "candidates": 20,
+          "elapsed_ms": 735,
+          "model": [
+            "clef"
+          ]
+        },
+        {
+          "stage": "choice_rerank",
+          "calls": 1,
+          "candidates": 6,
+          "elapsed_ms": 804,
+          "model": [
+            "clef"
+          ]
+        }
+      ],
+      "wall_ms": 8711
+    },
+    {
+      "query_case": "underground",
+      "model": "flash",
+      "page": 5,
+      "elapsed_ms": 2115,
+      "timings": {
+        "scope_ms": 792,
+        "storage_ms": 362,
+        "model_ms": 961,
+        "generation_ms": 0,
+        "retrieval_ms": 2115
+      },
+      "evidence": [
+        {
+          "id": "TrainLCD/MobileApp:docs/changelog.md:12",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+          "title": "docs/changelog.md"
+        },
+        {
+          "id": "TrainLCD/MobileApp:docs/changelog.md:13",
+          "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+          "title": "docs/changelog.md"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "passage_scoring",
+          "calls": 2,
+          "candidates": 6,
+          "elapsed_ms": 543,
+          "model": [
+            "clef"
+          ]
+        },
+        {
+          "stage": "choice_rerank",
+          "calls": 1,
+          "candidates": 2,
+          "elapsed_ms": 418,
+          "model": [
+            "clef"
+          ]
+        }
+      ],
+      "wall_ms": 8768
+    },
+    {
+      "query_case": "metro",
+      "model": "main",
+      "page": 1,
+      "elapsed_ms": 9226,
+      "timings": {
+        "scope_ms": 898,
+        "storage_ms": 913,
+        "model_ms": 7415,
+        "generation_ms": 0,
+        "retrieval_ms": 9226
+      },
+      "evidence": [
+        {
+          "id": "TrainLCD/MobileApp#268:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/268",
+          "title": "英語環境・東京メトロテーマでSoonとArriving atが交互に表示される"
+        },
+        {
+          "id": "TrainLCD/MobileApp#261:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/261",
+          "title": "メトロ風のヘッダーの色がおかしい"
+        },
+        {
+          "id": "TrainLCD/MobileApp#258:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/258",
+          "title": "メトロテーマ改善時のバグ修正"
+        },
+        {
+          "id": "TrainLCD/MobileApp#256:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/256",
+          "title": "メトロテーマを田園都市線の色違い程度にする"
+        },
+        {
+          "id": "TrainLCD/MobileApp#257:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/257",
+          "title": "東京メトロデザイン変更と特急対応、バグ修正"
+        },
+        {
+          "id": "TrainLCD/MobileApp#1022:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/1022",
+          "title": "直通がある路線で直通情報がすぐに反映されない時がある？"
+        },
+        {
+          "id": "TrainLCD/MobileApp#259:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/259",
+          "title": "メトロテーマ更新後のバグ修正"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "document_screening",
+          "calls": 71,
+          "candidates": 2713,
+          "elapsed_ms": 5174,
+          "model": [
+            "clef-flash"
+          ]
+        },
+        {
+          "stage": "passage_scoring",
+          "calls": 1,
+          "candidates": 33,
+          "elapsed_ms": 2056,
+          "model": [
+            "clef"
+          ]
+        },
+        {
+          "stage": "choice_rerank",
+          "calls": 1,
+          "candidates": 7,
+          "elapsed_ms": 185,
+          "model": [
+            "clef"
+          ]
+        }
+      ],
+      "wall_ms": 15479
+    },
+    {
+      "query_case": "metro",
+      "model": "flash",
+      "page": 1,
+      "elapsed_ms": 8109,
+      "timings": {
+        "scope_ms": 1089,
+        "storage_ms": 1135,
+        "model_ms": 5885,
+        "generation_ms": 0,
+        "retrieval_ms": 8109
+      },
+      "evidence": [
+        {
+          "id": "TrainLCD/MobileApp#268:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/268",
+          "title": "英語環境・東京メトロテーマでSoonとArriving atが交互に表示される"
+        },
+        {
+          "id": "TrainLCD/MobileApp#257:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/257",
+          "title": "東京メトロデザイン変更と特急対応、バグ修正"
+        },
+        {
+          "id": "TrainLCD/MobileApp#269:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/269",
+          "title": "翻訳関係のバグ修正"
+        },
+        {
+          "id": "TrainLCD/MobileApp#258:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/258",
+          "title": "メトロテーマ改善時のバグ修正"
+        },
+        {
+          "id": "TrainLCD/MobileApp#831:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/831",
+          "title": "メトロテーマでひらがなステートでもただいまを出す"
+        },
+        {
+          "id": "TrainLCD/MobileApp#402:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/402",
+          "title": "地下鉄ではBestForNavigation&メイン画面行かない限り位置を取り続けない"
+        },
+        {
+          "id": "TrainLCD/MobileApp#262:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/262",
+          "title": "メトロヘッダー微調整"
+        },
+        {
+          "id": "TrainLCD/MobileApp#259:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/259",
+          "title": "メトロテーマ更新後のバグ修正"
+        },
+        {
+          "id": "TrainLCD/MobileApp#1077:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/1077",
+          "title": "通過駅がちゃんと通過表示になるようにした"
+        },
+        {
+          "id": "TrainLCD/MobileApp#830:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/830",
+          "title": "ひらがな表記の状態でも「ただいま」を出さないといけない"
+        },
+        {
+          "id": "TrainLCD/MobileApp#686:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/686",
+          "title": "メトロ/TY/埼京線テーマヘッダーアニメーション改善"
+        },
+        {
+          "id": "TrainLCD/MobileApp#1022:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/1022",
+          "title": "直通がある路線で直通情報がすぐに反映されない時がある？"
+        },
+        {
+          "id": "TrainLCD/MobileApp#1023:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/1023",
+          "title": "急行種別が自動選択されないバグを修正"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "page_screening",
+          "calls": 40,
+          "candidates": 114,
+          "elapsed_ms": 1357,
+          "model": [
+            "clef-flash"
+          ]
+        },
+        {
+          "stage": "document_screening",
+          "calls": 66,
+          "candidates": 1128,
+          "elapsed_ms": 3524,
+          "model": [
+            "clef-flash",
+            "clef"
+          ]
+        },
+        {
+          "stage": "passage_scoring",
+          "calls": 4,
+          "candidates": 20,
+          "elapsed_ms": 589,
+          "model": [
+            "clef"
+          ]
+        },
+        {
+          "stage": "choice_rerank",
+          "calls": 1,
+          "candidates": 13,
+          "elapsed_ms": 415,
+          "model": [
+            "clef"
+          ]
+        }
+      ],
+      "wall_ms": 13623
+    },
+    {
+      "query_case": "metro",
+      "model": "flash",
+      "page": 2,
+      "elapsed_ms": 1832,
+      "timings": {
+        "scope_ms": 977,
+        "storage_ms": 174,
+        "model_ms": 681,
+        "generation_ms": 0,
+        "retrieval_ms": 1832
+      },
+      "evidence": [
+        {
+          "id": "TrainLCD/MobileApp#261:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/261",
+          "title": "メトロ風のヘッダーの色がおかしい"
+        },
+        {
+          "id": "TrainLCD/MobileApp#550:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/550",
+          "title": "英語のフォントサイズ調整廃止&15文字を長大駅名に変更"
+        },
+        {
+          "id": "TrainLCD/MobileApp#549:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/549",
+          "title": "\b駅名のフォントサイズ変更閾値を緩和する"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "passage_scoring",
+          "calls": 4,
+          "candidates": 20,
+          "elapsed_ms": 430,
+          "model": [
+            "clef"
+          ]
+        },
+        {
+          "stage": "choice_rerank",
+          "calls": 1,
+          "candidates": 3,
+          "elapsed_ms": 251,
+          "model": [
+            "clef"
+          ]
+        }
+      ],
+      "wall_ms": 8178
+    },
+    {
+      "query_case": "metro",
+      "model": "flash",
+      "page": 3,
+      "elapsed_ms": 1436,
+      "timings": {
+        "scope_ms": 737,
+        "storage_ms": 173,
+        "model_ms": 526,
+        "generation_ms": 0,
+        "retrieval_ms": 1436
+      },
+      "evidence": [
+        {
+          "id": "TrainLCD/MobileApp#541:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/541",
+          "title": "通過中直近の停車駅が表示されてしまっている"
+        },
+        {
+          "id": "TrainLCD/MobileApp#542:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/542",
+          "title": "出発状態を経由しない状態で通過駅に停車したときに次へを出すようにした"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "passage_scoring",
+          "calls": 3,
+          "candidates": 11,
+          "elapsed_ms": 415,
+          "model": [
+            "clef"
+          ]
+        },
+        {
+          "stage": "choice_rerank",
+          "calls": 1,
+          "candidates": 2,
+          "elapsed_ms": 111,
+          "model": [
+            "clef"
+          ]
+        }
+      ],
+      "wall_ms": 7838
+    },
+    {
+      "query_case": "through",
+      "model": "main",
+      "page": 1,
+      "elapsed_ms": 9646,
+      "timings": {
+        "scope_ms": 995,
+        "storage_ms": 1348,
+        "model_ms": 7303,
+        "generation_ms": 0,
+        "retrieval_ms": 9646
+      },
+      "evidence": [
+        {
+          "id": "TrainLCD/MobileApp#1022:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/1022",
+          "title": "直通がある路線で直通情報がすぐに反映されない時がある？"
+        },
+        {
+          "id": "TrainLCD/Website#108:1",
+          "url": "https://github.com/TrainLCD/Website/pull/108",
+          "title": "Add POST API endpoint for status/incident updates with SSE distribution"
+        },
+        {
+          "id": "TrainLCD/Website#108:5",
+          "url": "https://github.com/TrainLCD/Website/pull/108",
+          "title": "Add POST API endpoint for status/incident updates with SSE distribution"
+        },
+        {
+          "id": "TrainLCD/Website#113:0",
+          "url": "https://github.com/TrainLCD/Website/pull/113",
+          "title": "Update Redis TTL to one hour for status caching"
+        },
+        {
+          "id": "TrainLCD/Website#108:15",
+          "url": "https://github.com/TrainLCD/Website/pull/108",
+          "title": "Add POST API endpoint for status/incident updates with SSE distribution"
+        },
+        {
+          "id": "TrainLCD/Website#108:2",
+          "url": "https://github.com/TrainLCD/Website/pull/108",
+          "title": "Add POST API endpoint for status/incident updates with SSE distribution"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "document_screening",
+          "calls": 71,
+          "candidates": 2713,
+          "elapsed_ms": 4821,
+          "model": [
+            "clef-flash"
+          ]
+        },
+        {
+          "stage": "passage_scoring",
+          "calls": 4,
+          "candidates": 72,
+          "elapsed_ms": 2065,
+          "model": [
+            "clef"
+          ]
+        },
+        {
+          "stage": "choice_rerank",
+          "calls": 1,
+          "candidates": 6,
+          "elapsed_ms": 417,
+          "model": [
+            "clef"
+          ]
+        }
+      ],
+      "wall_ms": 16027
+    },
+    {
+      "query_case": "through",
+      "model": "flash",
+      "page": 1,
+      "elapsed_ms": 7488,
+      "timings": {
+        "scope_ms": 1021,
+        "storage_ms": 1492,
+        "model_ms": 4975,
+        "generation_ms": 0,
+        "retrieval_ms": 7488
+      },
+      "evidence": [
+        {
+          "id": "TrainLCD/MobileApp#1022:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/1022",
+          "title": "直通がある路線で直通情報がすぐに反映されない時がある？"
+        },
+        {
+          "id": "TrainLCD/MobileApp#1023:0",
+          "url": "https://github.com/TrainLCD/MobileApp/pull/1023",
+          "title": "急行種別が自動選択されないバグを修正"
+        },
+        {
+          "id": "TrainLCD/StationAPI#653:0",
+          "url": "https://github.com/TrainLCD/StationAPI/pull/653",
+          "title": "西武豊島線直通を壮大にバグらせてた"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "page_screening",
+          "calls": 40,
+          "candidates": 114,
+          "elapsed_ms": 1705,
+          "model": [
+            "clef-flash"
+          ]
+        },
+        {
+          "stage": "document_screening",
+          "calls": 63,
+          "candidates": 864,
+          "elapsed_ms": 2484,
+          "model": [
+            "clef-flash",
+            "clef"
+          ]
+        },
+        {
+          "stage": "passage_scoring",
+          "calls": 4,
+          "candidates": 20,
+          "elapsed_ms": 576,
+          "model": [
+            "clef"
+          ]
+        },
+        {
+          "stage": "choice_rerank",
+          "calls": 1,
+          "candidates": 3,
+          "elapsed_ms": 210,
+          "model": [
+            "clef"
+          ]
+        }
+      ],
+      "wall_ms": 14226
+    },
+    {
+      "query_case": "through",
+      "model": "flash",
+      "page": 2,
+      "elapsed_ms": 1873,
+      "timings": {
+        "scope_ms": 974,
+        "storage_ms": 351,
+        "model_ms": 548,
+        "generation_ms": 0,
+        "retrieval_ms": 1873
+      },
+      "evidence": [
+        {
+          "id": "TrainLCD/MobileApp#919:0",
+          "url": "https://github.com/TrainLCD/MobileApp/issues/919",
+          "title": "直通後に前の路線の最後の駅が前路線扱いになる"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "passage_scoring",
+          "calls": 4,
+          "candidates": 20,
+          "elapsed_ms": 548,
+          "model": [
+            "clef"
+          ]
+        }
+      ],
+      "wall_ms": 8092
+    },
+    {
+      "query_case": "through",
+      "model": "flash",
+      "page": 3,
+      "elapsed_ms": 1354,
+      "timings": {
+        "scope_ms": 693,
+        "storage_ms": 149,
+        "model_ms": 512,
+        "generation_ms": 0,
+        "retrieval_ms": 1354
+      },
+      "evidence": [
+        {
+          "id": "TrainLCD/StationAPI:AGENTS.md:4",
+          "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/AGENTS.md",
+          "title": "AGENTS.md"
+        }
+      ],
+      "trace": [
+        {
+          "stage": "passage_scoring",
+          "calls": 4,
+          "candidates": 20,
+          "elapsed_ms": 512,
+          "model": [
+            "clef"
+          ]
+        }
+      ],
+      "wall_ms": 7599
+    },
+    {
+      "query_case": "through",
+      "model": "flash",
+      "page": 4,
+      "elapsed_ms": 1752,
+      "timings": {
+        "scope_ms": 850,
+        "storage_ms": 333,
+        "model_ms": 569,
+        "generation_ms": 0,
+        "retrieval_ms": 1752
+      },
+      "evidence": [],
+      "trace": [
+        {
+          "stage": "passage_scoring",
+          "calls": 4,
+          "candidates": 20,
+          "elapsed_ms": 569,
+          "model": [
+            "clef"
+          ]
+        }
+      ],
+      "wall_ms": 7916
+    },
+    {
+      "query_case": "through",
+      "model": "flash",
+      "page": 5,
+      "elapsed_ms": 1393,
+      "timings": {
+        "scope_ms": 767,
+        "storage_ms": 329,
+        "model_ms": 297,
+        "generation_ms": 0,
+        "retrieval_ms": 1393
+      },
+      "evidence": [],
+      "trace": [
+        {
+          "stage": "passage_ranking",
+          "calls": 1,
+          "candidates": 3,
+          "elapsed_ms": 297,
+          "model": [
+            "clef"
+          ]
+        }
+      ],
+      "wall_ms": 7682
+    }
+  ],
+  "repeat_runs": [
+    {
+      "model": "flash",
+      "page": 1,
+      "ms": 9255,
+      "wall_ms": 16718,
+      "error": null,
+      "sources": [
+        "https://github.com/TrainLCD/MobileApp/issues/545",
+        "https://github.com/TrainLCD/MobileApp/pull/402",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+        "https://github.com/TrainLCD/THQ/blob/37208ef7dbac9af640a41cf85c205474377dc277/docs/location-freeze-regression.md",
+        "https://github.com/TrainLCD/MobileApp/pull/546",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/background-location-diagnostics.md",
+        "https://github.com/TrainLCD/MobileApp/pull/423",
+        "https://github.com/TrainLCD/MobileApp/issues/263",
+        "https://github.com/TrainLCD/MobileApp/pull/416",
+        "https://github.com/TrainLCD/MobileApp/issues/401",
+        "https://github.com/TrainLCD/MobileApp/issues/420",
+        "https://github.com/TrainLCD/MobileApp/pull/267"
+      ],
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "calls": 40,
+          "elapsed_ms": 1430
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1152,
+          "calls": 81,
+          "elapsed_ms": 4109
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 20,
+          "calls": 4,
+          "elapsed_ms": 601
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 12,
+          "calls": 1,
+          "elapsed_ms": 662
+        }
+      ],
+      "pages": 5
+    },
+    {
+      "model": "main",
+      "page": 1,
+      "ms": 11750,
+      "wall_ms": 19835,
+      "error": null,
+      "sources": [
+        "https://github.com/TrainLCD/MobileApp/pull/423",
+        "https://github.com/TrainLCD/MobileApp/issues/420",
+        "https://github.com/TrainLCD/THQ/blob/37208ef7dbac9af640a41cf85c205474377dc277/docs/location-freeze-regression.md",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/background-location-diagnostics.md",
+        "https://github.com/TrainLCD/MobileApp/pull/402",
+        "https://github.com/TrainLCD/THQ/blob/37208ef7dbac9af640a41cf85c205474377dc277/docs/location-freeze-regression.md",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+        "https://github.com/TrainLCD/MobileApp/issues/263",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+        "https://github.com/TrainLCD/MobileApp/pull/267"
+      ],
+      "trace": [
+        {
+          "stage": "document_screening",
+          "candidates": 2713,
+          "calls": 71,
+          "elapsed_ms": 5795
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 53,
+          "calls": 3,
+          "elapsed_ms": 2426
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 14,
+          "calls": 1,
+          "elapsed_ms": 1366
+        }
+      ],
+      "pages": null
+    },
+    {
+      "model": "flash",
+      "page": 1,
+      "ms": 9206,
+      "wall_ms": 15612,
+      "error": null,
+      "sources": [
+        "https://github.com/TrainLCD/MobileApp/issues/545",
+        "https://github.com/TrainLCD/MobileApp/pull/402",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+        "https://github.com/TrainLCD/THQ/blob/37208ef7dbac9af640a41cf85c205474377dc277/docs/location-freeze-regression.md",
+        "https://github.com/TrainLCD/MobileApp/pull/546",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/background-location-diagnostics.md",
+        "https://github.com/TrainLCD/MobileApp/pull/423",
+        "https://github.com/TrainLCD/MobileApp/issues/263",
+        "https://github.com/TrainLCD/MobileApp/pull/416",
+        "https://github.com/TrainLCD/MobileApp/issues/401",
+        "https://github.com/TrainLCD/MobileApp/issues/420",
+        "https://github.com/TrainLCD/MobileApp/pull/267"
+      ],
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "calls": 40,
+          "elapsed_ms": 1582
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1152,
+          "calls": 81,
+          "elapsed_ms": 4188
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 20,
+          "calls": 4,
+          "elapsed_ms": 936
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 12,
+          "calls": 1,
+          "elapsed_ms": 705
+        }
+      ],
+      "pages": 5
+    },
+    {
+      "model": "main",
+      "page": 1,
+      "ms": 10596,
+      "wall_ms": 17495,
+      "error": null,
+      "sources": [
+        "https://github.com/TrainLCD/MobileApp/pull/423",
+        "https://github.com/TrainLCD/MobileApp/issues/420",
+        "https://github.com/TrainLCD/THQ/blob/37208ef7dbac9af640a41cf85c205474377dc277/docs/location-freeze-regression.md",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/background-location-diagnostics.md",
+        "https://github.com/TrainLCD/MobileApp/pull/402",
+        "https://github.com/TrainLCD/THQ/blob/37208ef7dbac9af640a41cf85c205474377dc277/docs/location-freeze-regression.md",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+        "https://github.com/TrainLCD/MobileApp/issues/263",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+        "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+        "https://github.com/TrainLCD/MobileApp/pull/267"
+      ],
+      "trace": [
+        {
+          "stage": "document_screening",
+          "candidates": 2713,
+          "calls": 71,
+          "elapsed_ms": 5182
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 53,
+          "calls": 3,
+          "elapsed_ms": 2344
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 14,
+          "calls": 1,
+          "elapsed_ms": 1408
+        }
+      ],
+      "pages": null
+    }
+  ]
+}

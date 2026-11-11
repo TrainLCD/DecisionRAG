@@ -34,7 +34,7 @@ test('retrieves by shared-context hierarchy without lexical or vector filtering'
     assert.equal(evidence[0]?.source_id, 'TrainLCD/MobileApp#1');
     assert.ok(states.some(s => Object.values(s.candidates || {}).some(t => t.includes('Restore continuous heartbeat')) &&
       Object.values(s.candidates || {}).some(t => t.includes('地下鉄の駅名を修正'))));
-    assert.deepEqual(judge.trace.map(t => t.stage), ['document_screening', 'passage_ranking']);
+    assert.deepEqual(judge.trace.map(t => t.stage), ['document_screening', 'passage_scoring']);
     assert.equal(evidence[0]?.metadata.release_status, 'unknown');
   } finally { restore(); sqlite.close(); }
 });
@@ -129,35 +129,39 @@ test('passage ranking retains matches outside the Choice shortlist', async () =>
     const options = Object.values<string>(state.candidates ?? state.passages);
     calls.push(options);
     const answers = state.candidates
-      ? Object.fromEntries(Object.keys(state.candidates).map((id, i) => [id, { type: 'noul', noul: [0.5, 0.6, 0.7, 0.8][i] }]))
+      ? Object.fromEntries(Object.entries<string>(state.candidates).map(([id, text]) => [id, { type: 'noul', noul: ({ one: 0.5, two: 0.6, three: 0.7, four: 0.8 } as Record<string, number>)[text] }]))
       : { best: { type: 'choice', choice: 'p1', probabilities: { p0: 0.1, p1: 0.9 } } };
     return Response.json({ model: 'test', answers, usage: { input_tokens: 1, output_tokens: 1 } });
   });
   try {
     const judge = new Jev(env);
     const ranked = await judge.rankPassages('query', ['one', 'two', 'three', 'four'].map(id => ({ id, description: id })), 2);
-    assert.deepEqual(calls, [['one', 'two', 'three', 'four'], ['four', 'three']]);
+    assert.deepEqual(calls, [['one'], ['two'], ['three'], ['four'], ['four', 'three']]);
     assert.deepEqual(ranked.map(({ item, probability }) => [item.id, probability]), [['three', 0.7], ['four', 0.8], ['two', 0.6]]);
   } finally { restore(); sqlite.close(); }
 });
 
-test('combined passage ranking uses Choice order and preserves binary relevance', async () => {
+test('isolated passage judgments preserve relevance before comparative Choice ordering', async () => {
   const { env, sqlite } = fixture();
   let calls = 0;
   const restore = mockFetch((_url, init) => {
     calls++;
-    const { questions } = JSON.parse(String(init?.body));
-    assert.deepEqual(Object.fromEntries(Object.entries(questions).map(([id, question]) =>
-      [id, (question as { type: string }).type])), { c0: 'noul', c1: 'noul', best: 'choice' });
+    const { state, questions } = JSON.parse(String(init?.body));
+    if (state.candidates) {
+      const values = Object.values(state.candidates);
+      assert.equal(values.length, 1);
+      assert.deepEqual(Object.keys(questions), ['c0']);
+      return Response.json({ model: 'test', usage: { input_tokens: 1, output_tokens: 1 }, answers: {
+        c0: { type: 'noul', noul: values[0] === 'first' ? 0.9 : 0.6 },
+      } });
+    }
     return Response.json({ model: 'test', usage: { input_tokens: 1, output_tokens: 1 }, answers: {
-      c0: { type: 'noul', noul: 0.9 }, c1: { type: 'noul', noul: 0.6 },
-      best: { type: 'choice', choice: 'c1', probabilities: { c0: 0.1, c1: 0.9 } },
+      best: { type: 'choice', choice: 'p1', probabilities: { p0: 0.1, p1: 0.9 } },
     } });
   });
   try {
-    const judge = new Jev(env);
-    const ranked = await judge.rankPassages('query', ['first', 'second'].map(id => ({ id, description: id })), 2);
-    assert.equal(calls, 1);
+    const ranked = await new Jev(env).rankPassages('query', ['first', 'second'].map(id => ({ id, description: id })), 2);
+    assert.equal(calls, 3);
     assert.deepEqual(ranked.map(({ item, probability }) => [item.id, probability]), [['second', 0.6], ['first', 0.9]]);
   } finally { restore(); sqlite.close(); }
 });
