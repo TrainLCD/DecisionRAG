@@ -301,3 +301,47 @@ test('atomic snapshot guard prevents stale jobs from erasing newer passages', as
   assert.equal(sqlite.prepare('SELECT text FROM passages').get()?.text, 'new content');
   sqlite.close();
 });
+
+
+test('answer SSE preserves authentication and emits sources, drafts, then the verified result', async () => {
+  const { env, sqlite } = fixture();
+  const repo = 'TrainLCD/MobileApp';
+  sqlite.prepare('INSERT INTO repositories(repo,description,default_branch) VALUES(?,?,?)').run(repo, '', 'main');
+  await saveSource(env, { id: repo + '#1', repo, kind: 'issue', title: 'Report', url: 'https://github.com/' + repo + '/issues/1',
+    body: 'A report exists.', metadata: {}, updated_at: '2026-11-11' });
+  const restore = mockFetch((url, init) => {
+    const input = JSON.parse(String(init?.body));
+    if (url.endsWith('/chat/completions')) {
+      assert.equal(input.stream, true);
+      assert.equal(init?.redirect, 'manual');
+      return new Response('data: ' + JSON.stringify({ choices: [{ delta: { content:
+        '{"claims":[{"text":"A report exists.","citations":["p1"]}],"summaries":[]}' } }] }) + '\n\ndata: [DONE]\n\n');
+    }
+    const answers = Object.fromEntries(Object.entries(input.questions).map(([key, value]) => {
+      if ((value as { type: string }).type === 'choice') {
+        const ids = Object.keys(input.state.candidates ?? input.state.passages);
+        return [key, { type: 'choice', choice: ids[0], probabilities: Object.fromEntries(ids.map(id => [id, 1])) }];
+      }
+      return [key, { type: 'noul', noul: key === 'conflict' ? 0 : 1 }];
+    }));
+    return Response.json({ model: 'test', answers, usage: { input_tokens: 1, output_tokens: 1 } });
+  });
+  const request = (token: string) => new Request<unknown, IncomingRequestCfProperties>('https://example.test/answer', { method: 'POST',
+    headers: { Accept: 'text/event-stream', Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: 'Reports?' }) });
+  try {
+    const app = { ...env, ANSWER_MODEL: 'test', ANSWER_API_KEY: 'test' };
+    const rejected = await worker.fetch!(request('invalid'), app, {} as ExecutionContext);
+    assert.equal(rejected.status, 401);
+    assert.match(rejected.headers.get('Content-Type')!, /application\/json/);
+    const response = await worker.fetch!(request(env.API_TOKEN), app, {} as ExecutionContext);
+    assert.match(response.headers.get('Content-Type')!, /text\/event-stream/);
+    assert.equal(response.headers.get('Cache-Control'), 'no-store');
+    const body = await response.text();
+    assert.ok(body.indexOf('event: sources') < body.indexOf('event: draft'));
+    assert.ok(body.indexOf('event: draft') < body.indexOf('event: result'));
+    const final = JSON.parse(body.split('event: result\ndata: ')[1]!.trim());
+    assert.equal(final.status, 'answered');
+    assert.equal(final.answer, 'A report exists. [p1]');
+  } finally { restore(); sqlite.close(); }
+});

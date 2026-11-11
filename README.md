@@ -56,7 +56,7 @@ npx wrangler secret put TYPESAFE_API_KEY
 - `GITHUB_TOKEN`: org内対象リポジトリのMetadata・Contents・Issues・Pull requestsの読み取り権限が必要。リポジトリ作成・書き込み権限は不要。
 - `TYPESAFE_API_KEY`: Jevのキー。[公式APIドキュメント](https://docs.typesafe.ai/api/system-one)を参照。
 
-既定の文章生成には Cloudflare Workers AI の `AI` バインディングを使う。別の生成サービスを使う場合は、`ANSWER_MODEL`・`ANSWER_BASE_URL` を設定し、`wrangler secret put ANSWER_API_KEY` を実行する。OpenAI互換の `/chat/completions` とJSON object出力に対応するプロバイダーを想定する。根拠の本文はJevと設定された生成サービスに送信される。
+既定の文章生成には Cloudflare Workers AI の `AI` バインディングを使う。別の生成サービスを使う場合は、`ANSWER_MODEL`・`ANSWER_BASE_URL` を設定し、`wrangler secret put ANSWER_API_KEY` を実行する。OpenAI互換の `/chat/completions` とJSON object出力に対応するプロバイダーを想定する。サンプルWebアプリではSSEストリーミング（`stream: true`、`stream_options.include_usage: true`）への対応も必要となる。非ストリーミングへのフォールバックはなく、未対応のプロバイダーではWebアプリの要約が失敗する場合がある。Acceptヘッダーを省略したJSON APIは引き続き非ストリーミングで動作する。根拠の本文はJevと設定された生成サービスに送信される。
 
 `workers_dev` は既定で `false`。利用するホスト名のrouteを設定するか、意図して `true` に変更してから `npm run deploy` を実行する。公開資料の検索・要約は認証なしで使える。フィードバック検索、同期、管理APIはBearer認証が必須。WebhookはHMAC-SHA256署名検証が必須。複数ユーザー向けのACLは実装していないため、このAPIトークンを他者に配布しないこと。
 
@@ -144,6 +144,8 @@ curl "$RAG_URL/search" \
 
 既定の生成モデルは1回の呼び出しで、質問への直接の回答（最大3文）、続いて資料ごとの要約を生成する。`answer` に回答、`ticket_summaries` に出典ID・本文・引用IDを持つ検証済みの要約を返す。同じチケットの本文区間はまとめ、生成対象は上位20区間に限る。回答と各要約はいずれも根拠検証を通過したものだけを表示する。`generate_answer` ステージには、生成モデルと所要時間、プロバイダーが返した入出力トークン数を記録する。
 
+サンプルWebアプリの要約はストリーミングで表示する。`POST /answer` に `Accept: text/event-stream` を指定すると、検索完了時の `sources`、生成途中の `draft`、出典検証後の `result` をSSEで返す。`draft` の `answer` / `summaries` は生成途中の文字列配列で、未検証の仮表示にのみ使う。最終 `result` は従来のJSON応答と同じ構造であり、仮表示を必ず置き換える。途中の `error` イベントや `result` のない切断では仮表示を破棄する。検索自体の所要時間は変わらない。Acceptヘッダーを省略したAPI利用は従来のJSON応答を維持する。
+
 `/answer` のstatus:
 
 - `answered`: 質問に答える文章と引用IDを返した。
@@ -154,7 +156,7 @@ curl "$RAG_URL/search" \
 - `verification_failed`: 生成結果を根拠検査で却下。回答はnull。
 - `generation_unavailable`: 既定の生成モデルから利用できる要約を得られなかった。検索で得た資料は返す。
 
-Jevや別途設定した生成サービスの失敗はHTTP 502。検索予算超過はHTTP 422。
+JSON応答では、Jevや別途設定した生成サービスの失敗はHTTP 502、検索予算超過はHTTP 422。SSE応答でも開始前のエラーは同じHTTPステータスを返す。SSE開始後に回答処理が例外を送出した場合は、HTTP 200のストリーム内で `error` イベントを通知する。既定の生成モデルを利用できない場合は、`result` の `generation_unavailable` で通知する。
 
 ## GitHub Webhook
 
