@@ -111,8 +111,14 @@ export async function retrievePlannedPage(query: string, store: RetrievalStore, 
   if (expectedRevision && revision !== expectedRevision) throw new HttpError(409, 'search_results_changed');
   const sourceContext = new Map(passages.filter(p => p.ordinal === 0).map(p =>
     [p.source_id, `${p.title}\nBody excerpt: ${p.text.slice(0, 480)}`]));
+  const referringSources = new Map<string, Set<string>>();
+  for (const passage of passages) for (const id of localReferences(passage.source_id, passage.text)) {
+    if (!sourceContext.has(id) || id === passage.source_id) continue;
+    if (!referringSources.has(id)) referringSources.set(id, new Set());
+    referringSources.get(id)!.add(passage.source_id);
+  }
   const candidates = passages.slice(offset, offset + pageSize).map(p => ({ ...p,
-    description: `${p.title}\nRepository: ${p.repo}\nMetadata: ${JSON.stringify(p.metadata)}\n${p.text}\nExplicitly linked issues: ${localReferences(p.source_id, p.text).filter(id => sourceContext.has(id)).slice(0, 3).map(id => `${id}: ${sourceContext.get(id)}`).join("; ")}` }));
+    description: `${p.title}\nRepository: ${p.repo}\nMetadata: ${JSON.stringify(p.metadata)}\n${p.text}\nExplicitly linked sources: ${[...new Set([...localReferences(p.source_id, p.text), ...referringSources.get(p.source_id) ?? []])].filter(id => sourceContext.has(id)).slice(0, 3).map(id => `${id}: ${sourceContext.get(id)}`).join("; ")}` }));
   const ranked = await judge.rankPassages(query, candidates, choiceShortlistSize);
   const evidence = ranked.map((r, i) => {
     const { description: _, ...passage } = r.item;

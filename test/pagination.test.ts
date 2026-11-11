@@ -127,6 +127,8 @@ test('linked passage context contains scoped body evidence and does not alter re
   judge.rankPassages = async (_query, items) => {
     assert.ok(items[0]!.description.includes('Body-only evidence about underground accuracy'));
     assert.ok(!items[0]!.description.includes('TrainLCD/App#3:'));
+    assert.ok(items[1]!.description.includes('TrainLCD/App#2: Fix'));
+    assert.ok(!items[1]!.description.includes('TrainLCD/App#3:'));
     return items.map(item => ({ item, probability: 0.9 }));
   };
   try {
