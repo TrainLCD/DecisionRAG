@@ -42,19 +42,19 @@ async function until(check) {
   assert.fail('UI did not reach the expected state');
 }
 function expectPage(c, page, count) {
-  const start = page * 20, end = Math.min(start + 20, count);
+  const start = page * 10, end = Math.min(start + 10, count);
   assert.deepEqual(c.cards(), evidence(count).slice(start, end).map(item => 'evidence-' + item.citation));
   for (const nav of c.navs()) {
-    assert.equal(nav.hidden, count <= 20);
+    assert.equal(nav.hidden, count <= 10);
     assert.equal(nav.querySelector('[data-page-label]').textContent, count
-      ? `${page + 1} / ${Math.ceil(count / 20)}ページ（${start + 1}〜${end}件 / ${count}件）` : '');
+      ? `${page + 1} / ${Math.ceil(count / 10)}ページ（${start + 1}〜${end}件 / ${count}件）` : '');
     assert.equal(nav.querySelector('[data-page-step="-1"]').disabled, page === 0);
-    assert.equal(nav.querySelector('[data-page-step="1"]').disabled, page + 1 >= Math.ceil(count / 20));
+    assert.equal(nav.querySelector('[data-page-step="1"]').disabled, page + 1 >= Math.ceil(count / 10));
   }
   assert.match(c.$('result-summary').textContent, new RegExp(`関連する本文：${count}件`));
 }
 
-for (const count of [0, 1, 11, 20, 21, 40, 41, 151]) {
+for (const count of [0, 1, 9, 10, 11, 20, 21, 40, 41, 151]) {
   test(`${count} hits: full totals, exact slices, no duplicate/missing passages or page requests`, async () => {
     const c = client(() => Response.json(result(count)));
     try {
@@ -62,7 +62,7 @@ for (const count of [0, 1, 11, 20, 21, 40, 41, 151]) {
       await until(() => !c.$('search-button').disabled);
       assert.deepEqual(c.requests.map(r => [r.path, r.body]), [['/search', { query: 'test query', include_feedback: false }]]);
       const seen = [];
-      const pages = Math.max(1, Math.ceil(count / 20));
+      const pages = Math.max(1, Math.ceil(count / 10));
       for (let page = 0; page < pages; page++) {
         expectPage(c, page, count);
         seen.push(...c.cards());
@@ -105,7 +105,7 @@ test('answer stream exposes full hits before completion and preserves them throu
     assert.equal(c.requests[0].path, '/answer');
     assert.equal(c.requests[0].headers.Accept, 'text/event-stream');
     send('sources', result(41));
-    await until(() => c.cards().length === 20);
+    await until(() => c.cards().length === 10);
     expectPage(c, 0, 41);
     assert.equal(c.$('search-button').disabled, true);
     send('draft', { answer: ['Partial answer'], summaries: [] });
@@ -117,7 +117,7 @@ test('answer stream exposes full hits before completion and preserves them throu
     await until(() => !c.$('search-button').disabled);
     expectPage(c, 0, 41);
     c.$('answer-panel').querySelector('a[href="#evidence-p41"]').click();
-    expectPage(c, 2, 41);
+    expectPage(c, 4, 41);
     assert.equal(c.window.document.activeElement.id, 'evidence-p41');
     assert.equal(c.requests.length, 1);
   } finally { c.close(); }
