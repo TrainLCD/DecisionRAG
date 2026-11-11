@@ -325,7 +325,7 @@ function renderAnswerProgress(event, data, query) {
   } else if (event === "draft") {
     const panel = $("answer-panel");
     panel.hidden = false;
-    panel.replaceChildren(element("p", "muted", "生成中・出典は未検証"), element("h3", "", "質問への回答"));
+    panel.replaceChildren(element("p", "muted", "生成中"), element("h3", "", "質問への回答"));
     for (const text of data.answer || []) panel.append(element("p", "", text));
     if (data.summaries?.length) {
       panel.append(element("h3", "", "各チケットの要約"));
