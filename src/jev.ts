@@ -70,8 +70,8 @@ export class Jev implements Judge {
     const signal = AbortSignal.timeout(25_000);
     let result: Result;
     try {
-      result = await this.env.AI.run('@cf/cloudflare/clef', {
-        model: 'clef', state, questions,
+      result = await this.env.AI.run('@cf/cloudflare/clef-flash', {
+        model: 'clef-flash', state, questions,
       }, { signal }) as unknown as Result;
     } catch (error) {
       if (signal.aborted) throw new HttpError(502, 'upstream_timeout');
@@ -114,10 +114,7 @@ export class Jev implements Judge {
         return [...await scoreBatch(items.slice(0, middle)), ...await scoreBatch(items.slice(middle))];
       }
     };
-    // Title batches are small. Bound their parallelism without pruning documents
-    // or changing the shared context used by each relevance judgment.
-    const concurrency = documentScreening ? 16 : stage === 'branch_screening' ? 4 : 6;
-    const responses = (await mapConcurrent(batches, concurrency, scoreBatch)).flat();
+    const responses = (await mapConcurrent(batches, stage === 'branch_screening' ? 4 : 6, scoreBatch)).flat();
     const scored = responses.flatMap(r => r.scored).sort((a, b) => b.probability - a.probability);
     this.trace.push({ stage, candidates: candidates.length, selected: scored.slice(0, 12).map(r => r.item.id),
       calls, model: [...new Set(responses.map(r => r.result.model))],

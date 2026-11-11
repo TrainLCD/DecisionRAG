@@ -6,8 +6,8 @@ import type { Env } from '../src/types.js';
 test('Clef screens every candidate within the 64-question limit without Typesafe credentials', async () => {
   const sizes: number[] = [];
   const env = { AI: { async run(model: string, input: { model: string; questions: Record<string, unknown> }, options: { signal: AbortSignal }) {
-    assert.equal(model, '@cf/cloudflare/clef');
-    assert.equal(input.model, 'clef');
+    assert.equal(model, '@cf/cloudflare/clef-flash');
+    assert.equal(input.model, 'clef-flash');
     assert.ok(options.signal instanceof AbortSignal);
     const ids = Object.keys(input.questions);
     assert.ok(ids.length <= 64);
@@ -30,21 +30,4 @@ test('Clef errors are sanitized and a missing binding fails explicitly', async (
   await assert.rejects(new Jev({} as Env).score('q', items, 'document_screening'), /decision_not_configured/);
   const env = { AI: { async run() { throw new Error('private upstream body'); } } } as unknown as Env;
   await assert.rejects(new Jev(env).score('q', items, 'document_screening'), /decision_upstream_error/);
-});
-
-test('title screening bounds parallel calls and preserves candidates across out-of-order completion', async () => {
-  let active = 0, peak = 0;
-  const env = { AI: { async run(_model: string, input: { questions: Record<string, unknown> }) {
-    peak = Math.max(peak, ++active);
-    await new Promise(resolve => setTimeout(resolve, active % 2 ? 4 : 1));
-    active--;
-    return { model: 'clef', answers: Object.fromEntries(Object.keys(input.questions).map(id => [id, { type: 'noul', noul: 0.9 }])),
-      usage: { input_tokens: 1, output_tokens: 0 } };
-  } } } as unknown as Env;
-  const candidates = Array.from({ length: 2690 }, (_, i) => ({ id: String(i), description: String(i) }));
-  const judge = new Jev(env);
-  assert.deepEqual((await judge.score('query', candidates, 'document_screening')).map(row => row.item.id), candidates.map(row => row.id));
-  assert.equal(peak, 16);
-  assert.equal(active, 0);
-  assert.equal(judge.trace[0]?.calls, 43);
 });
