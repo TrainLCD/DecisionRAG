@@ -85,13 +85,22 @@ export async function planRetrieval(query: string, store: RetrievalStore, judge:
   const selectedDocs = documentScores.filter((r, index) => index < budget.documents || r.probability > 0.5).map(r => r.item.id);
   // Explicit links preserve the context of terse fix PRs. One hop only, scoped on both ends.
   const seeds = new Set(selectedDocs);
-  const related = new Set(scopedDocuments.filter(doc => seeds.has(doc.id)).flatMap(doc => doc.references ?? []));
-  for (const doc of scopedDocuments) {
-    if (!seeds.has(doc.id) && (related.has(doc.id) || doc.references?.some(id => seeds.has(id)))) selectedDocs.push(doc.id);
+  const known = new Set(scopedDocuments.map(doc => doc.id));
+  const neighbors = new Map<string, Set<string>>();
+  const link = (seed: string, id: string) => {
+    if (!neighbors.has(seed)) neighbors.set(seed, new Set());
+    neighbors.get(seed)!.add(id);
+  };
+  for (const doc of scopedDocuments) for (const reference of doc.references ?? []) {
+    if (!known.has(reference)) continue;
+    if (seeds.has(doc.id)) link(doc.id, reference);
+    if (seeds.has(reference)) link(reference, doc.id);
   }
+  // Keep a terse fix beside its matching issue, not after every unrelated seed.
+  const orderedIds = [...new Set(selectedDocs.flatMap(id => [id, ...neighbors.get(id) ?? []]))];
   const documentTrace = judge.trace.at(-1);
-  if (documentTrace?.stage === 'document_screening') documentTrace.selected = selectedDocs;
-  return { ids: selectedDocs };
+  if (documentTrace?.stage === 'document_screening') documentTrace.selected = orderedIds;
+  return { ids: orderedIds };
 }
 /** Evaluate only this page's passages; planning can be reused across requests. */
 export async function retrievePlannedPage(query: string, store: RetrievalStore, judge: Judge, plan: RetrievalPlan,
