@@ -34,7 +34,7 @@ test('retrieves by shared-context hierarchy without lexical or vector filtering'
     assert.equal(evidence[0]?.source_id, 'TrainLCD/MobileApp#1');
     assert.ok(states.some(s => Object.values(s.candidates || {}).some(t => t.includes('Restore continuous heartbeat')) &&
       Object.values(s.candidates || {}).some(t => t.includes('地下鉄の駅名を修正'))));
-    assert.deepEqual(judge.trace.map(t => t.stage), ['document_screening', 'passage_ranking']);
+    assert.deepEqual(judge.trace.map(t => t.stage), ['document_screening', 'passage_scoring']);
     assert.equal(evidence[0]?.metadata.release_status, 'unknown');
   } finally { restore(); sqlite.close(); }
 });
@@ -129,14 +129,14 @@ test('passage ranking retains matches outside the Choice shortlist', async () =>
     const options = Object.values<string>(state.candidates ?? state.passages);
     calls.push(options);
     const answers = state.candidates
-      ? Object.fromEntries(Object.keys(state.candidates).map((id, i) => [id, { type: 'noul', noul: [0.5, 0.6, 0.7, 0.8][i] }]))
+      ? Object.fromEntries(Object.entries<string>(state.candidates).map(([id, text]) => [id, { type: 'noul', noul: ({ one: 0.5, two: 0.6, three: 0.7, four: 0.8 } as Record<string, number>)[text] }]))
       : { best: { type: 'choice', choice: 'p1', probabilities: { p0: 0.1, p1: 0.9 } } };
     return Response.json({ model: 'test', answers, usage: { input_tokens: 1, output_tokens: 1 } });
   });
   try {
     const judge = new Jev(env);
     const ranked = await judge.rankPassages('query', ['one', 'two', 'three', 'four'].map(id => ({ id, description: id })), 2);
-    assert.deepEqual(calls, [['one', 'two', 'three', 'four'], ['four', 'three']]);
+    assert.deepEqual(calls, [['one'], ['two'], ['three'], ['four'], ['four', 'three']]);
     assert.deepEqual(ranked.map(({ item, probability }) => [item.id, probability]), [['three', 0.7], ['four', 0.8], ['two', 0.6]]);
   } finally { restore(); sqlite.close(); }
 });
