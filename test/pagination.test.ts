@@ -166,3 +166,22 @@ test('coarse routing splits long descriptions without losing candidates or excee
     assert.deepEqual(new Set(plan.ids), new Set(docs.map(doc => doc.id)));
   } finally { sqlite.close(); }
 });
+
+
+test('coarse grouping respects the full Unicode request budget through the real judge', async () => {
+  const { env, sqlite } = fixture();
+  const docs = Array.from({ length: 130 }, (_, i) => ({ id: `d${i}`, description: `${i}:` + '地下'.repeat(1000) }));
+  let calls = 0;
+  env.AI = { async run(model: string, input: { state: unknown; questions: Record<string, unknown> }) {
+    calls++;
+    const bytes = new TextEncoder().encode(JSON.stringify({ state: input.state, questions: input.questions })).byteLength;
+    assert.ok(bytes + 4096 <= (model.endsWith('clef-flash') ? 24576 : 65536));
+    return { model, answers: Object.fromEntries(Object.keys(input.questions).map(id => [id, { type: 'noul', noul: 0.9 }])),
+      usage: { input_tokens: 1, output_tokens: 0 } };
+  } } as unknown as typeof env.AI;
+  try {
+    const plan = await planRetrieval('質問'.repeat(750), { documents: async () => docs, branches: async () => [], documentPages: async () => [], passages: async () => [] }, new Jev(env));
+    assert.deepEqual(new Set(plan.ids), new Set(docs.map(doc => doc.id)));
+    assert.ok(calls > 1);
+  } finally { sqlite.close(); }
+});

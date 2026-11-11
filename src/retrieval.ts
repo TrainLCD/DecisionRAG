@@ -1,5 +1,5 @@
 import { branches, DOCUMENT_PAGE_SIZE, documentPages, documentsFor, passagesFor, localReferences, type Branch, type DocumentCursor, type SearchScope } from './store.js';
-import { maxCandidateChars, type Judge } from './jev.js';
+import { fitsCoarseScreeningRequest, maxCandidateChars, type Judge } from './jev.js';
 import { boundedNumber, HttpError, type Candidate, type Env, type Passage } from './types.js';
 export interface RetrievalStore {
   documents(limit: number): Promise<Candidate[]>;
@@ -82,7 +82,9 @@ export async function planRetrieval(query: string, store: RetrievalStore, judge:
       members = [];
     };
     for (const document of documents) {
-      if (members.length && (members.length >= 24 || describe([...members, document]).length > maxCandidateChars)) flush();
+      const nextDescription = describe([...members, document]);
+      if (members.length && (members.length >= 24 || nextDescription.length > maxCandidateChars ||
+        !fitsCoarseScreeningRequest(query, nextDescription))) flush();
       members.push(document);
     }
     flush();

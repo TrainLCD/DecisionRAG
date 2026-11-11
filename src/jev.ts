@@ -43,6 +43,11 @@ function screeningRequest(query: string, items: Candidate[], documentScreening: 
   return { state, questions, tokenUpperBound };
 }
 
+/** Check a single coarse group with the same query, questions and wrapper sent to Clef. */
+export function fitsCoarseScreeningRequest(query: string, description: string): boolean {
+  return screeningRequest(query, [{ id: 'group', description }], false, true).tokenUpperBound <= clefTextTokenBudget;
+}
+
 /** Assign one relevance question to each candidate in the shared context. */
 function binaryQuestions(candidates: Candidate[], documentScreening = false, coarse = false, passage = false) {
   return Object.fromEntries(candidates.map((_, i) => [candidateId(i), { type: 'noul',
