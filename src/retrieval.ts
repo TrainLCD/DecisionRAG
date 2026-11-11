@@ -113,9 +113,10 @@ export async function retrievePlannedPage(query: string, store: RetrievalStore, 
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(passages)));
   const revision = Array.from(new Uint8Array(digest), value => value.toString(16).padStart(2, '0')).join('');
   if (expectedRevision && revision !== expectedRevision) throw new HttpError(409, 'search_results_changed');
-  const sourceTitles = new Map(passages.map(p => [p.source_id, p.title]));
+  const sourceContext = new Map(passages.filter(p => p.ordinal === 0).map(p =>
+    [p.source_id, `${p.title}\nBody excerpt: ${p.text.slice(0, 480)}`]));
   const candidates = passages.slice(offset, offset + pageSize).map(p => ({ ...p,
-    description: `${p.title}\nRepository: ${p.repo}\nMetadata: ${JSON.stringify(p.metadata)}\n${p.text}\nExplicitly linked issues: ${localReferences(p.source_id, p.text).filter(id => sourceTitles.has(id)).map(id => `${id}: ${sourceTitles.get(id)}`).join("; ")}` }));
+    description: `${p.title}\nRepository: ${p.repo}\nMetadata: ${JSON.stringify(p.metadata)}\n${p.text}\nExplicitly linked issues: ${localReferences(p.source_id, p.text).filter(id => sourceContext.has(id)).slice(0, 3).map(id => `${id}: ${sourceContext.get(id)}`).join("; ")}` }));
   const ranked = await judge.rankPassages(query, candidates, choiceShortlistSize);
   const evidence = ranked.map((r, i) => {
     const { description: _, ...passage } = r.item;
