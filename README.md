@@ -26,7 +26,7 @@ TrainLCD org の Issue・PR・リポジトリ文書・ユーザーフィード�
 
 初回 `POST /sync` でorg内のアクセス可能なリポジトリを列挙し、Queuesで分割取り込みする。6時間ごとのCronとWebhookで更新する。Issue/PRの差分巡回には10分の重複期間を設ける。文書のURLはコミットSHA固定。文書削除は完全なツリー取得後に反映し、古いコミットのジョブは破棄する。
 
-**マージとリリースは別扱い。** 現段階ではRelease・ビルド配信状況を取り込まないため `release_status: unknown` を保存する。PRのマージだけを根拠に「公開版で修正済み」と断定しないよう評価・生成の両方に指示する。これはモデルの無誤答を保証する仕組みではない。
+リポジトリごとにGitHubの最新正式リリースを同期する。リリースタグが指すコミットの履歴にPRのマージコミットが含まれると確認できた場合、根拠に `metadata.github_release`（タグ、URL、公開日時）を追加する。画面はそのGitHubリリースに収録されたことを表示する。初出バージョンやApp Store・Google Playの配信状況は別の情報源が必要になる。
 
 ## セットアップ
 
@@ -152,7 +152,7 @@ Org Webhookまたは各リポジトリのWebhookを、デプロイ先の `/webho
 
 - Content type: `application/json`
 - Secret: `WEBHOOK_SECRET` と同じ値
-- Events: Issues、Issue comments、Pull requests、Pull request reviews、Pull request review comments、Pushes、Repositories
+- Events: Issues、Issue comments、Pull requests、Pull request reviews、Pull request review comments、Pushes、Repositories、Releases
 
 重複配信は許容する。常にGitHub上の最新状態を取得してupsertする。Issue削除・移管、リポジトリ削除・移管のイベントで索引も削除する。同期失敗は最大5回再試行し、DLQに移る。`/sync/status` のエラーとDLQを監視し、原因解消後に再処理する。同期カーソルは「子ジョブの登録完了」を表すもので、取り込み完了を保証しない。
 

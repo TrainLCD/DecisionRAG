@@ -54,7 +54,7 @@ async function search(request: Request, env: Env, path: string): Promise<Respons
     else timings.model_ms += step.elapsed_ms;
   }
   return Response.json({ ...result, evidence, hit_count: hitCount, trace: judge.trace, timings, elapsed_ms: Date.now() - start,
-    retrieval: 'hierarchical_decision', release_inference: 'disabled' });
+    retrieval: 'hierarchical_decision', release_inference: 'github_release_commit_ancestry' });
 }
 
 /** Dispatch public endpoints before applying the authentication gate for admin routes. */

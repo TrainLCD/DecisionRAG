@@ -81,12 +81,23 @@ export async function passagesFor(env: Env, ids: string[], limit: number, scope?
   // A legacy snapshot can contain a draft review visible only to the sync credential.
   const scopeFilter = scope ? `AND ${scopedSources}
     AND (s.kind<>'pr' OR instr(s.body,char(10)||'PENDING'||char(10))=0)` : '';
-  const result = await env.DB.prepare(`SELECT p.*,s.repo,s.kind,s.title,s.url,s.metadata,s.updated_at
+  const result = await env.DB.prepare(`SELECT p.*,s.repo,s.kind,s.title,s.url,s.metadata,s.updated_at,
+      r.tag AS release_tag,r.url AS release_url,r.published_at AS release_published_at
     FROM passages p JOIN sources s ON s.id=p.source_id
+    LEFT JOIN github_release_commits c ON s.kind='pr' AND json_extract(s.metadata,'$.merged_at') IS NOT NULL
+      AND c.repo=s.repo AND c.sha=json_extract(s.metadata,'$.merge_commit_sha')
+    LEFT JOIN github_releases r ON r.repo=c.repo
     WHERE s.id IN (SELECT value FROM json_each(?)) ${scopeFilter} ORDER BY s.id,p.ordinal LIMIT ?`)
     .bind(JSON.stringify(ids), ...(scope ? [JSON.stringify(scope.publicRepos), scope.feedbackRepo ?? null] : []), limit)
-    .all<Omit<Passage, 'metadata'> & { metadata: string }>();
-  return result.results.map(p => ({ ...p, metadata: JSON.parse(p.metadata) as Record<string, unknown> }));
+    .all<Omit<Passage, 'metadata'> & { metadata: string; release_tag: string | null; release_url: string | null; release_published_at: string | null }>();
+  return result.results.map(({ release_tag, release_url, release_published_at, ...p }) => {
+    const metadata = JSON.parse(p.metadata) as Record<string, unknown>;
+    if (release_tag && release_url && release_published_at) {
+      metadata.release_status = 'included_in_github_release';
+      metadata.github_release = { tag: release_tag, url: release_url, published_at: release_published_at };
+    }
+    return { ...p, metadata };
+  });
 }
 export async function repoRow(env: Env, repo: string): Promise<RepoRow | null> {
   return env.DB.prepare('SELECT * FROM repositories WHERE repo=?').bind(repo).first<RepoRow>();

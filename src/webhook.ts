@@ -33,6 +33,8 @@ export async function webhook(request: Request, env: Env): Promise<Response> {
     await purgeRepo(env, repo);
   } else if (event === 'repository') {
     await enqueue(env, { type: 'repo', repo });
+  } else if (event === 'release') {
+    await enqueue(env, { type: 'releases', repo });
   } else if (['issues', 'issue_comment', 'pull_request', 'pull_request_review', 'pull_request_review_comment'].includes(event || '')) {
     const number = payload.issue?.number || payload.pull_request?.number || payload.number;
     if (!Number.isSafeInteger(number) || number! < 1) throw new HttpError(400, 'invalid_issue_number');
