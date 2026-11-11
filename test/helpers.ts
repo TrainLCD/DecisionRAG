@@ -1,6 +1,8 @@
 import { DatabaseSync } from 'node:sqlite';
 import { readdirSync, readFileSync } from 'node:fs';
 import type { Env, SyncJob } from '../src/types.js';
+import { HttpError } from '../src/types.js';
+let mockUpstream: ((url: string, init?: RequestInit) => Response | Promise<Response>) | undefined;
 export function fixture() {
   const sqlite = new DatabaseSync(':memory:');
   sqlite.exec('PRAGMA foreign_keys=ON');
@@ -23,11 +25,22 @@ export function fixture() {
   const jobs: SyncJob[] = [];
   const env: Env = { DB: db, SYNC_QUEUE: { send: async (job: SyncJob) => { jobs.push(job); } } as unknown as Queue<SyncJob>,
     API_TOKEN: 'test-private-token', WEBHOOK_SECRET: 'test-webhook-secret', GITHUB_TOKEN: 'test-github-token',
-    TYPESAFE_API_KEY: 'test-jev-key', GITHUB_ORG: 'TrainLCD', JEV_MODEL: 'jev-test' };
+    GITHUB_ORG: 'TrainLCD', AI: { async run(model: string, input: Record<string, unknown>) {
+      if (model !== '@cf/cloudflare/clef') throw new Error('Generation is not configured in this fixture');
+      if (!mockUpstream) throw new Error('Missing decision mock');
+      const response = await mockUpstream('https://workers-ai.test/decision', { body: JSON.stringify(input) });
+      const data = await response.json() as Record<string, unknown>;
+      if (!response.ok) throw new HttpError(502, JSON.stringify(data).includes('max_tokens_exceeded')
+        ? 'upstream_context_limit' : `upstream_http_${response.status}`);
+      return data;
+    } } as unknown as Ai };
   return { sqlite, env, jobs };
 }
 export function mockFetch(handler: (url: string, init?: RequestInit) => Response | Promise<Response>) {
   const original = globalThis.fetch;
+  const previous = mockUpstream;
+  mockUpstream = handler;
   globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => handler(String(input), init)) as typeof fetch;
-  return () => { globalThis.fetch = original; };
+  return () => { globalThis.fetch = original; mockUpstream = previous; };
 }
+

@@ -49,7 +49,8 @@ const errors = {
   authentication_not_configured: "サーバーにAPI_TOKENが設定されていません。",
   public_search_rate_limited: "検索回数の上限に達しました。少し待ってから再実行してください。",
   public_search_unavailable: "公開資料の検索は現在利用できません。",
-  jev_not_configured: "サーバーにJevのAPIキーが設定されていません。",
+  decision_not_configured: "サーバーの判定モデルが設定されていません。",
+  decision_upstream_error: "判定サービスでエラーが発生しました。時間をおいて再実行してください。",
   upstream_http_401:
     "外部サービスの認証に失敗しました。サーバーのAPIキーを確認してください。",
   upstream_http_403: "外部サービスの権限または利用制限を確認してください。",
@@ -451,7 +452,7 @@ function renderResult(data, mode, query) {
   if (data.timings) {
     const row = element("div", "trace-row", "所要時間の内訳");
     const { scope_ms, storage_ms, model_ms, generation_ms } = data.timings;
-    const parts = ["DB取得 " + number(storage_ms) + " ms", "Jev判定 " + number(model_ms) + " ms"];
+    const parts = ["DB取得 " + number(storage_ms) + " ms", "Clef判定 " + number(model_ms) + " ms"];
     if (scope_ms) parts.unshift("公開範囲の確認 " + number(scope_ms) + " ms");
     if (generation_ms) parts.push("要約生成 " + number(generation_ms) + " ms");
     row.append(element("span", "", parts.join(" / ")));

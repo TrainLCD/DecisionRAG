@@ -16,7 +16,7 @@ test('retrieves by shared-context hierarchy without lexical or vector filtering'
     url: 'https://github.com/TrainLCD/MobileApp/pull/2', body: '駅名の翻訳を更新。', metadata: {}, updated_at: '2026-11-06' });
   const states: { candidates?: Record<string, string> }[] = [];
   const restore = mockFetch((url, init) => {
-    assert.equal(url, 'https://api.typesafe.ai/v1/systemone');
+    assert.equal(url, 'https://workers-ai.test/decision');
     const req = JSON.parse(String(init?.body));
     states.push(req.state);
     const answers = Object.fromEntries(Object.entries(req.questions).map(([key, value]) => {
@@ -181,7 +181,7 @@ test('verified partial summaries are returned, but unsupported claims and unknow
   let citations = ['p1'];
   let claimText = 'A change was proposed.';
   const restore = mockFetch((url, init) => {
-    if (url.includes('typesafe')) {
+    if (url.includes('workers-ai.test')) {
       const { questions, state } = JSON.parse(String(init?.body));
       const answers = Object.fromEntries(Object.keys(questions).map(key => [key, { type: 'noul',
         noul: key === 'conflict' ? conflict : (key === 'supported' || state.draft?.[key]?.text === 'A change was proposed.' ? support : 0.1) }]));
@@ -194,7 +194,7 @@ test('verified partial summaries are returned, but unsupported claims and unknow
   });
   try {
     const configured = { ...env, ANSWER_API_KEY: 'test', ANSWER_MODEL: 'test' };
-    assert.equal((await answer('Released?', evidence, env, new Jev(env))).status, 'evidence_ready');
+    assert.equal((await answer('Released?', evidence, { ...env, AI: undefined }, new Jev(env))).status, 'evidence_ready');
     assert.equal(calls, 0);
     const judge = new Jev(env);
     const summary = await answer('Released?', evidence, configured, judge);
@@ -240,3 +240,4 @@ test('passage replacement removes stale text and preserves tail and Unicode', as
   assert.equal(sqlite.prepare('SELECT count(*) AS n FROM passages').get()?.n, 1);
   sqlite.close();
 });
+

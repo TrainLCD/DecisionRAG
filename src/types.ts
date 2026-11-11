@@ -6,9 +6,7 @@ export interface Env {
   API_TOKEN: string;
   WEBHOOK_SECRET: string;
   GITHUB_TOKEN: string;
-  TYPESAFE_API_KEY: string;
   GITHUB_ORG: string;
-  JEV_MODEL: string;
   ANSWER_API_KEY?: string;
   ANSWER_MODEL?: string;
   ANSWER_BASE_URL?: string;

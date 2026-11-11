@@ -1,4 +1,4 @@
-import { jsonRequest, mapConcurrent } from './http.js';
+import { mapConcurrent } from './http.js';
 import { HttpError, type Candidate, type Env, type Scored, type Trace } from './types.js';
 interface Noul { type: 'noul'; noul: number }
 interface Choice { type: 'choice'; choice: string; probabilities: Record<string, number>; confidence: number }
@@ -65,12 +65,20 @@ export class Jev implements Judge {
   trace: Trace[] = [];
   constructor(private env: Env) {}
   private async call(state: unknown, questions: Record<string, unknown>): Promise<Result> {
-    if (!this.env.TYPESAFE_API_KEY) throw new HttpError(503, 'jev_not_configured');
-    const result = await jsonRequest<Result>('https://api.typesafe.ai/v1/systemone', {
-      method: 'POST', headers: { Authorization: `Bearer ${this.env.TYPESAFE_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: this.env.JEV_MODEL || 'jev-latest', state, questions }),
-    });
-    if (!result.answers || typeof result.model !== 'string' || !result.usage ||
+    if (!this.env.AI) throw new HttpError(503, 'decision_not_configured');
+    if (Object.keys(questions).length > 64) throw new HttpError(503, 'decision_question_limit');
+    const signal = AbortSignal.timeout(25_000);
+    let result: Result;
+    try {
+      result = await this.env.AI.run('@cf/cloudflare/clef', {
+        model: 'clef', state, questions,
+      }, { signal }) as unknown as Result;
+    } catch (error) {
+      if (signal.aborted) throw new HttpError(502, 'upstream_timeout');
+      if (error instanceof HttpError) throw error;
+      throw new HttpError(502, 'decision_upstream_error');
+    }
+    if (!result || !result.answers || typeof result.model !== 'string' || !result.usage ||
       !Number.isFinite(result.usage.input_tokens) || !Number.isFinite(result.usage.output_tokens))
       throw new HttpError(502, 'invalid_jev_response');
     return result;
@@ -80,7 +88,7 @@ export class Jev implements Judge {
     const start = Date.now();
     // Candidates within a request share the full context; this is not one request per item.
     const documentScreening = stage === 'document_screening';
-    const batchLimit = documentScreening ? 240 : stage === 'branch_screening' ? 120 : passageBatchSize;
+    const batchLimit = stage === 'passage_scoring' ? passageBatchSize : 64;
     const charLimit = stage === 'passage_scoring' ? maxPassageBatchChars : maxBatchChars;
     const batches: T[][] = [];
     let batch: T[] = [], chars = 0;
