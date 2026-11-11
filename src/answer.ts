@@ -63,7 +63,7 @@ export async function answer(query: string, evidence: Evidence[], env: Env, judg
     return { status: status === 'ready' ? 'evidence_ready' : status, answer: null, citations: [], assessment };
   }
   const verificationEvidence = answerEvidence.map(({ citation, repo, title, text, kind, metadata }) => ({ citation, repo, title, text, kind, metadata }));
-  const context = verificationEvidence.slice(0, 6);
+  const context = verificationEvidence;
   const valid = new Set(context.map(p => p.citation));
   const messages = [
     { role: 'system' as const, content: instructions },

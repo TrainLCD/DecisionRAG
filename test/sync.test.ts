@@ -246,7 +246,7 @@ test('public search and answers keep private and feedback sources out of model r
   } finally { restore(); sqlite.close(); }
 });
 
-test('search and answer return all 31 matches while verification stays bounded', async () => {
+test('search and answer return all 31 matches while summarizing the top 20', async () => {
   const { env, sqlite } = fixture();
   const repo = 'TrainLCD/MobileApp';
   sqlite.prepare('INSERT INTO repositories(repo,description,default_branch) VALUES(?,?,?)').run(repo, '', 'main');
@@ -256,6 +256,10 @@ test('search and answer return all 31 matches while verification stays bounded',
   }
   const restore = mockFetch((url, init) => {
     if (url.endsWith('/chat/completions')) {
+      const { messages } = JSON.parse(String(init?.body));
+      const context = JSON.parse(messages[1].content.split('\n\n')[0]);
+      assert.equal(context.evidence.length, 20);
+      assert.equal(context.evidence[19].citation, 'p20');
       return Response.json({ choices: [{ message: { content: '{"claims":[{"text":"Relevant evidence.","citations":["p1"]}]}' } }] });
     }
     const { state, questions } = JSON.parse(String(init?.body));
