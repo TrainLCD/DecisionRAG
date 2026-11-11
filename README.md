@@ -53,7 +53,7 @@ npx wrangler secret put GITHUB_TOKEN
 - `API_TOKEN`: フィードバック検索・同期・管理用のBearerトークン。十分長いランダム値を設定する。
 - `WEBHOOK_SECRET`: GitHub Webhookと同じ値。
 - `GITHUB_TOKEN`: org内対象リポジトリのMetadata・Contents・Issues・Pull requestsの読み取り権限が必要。リポジトリ作成・書き込み権限は不要。
-- 判定は既存の `AI` バインディングから Cloudflare Workers AI の `@cf/cloudflare/clef-flash` を呼び出す。TypesafeのAPIキーは不要。既存の `TYPESAFE_API_KEY`・`JEV_MODEL` 設定は参照しない。
+- 判定は既存の `AI` バインディングを使う。タイトル・枝の選択は `@cf/cloudflare/clef-flash`、本文評価・並べ替え・回答検証は `@cf/cloudflare/clef` を呼び出す。TypesafeのAPIキーは不要。既存の `TYPESAFE_API_KEY`・`JEV_MODEL` 設定は参照しない。
 
 既定の文章生成には Cloudflare Workers AI の `AI` バインディングを使う。別の生成サービスを使う場合は、`ANSWER_MODEL`・`ANSWER_BASE_URL` を設定し、`wrangler secret put ANSWER_API_KEY` を実行する。OpenAI互換の `/chat/completions` とJSON object出力に対応するプロバイダーを想定する。サンプルWebアプリではSSEストリーミング（`stream: true`、`stream_options.include_usage: true`）への対応も必要となる。非ストリーミングへのフォールバックはなく、未対応のプロバイダーではWebアプリの要約が失敗する場合がある。Acceptヘッダーを省略したJSON APIは引き続き非ストリーミングで動作する。根拠の本文はClefと設定された生成サービスに送信される。
 

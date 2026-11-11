@@ -64,14 +64,15 @@ function choiceOrder<T extends Candidate>(candidates: Scored<T>[], result: Resul
 export class Jev implements Judge {
   trace: Trace[] = [];
   constructor(private env: Env) {}
-  private async call(state: unknown, questions: Record<string, unknown>): Promise<Result> {
+  private async call(state: unknown, questions: Record<string, unknown>, flash = false): Promise<Result> {
     if (!this.env.AI) throw new HttpError(503, 'decision_not_configured');
     if (Object.keys(questions).length > 64) throw new HttpError(503, 'decision_question_limit');
     const signal = AbortSignal.timeout(25_000);
     let result: Result;
     try {
-      result = await this.env.AI.run('@cf/cloudflare/clef-flash', {
-        model: 'clef-flash', state, questions,
+      const model = flash ? 'clef-flash' : 'clef';
+      result = await this.env.AI.run(flash ? '@cf/cloudflare/clef-flash' : '@cf/cloudflare/clef', {
+        model, state, questions,
       }, { signal }) as unknown as Result;
     } catch (error) {
       if (signal.aborted) throw new HttpError(502, 'upstream_timeout');
@@ -105,7 +106,7 @@ export class Jev implements Judge {
       calls++;
       try {
         const result = await this.call({ query, candidates: Object.fromEntries(items.map((c, i) => [candidateId(i), c.description])) },
-          binaryQuestions(items, documentScreening));
+          binaryQuestions(items, documentScreening), documentScreening || stage === 'branch_screening');
         return [{ result, scored: binaryScores(items, result) }];
       } catch (error) {
         if (!(error instanceof HttpError) || error.code !== 'upstream_context_limit' || items.length < 2) throw error;
