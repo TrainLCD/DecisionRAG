@@ -109,7 +109,7 @@ export class Jev implements Judge {
     const documentScreening = stage === 'document_screening';
     const navigation = documentScreening || stage === 'branch_screening' || stage === 'page_screening';
     const useClef = (candidate: Candidate) => this.env.SCREENING_MODEL === 'clef' || (documentScreening && candidate.kind === 'doc');
-    const batchLimit = stage === 'passage_scoring' ? passageBatchSize : 64;
+    const batchLimit = stage === 'passage_scoring' ? (candidates.length <= 20 ? 5 : passageBatchSize) : 64;
     const charLimit = stage === 'passage_scoring' ? maxPassageBatchChars : maxBatchChars;
     const batches: T[][] = [];
     let batch: T[] = [], chars = 0;
@@ -153,7 +153,7 @@ export class Jev implements Judge {
   /** Screen passages and compare the shortlist, combining both judgments when all candidates fit. */
   async rankPassages<T extends Candidate>(query: string, candidates: T[], shortlistSize: number): Promise<Scored<T>[]> {
     // When no passage would be pruned, both judgments can share one request.
-    if (candidates.length >= 2 && candidates.length <= Math.min(shortlistSize, passageBatchSize) &&
+    if (candidates.length >= 2 && candidates.length <= Math.min(shortlistSize, 5) &&
       candidates.every(c => c.description.length <= maxCandidateChars) &&
       candidates.reduce((chars, c) => chars + c.description.length, 0) <= maxChoiceChars) {
       const start = Date.now();

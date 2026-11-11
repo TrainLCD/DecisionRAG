@@ -48,7 +48,7 @@ test('pagination evaluates only its passages, reuses planning, and rejects chang
     const next = await (await request({ cursor: first.pagination.next_cursor })).json() as any;
     assert.equal(next.evidence.length, 20);
     assert.equal(next.pagination.page, 2);
-    assert.deepEqual(next.trace.map((x: any) => x.stage), ['passage_ranking']);
+    assert.deepEqual(next.trace.map((x: any) => x.stage), ['passage_scoring', 'choice_rerank']);
     assert.equal(new Set([...first.evidence, ...next.evidence].map((x: any) => x.id)).size, 40);
     const last = await (await request({ cursor: next.pagination.next_cursor })).json() as any;
     assert.equal(last.evidence.length, 5);
