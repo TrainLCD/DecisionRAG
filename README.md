@@ -146,7 +146,7 @@ curl "$RAG_URL/search" \
 - `verification_failed`: 生成結果を根拠検査で却下。回答はnull。
 - `generation_unavailable`: 既定の生成モデルから利用できる要約を得られなかった。検索で得た資料は返す。
 
-Jevや別途設定した生成サービスの失敗はHTTP 502。検索予算超過はHTTP 422。
+JSON応答では、Jevや別途設定した生成サービスの失敗はHTTP 502、検索予算超過はHTTP 422。SSE応答でも開始前のエラーは同じHTTPステータスを返す。SSE開始後に回答処理が例外を送出した場合は、HTTP 200のストリーム内で `error` イベントを通知する。既定の生成モデルを利用できない場合は、`result` の `generation_unavailable` で通知する。
 
 ## GitHub Webhook
 

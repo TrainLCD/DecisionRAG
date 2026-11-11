@@ -65,19 +65,32 @@ test('streamed provisional claims still pass through verification and can be wit
 });
 
 test('preview updates are throttled with a final flush; preview failures cannot discard generation', async (t) => {
-  let clock = 1000;
-  t.mock.method(Date, 'now', () => clock);
+  t.mock.method(Date, 'now', () => 1000);
   const parts = ['{"claims":[{"text":"a', 'b', 'c', 'd', '","citations":["p1"]}],"summaries":[]}'];
-  let i = 0, calls = 0;
-  const stream = new ReadableStream<Uint8Array>({ pull(controller) {
-    clock += 20;
+  let i = 0;
+  const previews: ReturnType<typeof draftPreview>[] = [];
+  let doneRequested!: () => void, releaseDone!: () => void;
+  const waitingForDone = new Promise<void>(resolve => { doneRequested = resolve; });
+  const allowDone = new Promise<void>(resolve => { releaseDone = resolve; });
+  const stream = new ReadableStream<Uint8Array>({ async pull(controller) {
     if (i < parts.length) controller.enqueue(encoder.encode(frame(parts[i++]!)));
-    else { controller.enqueue(encoder.encode('data: [DONE]\n\n')); controller.close(); }
+    else {
+      doneRequested();
+      await allowDone;
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.close();
+    }
   } });
-  const result = await collectGeneration(stream, new AbortController().signal, () => {
-    calls++;
+  const pending = collectGeneration(stream, new AbortController().signal, preview => {
+    previews.push(preview);
     throw new Error('Preview unavailable');
   });
-  assert.equal(calls, 2);
+  await waitingForDone;
+  await new Promise<void>(resolve => setImmediate(resolve));
+  assert.deepEqual(previews, [{ answer: ['a'], summaries: [] }]);
+  releaseDone();
+  const result = await pending;
+  assert.equal(previews.length, 2);
+  assert.deepEqual(previews[1], { answer: ['abcd'], summaries: [] });
   assert.equal(JSON.parse(result.choices[0]!.message.content).claims[0].text, 'abcd');
 });
