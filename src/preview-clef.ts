@@ -11,9 +11,8 @@ export default {
       });
       let reason = 'none';
       if (!response.ok) {
-        const body = await response.json() as { message?: string };
-        const message = typeof body.message === 'string' ? body.message.toLowerCase() : '';
-        reason = message.includes('rate limit') ? 'rate_limit' : message.includes('resource not accessible') ? 'permission' : message.includes('bad credentials') ? 'credentials' : 'other';
+        const message = (await response.text()).slice(0, 8000).toLowerCase();
+        reason = message.includes('access denied') ? 'access_denied' : message.includes('rate limit') ? 'rate_limit' : message.includes('resource not accessible') ? 'permission' : message.includes('bad credentials') ? 'credentials' : 'other';
       } else await response.body?.cancel();
       return Response.json({ github_status: response.status, reason, remaining: response.headers.get('x-ratelimit-remaining'), reset: response.headers.get('x-ratelimit-reset'), retry_after: response.headers.get('retry-after') }, { headers: { 'Cache-Control': 'no-store' } });
     }
