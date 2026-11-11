@@ -7,6 +7,56 @@ import worker from '../src/index.js';
 import { planRetrieval, retrievePlannedPage } from '../src/retrieval.js';
 import { Jev } from '../src/jev.js';
 
+test('full-result API counts relevant passages, retains tail matches and agrees across JSON and SSE', async () => {
+  const { env, sqlite } = fixture();
+  sqlite.exec("INSERT INTO repositories(repo,description,default_branch) VALUES('TrainLCD/App','App','main')");
+  for (let i = 0; i < 160; i++) await saveSource(env, {
+    id: `doc${String(i).padStart(3, '0')}`, repo: 'TrainLCD/App', kind: 'issue', title: `Record ${i}`,
+    body: `MARKER_${i}`, url: 'https://example.test', metadata: {}, updated_at: '2026-11-11',
+  });
+  let hits = 0;
+  const restore = mockFetch((_url, init) => {
+    const { state, questions } = JSON.parse(String(init?.body));
+    const answers = Object.fromEntries(Object.entries(questions).map(([id, q]) => {
+      if ((q as { type: string }).type === 'choice') {
+        const ids = Object.keys(state.passages);
+        return [id, { type: 'choice', choice: ids[0], probabilities: Object.fromEntries(ids.map(key => [key, 1 / ids.length])) }];
+      }
+      const text: string = state.candidates?.[id] ?? '';
+      const passage = text.includes('Repository:');
+      const index = Number(text.match(/MARKER_(\d+)/)?.[1]);
+      return [id, { type: 'noul', noul: passage && index < 160 - hits ? 0.1 : 0.9 }];
+    }));
+    return Response.json({ model: 'test', answers, usage: { input_tokens: 1, output_tokens: 1 } });
+  });
+  try {
+    for (hits of [0, 11, 20, 21, 151]) {
+      const expected = Array.from({ length: hits }, (_, i) => `doc${String(160 - hits + i).padStart(3, '0')}`);
+      for (const mode of ['search', 'answer', 'stream']) {
+        const response = await worker.fetch!(new Request(`https://example.test/${mode === 'search' ? 'search' : 'answer'}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.API_TOKEN}`,
+            ...(mode === 'stream' ? { Accept: 'text/event-stream' } : {}) },
+          body: JSON.stringify({ query: 'records' }),
+        }), { ...env, AI: env.AI }, {} as ExecutionContext);
+        assert.equal(response.status, 200);
+        const payloads = mode === 'stream'
+          ? (await response.text()).split('\n\n').filter(block => /^event: (sources|result)\n/.test(block))
+            .map(block => JSON.parse(block.slice(block.indexOf('data: ') + 6)))
+          : [await response.json()];
+        assert.equal(payloads.length, mode === 'stream' ? 2 : 1);
+        for (const data of payloads as any[]) {
+          assert.equal(data.hit_count, hits);
+          assert.equal(data.evidence.length, hits);
+          assert.equal(data.pagination, undefined, 'full results must never carry candidate-page totals');
+          assert.deepEqual(data.evidence.map((p: any) => p.source_id).sort(), expected);
+          assert.equal(new Set(data.evidence.map((p: any) => p.id)).size, hits);
+          assert.equal(new Set(data.evidence.map((p: any) => p.citation)).size, hits);
+        }
+      }
+    }
+  } finally { restore(); sqlite.close(); }
+});
+
 test('continuations are encrypted, scoped, authenticated and expire', async () => {
   const value = { query: '地下鉄', scope: '[true,true]', ids: ['private#42'], offset: 20, revision: 'abc', expires: Date.now() + 10000 };
   const token = await encodeCursor(value, 'secret');
@@ -185,3 +235,4 @@ test('coarse grouping respects the full Unicode request budget through the real 
     assert.ok(calls > 1);
   } finally { sqlite.close(); }
 });
+

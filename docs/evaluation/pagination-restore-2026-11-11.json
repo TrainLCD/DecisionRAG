@@ -1,0 +1,3885 @@
+{
+  "started_at": "2026-11-11T11:37:42.698Z",
+  "repetitions": 3,
+  "variants": [
+    {
+      "name": "before",
+      "url": "https://trainlcd-decision-rag.catwalk8205.workers.dev",
+      "paginated": true
+    },
+    {
+      "name": "after",
+      "url": "https://53d9f165-trainlcd-decision-rag.catwalk8205.workers.dev"
+    }
+  ],
+  "runs": [
+    {
+      "variant": "before",
+      "query": "地下鉄で位置更新が止まる問題",
+      "mode": "search",
+      "round": 1,
+      "http_status": 200,
+      "total_ms": 17441,
+      "server_ms": 7697,
+      "hit_count": 15,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#545:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp#402:0",
+        "TrainLCD/MobileApp#546:0",
+        "TrainLCD/MobileApp#263:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp#420:0",
+        "TrainLCD/MobileApp#401:0",
+        "TrainLCD/MobileApp#423:0",
+        "TrainLCD/MobileApp#447:0",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:0",
+        "TrainLCD/MobileApp#267:0",
+        "TrainLCD/MobileApp#448:0",
+        "TrainLCD/MobileApp#237:0",
+        "TrainLCD/MobileApp#236:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#545",
+        "TrainLCD/THQ:docs/location-freeze-regression.md",
+        "TrainLCD/MobileApp#402",
+        "TrainLCD/MobileApp#546",
+        "TrainLCD/MobileApp#263",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+        "TrainLCD/MobileApp#420",
+        "TrainLCD/MobileApp#401",
+        "TrainLCD/MobileApp#423",
+        "TrainLCD/MobileApp#447",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+        "TrainLCD/MobileApp#267",
+        "TrainLCD/MobileApp#448",
+        "TrainLCD/MobileApp#237",
+        "TrainLCD/MobileApp#236"
+      ],
+      "timings": {
+        "scope_ms": 688,
+        "storage_ms": 654,
+        "model_ms": 6355,
+        "generation_ms": 0,
+        "retrieval_ms": 7697
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group42",
+            "group24",
+            "group22",
+            "group41",
+            "group23",
+            "group21",
+            "group40",
+            "group55",
+            "group11",
+            "group29",
+            "group33",
+            "group56"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203951,
+          "output_tokens": 0,
+          "elapsed_ms": 1301
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1152,
+          "selected": [
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+            "TrainLCD/MobileApp#265",
+            "TrainLCD/MobileApp#237",
+            "TrainLCD/MobileApp#447",
+            "TrainLCD/MobileApp#263",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp:docs/location-simulation.md",
+            "TrainLCD/THQ:docs/location-freeze-regression.md",
+            "TrainLCD/MobileApp#416",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+            "TrainLCD/MobileApp#420"
+          ],
+          "calls": 81,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 515374,
+          "output_tokens": 0,
+          "elapsed_ms": 3620
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 20,
+          "selected": [
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+            "TrainLCD/MobileApp#263:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#447:0",
+            "TrainLCD/MobileApp#448:0"
+          ],
+          "calls": 20,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 13497,
+          "output_tokens": 0,
+          "elapsed_ms": 575
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 15,
+          "selected": [
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#263:0",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp#447:0",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#448:0",
+            "TrainLCD/MobileApp#237:0",
+            "TrainLCD/MobileApp#236:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 7334,
+          "output_tokens": 0,
+          "elapsed_ms": 859
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "total_pages": 5
+      }
+    },
+    {
+      "variant": "after",
+      "query": "地下鉄で位置更新が止まる問題",
+      "mode": "search",
+      "round": 1,
+      "http_status": 200,
+      "total_ms": 17478,
+      "server_ms": 11171,
+      "hit_count": 28,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#420:0",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/MobileApp:docs/location-simulation.md:6",
+        "TrainLCD/MobileApp#545:0",
+        "TrainLCD/MobileApp#423:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+        "TrainLCD/MobileApp#546:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+        "TrainLCD/MobileApp#1:0",
+        "TrainLCD/MobileApp:docs/changelog.md:2",
+        "TrainLCD/MobileApp#402:0",
+        "TrainLCD/MobileApp#348:0",
+        "TrainLCD/MobileApp#401:0",
+        "TrainLCD/MobileApp#267:0",
+        "TrainLCD/MobileApp#761:0",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:2",
+        "TrainLCD/MobileApp:docs/changelog.md:13",
+        "TrainLCD/MobileApp:docs/changelog.md:5",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp#416:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp:docs/location-simulation.md:4",
+        "TrainLCD/MobileApp#27:0",
+        "TrainLCD/MobileApp:docs/location-simulation.md:2",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp#263:0",
+        "TrainLCD/MobileApp:docs/changelog.md:12"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#420",
+        "TrainLCD/MobileApp:docs/changelog.md",
+        "TrainLCD/MobileApp:docs/location-simulation.md",
+        "TrainLCD/MobileApp#545",
+        "TrainLCD/MobileApp#423",
+        "TrainLCD/THQ:docs/location-freeze-regression.md",
+        "TrainLCD/MobileApp#546",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+        "TrainLCD/MobileApp#1",
+        "TrainLCD/MobileApp#402",
+        "TrainLCD/MobileApp#348",
+        "TrainLCD/MobileApp#401",
+        "TrainLCD/MobileApp#267",
+        "TrainLCD/MobileApp#761",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+        "TrainLCD/MobileApp#416",
+        "TrainLCD/MobileApp#27",
+        "TrainLCD/MobileApp#263"
+      ],
+      "timings": {
+        "scope_ms": 782,
+        "storage_ms": 1716,
+        "model_ms": 8673,
+        "generation_ms": 0,
+        "retrieval_ms": 11171
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group42",
+            "group24",
+            "group22",
+            "group41",
+            "group23",
+            "group21",
+            "group40",
+            "group55",
+            "group11",
+            "group29",
+            "group33",
+            "group56"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203951,
+          "output_tokens": 0,
+          "elapsed_ms": 1401
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1152,
+          "selected": [
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+            "TrainLCD/MobileApp#265",
+            "TrainLCD/MobileApp#237",
+            "TrainLCD/MobileApp#447",
+            "TrainLCD/MobileApp#263",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp:docs/location-simulation.md",
+            "TrainLCD/THQ:docs/location-freeze-regression.md",
+            "TrainLCD/MobileApp#416",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+            "TrainLCD/MobileApp#420"
+          ],
+          "calls": 81,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 515374,
+          "output_tokens": 0,
+          "elapsed_ms": 3240
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 87,
+          "selected": [
+            "TrainLCD/MobileApp:docs/changelog.md:3",
+            "TrainLCD/MobileApp:docs/changelog.md:2",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#1:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp:docs/location-simulation.md:6",
+            "TrainLCD/MobileApp:docs/changelog.md:13",
+            "TrainLCD/MobileApp#761:0"
+          ],
+          "calls": 4,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 65717,
+          "output_tokens": 0,
+          "elapsed_ms": 2638
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 19,
+          "selected": [
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp:docs/changelog.md:3",
+            "TrainLCD/MobileApp:docs/location-simulation.md:6",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp:docs/changelog.md:1",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+            "TrainLCD/MobileApp#1:0",
+            "TrainLCD/MobileApp:docs/changelog.md:2",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#348:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#761:0",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:2",
+            "TrainLCD/MobileApp:docs/changelog.md:13",
+            "TrainLCD/MobileApp:docs/changelog.md:5"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 13326,
+          "output_tokens": 0,
+          "elapsed_ms": 1394
+        }
+      ],
+      "pagination": null
+    },
+    {
+      "variant": "before",
+      "query": "東京メトロ固有の問題はある？",
+      "mode": "search",
+      "round": 1,
+      "http_status": 200,
+      "total_ms": 13533,
+      "server_ms": 7465,
+      "hit_count": 14,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#21:0",
+        "TrainLCD/MobileApp#830:0",
+        "TrainLCD/MobileApp#831:0",
+        "TrainLCD/MobileApp#402:0",
+        "TrainLCD/MobileApp#268:0",
+        "TrainLCD/MobileApp#262:0",
+        "TrainLCD/MobileApp#258:0",
+        "TrainLCD/MobileApp#257:0",
+        "TrainLCD/MobileApp#269:0",
+        "TrainLCD/MobileApp#685:0",
+        "TrainLCD/MobileApp#650:0",
+        "TrainLCD/MobileApp#256:0",
+        "TrainLCD/MobileApp#259:0",
+        "TrainLCD/MobileApp#686:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#21",
+        "TrainLCD/MobileApp#830",
+        "TrainLCD/MobileApp#831",
+        "TrainLCD/MobileApp#402",
+        "TrainLCD/MobileApp#268",
+        "TrainLCD/MobileApp#262",
+        "TrainLCD/MobileApp#258",
+        "TrainLCD/MobileApp#257",
+        "TrainLCD/MobileApp#269",
+        "TrainLCD/MobileApp#685",
+        "TrainLCD/MobileApp#650",
+        "TrainLCD/MobileApp#256",
+        "TrainLCD/MobileApp#259",
+        "TrainLCD/MobileApp#686"
+      ],
+      "timings": {
+        "scope_ms": 655,
+        "storage_ms": 657,
+        "model_ms": 6153,
+        "generation_ms": 0,
+        "retrieval_ms": 7465
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group18",
+            "group16",
+            "group24",
+            "group17",
+            "group13",
+            "group28",
+            "group22",
+            "group14",
+            "group23",
+            "group19",
+            "group53",
+            "group37"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203871,
+          "output_tokens": 0,
+          "elapsed_ms": 1210
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1128,
+          "selected": [
+            "TrainLCD/MobileApp#831",
+            "TrainLCD/MobileApp#1076",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp#268",
+            "TrainLCD/MobileApp#27",
+            "TrainLCD/MobileApp#258",
+            "TrainLCD/MobileApp#686",
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp#257",
+            "TrainLCD/MobileApp#3",
+            "TrainLCD/MobileApp#262",
+            "TrainLCD/MobileApp#1022"
+          ],
+          "calls": 66,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 437454,
+          "output_tokens": 0,
+          "elapsed_ms": 3253
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 20,
+          "selected": [
+            "TrainLCD/MobileApp#831:0",
+            "TrainLCD/MobileApp#268:0",
+            "TrainLCD/MobileApp#269:0",
+            "TrainLCD/MobileApp#262:0",
+            "TrainLCD/MobileApp#830:0",
+            "TrainLCD/MobileApp#257:0",
+            "TrainLCD/MobileApp#258:0",
+            "TrainLCD/MobileApp#256:0",
+            "TrainLCD/MobileApp#686:0",
+            "TrainLCD/MobileApp#259:0",
+            "TrainLCD/MobileApp#685:0",
+            "TrainLCD/MobileApp#650:0"
+          ],
+          "calls": 20,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 11714,
+          "output_tokens": 0,
+          "elapsed_ms": 1130
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 14,
+          "selected": [
+            "TrainLCD/MobileApp#21:0",
+            "TrainLCD/MobileApp#830:0",
+            "TrainLCD/MobileApp#831:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#268:0",
+            "TrainLCD/MobileApp#262:0",
+            "TrainLCD/MobileApp#258:0",
+            "TrainLCD/MobileApp#257:0",
+            "TrainLCD/MobileApp#269:0",
+            "TrainLCD/MobileApp#685:0",
+            "TrainLCD/MobileApp#650:0",
+            "TrainLCD/MobileApp#256:0",
+            "TrainLCD/MobileApp#259:0",
+            "TrainLCD/MobileApp#686:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 5766,
+          "output_tokens": 0,
+          "elapsed_ms": 560
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "total_pages": 3
+      }
+    },
+    {
+      "variant": "after",
+      "query": "東京メトロ固有の問題はある？",
+      "mode": "search",
+      "round": 1,
+      "http_status": 200,
+      "total_ms": 15390,
+      "server_ms": 9242,
+      "hit_count": 10,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#830:0",
+        "TrainLCD/MobileApp#27:0",
+        "TrainLCD/MobileApp#261:0",
+        "TrainLCD/MobileApp#268:0",
+        "TrainLCD/MobileApp#831:0",
+        "TrainLCD/MobileApp#257:0",
+        "TrainLCD/MobileApp#259:0",
+        "TrainLCD/MobileApp#262:0",
+        "TrainLCD/MobileApp#269:0",
+        "TrainLCD/MobileApp#686:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#830",
+        "TrainLCD/MobileApp#27",
+        "TrainLCD/MobileApp#261",
+        "TrainLCD/MobileApp#268",
+        "TrainLCD/MobileApp#831",
+        "TrainLCD/MobileApp#257",
+        "TrainLCD/MobileApp#259",
+        "TrainLCD/MobileApp#262",
+        "TrainLCD/MobileApp#269",
+        "TrainLCD/MobileApp#686"
+      ],
+      "timings": {
+        "scope_ms": 660,
+        "storage_ms": 1137,
+        "model_ms": 7445,
+        "generation_ms": 0,
+        "retrieval_ms": 9242
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group18",
+            "group16",
+            "group24",
+            "group17",
+            "group13",
+            "group28",
+            "group22",
+            "group14",
+            "group23",
+            "group19",
+            "group53",
+            "group37"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203871,
+          "output_tokens": 0,
+          "elapsed_ms": 1405
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1128,
+          "selected": [
+            "TrainLCD/MobileApp#831",
+            "TrainLCD/MobileApp#1076",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp#268",
+            "TrainLCD/MobileApp#27",
+            "TrainLCD/MobileApp#258",
+            "TrainLCD/MobileApp#686",
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp#257",
+            "TrainLCD/MobileApp#3",
+            "TrainLCD/MobileApp#262",
+            "TrainLCD/MobileApp#1022"
+          ],
+          "calls": 66,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 437454,
+          "output_tokens": 0,
+          "elapsed_ms": 3159
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 54,
+          "selected": [
+            "TrainLCD/MobileApp#830:0",
+            "TrainLCD/MobileApp#261:0",
+            "TrainLCD/MobileApp#831:0",
+            "TrainLCD/MobileApp#262:0",
+            "TrainLCD/MobileApp#268:0",
+            "TrainLCD/MobileApp#259:0",
+            "TrainLCD/MobileApp#269:0",
+            "TrainLCD/MobileApp#257:0",
+            "TrainLCD/MobileApp#686:0",
+            "TrainLCD/MobileApp#27:0",
+            "TrainLCD/MobileApp#256:0",
+            "TrainLCD/MobileApp#258:0"
+          ],
+          "calls": 2,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 25321,
+          "output_tokens": 0,
+          "elapsed_ms": 2527
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 10,
+          "selected": [
+            "TrainLCD/MobileApp#830:0",
+            "TrainLCD/MobileApp#27:0",
+            "TrainLCD/MobileApp#261:0",
+            "TrainLCD/MobileApp#268:0",
+            "TrainLCD/MobileApp#831:0",
+            "TrainLCD/MobileApp#257:0",
+            "TrainLCD/MobileApp#259:0",
+            "TrainLCD/MobileApp#262:0",
+            "TrainLCD/MobileApp#269:0",
+            "TrainLCD/MobileApp#686:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 4332,
+          "output_tokens": 0,
+          "elapsed_ms": 354
+        }
+      ],
+      "pagination": null
+    },
+    {
+      "variant": "before",
+      "query": "直通情報がすぐに反映されない問題",
+      "mode": "search",
+      "round": 1,
+      "http_status": 200,
+      "total_ms": 13273,
+      "server_ms": 7506,
+      "hit_count": 4,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#1023:0",
+        "TrainLCD/MobileApp#1022:0",
+        "TrainLCD/StationAPI#342:0",
+        "TrainLCD/MobileApp#950:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#1023",
+        "TrainLCD/MobileApp#1022",
+        "TrainLCD/StationAPI#342",
+        "TrainLCD/MobileApp#950"
+      ],
+      "timings": {
+        "scope_ms": 737,
+        "storage_ms": 1295,
+        "model_ms": 5474,
+        "generation_ms": 0,
+        "retrieval_ms": 7506
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group13",
+            "group55",
+            "group105",
+            "group68",
+            "group61",
+            "group56",
+            "group72",
+            "group70",
+            "group106",
+            "group77",
+            "group71",
+            "group67"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203831,
+          "output_tokens": 0,
+          "elapsed_ms": 1261
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 864,
+          "selected": [
+            "TrainLCD/MobileApp#1022",
+            "TrainLCD/Website#99",
+            "TrainLCD/StationAPI:AGENTS.md",
+            "TrainLCD/Website#95",
+            "TrainLCD/MobileApp#943",
+            "TrainLCD/StationAPI#342",
+            "TrainLCD/StationAPI#47",
+            "TrainLCD/StationAPI#469",
+            "TrainLCD/MobileApp#964",
+            "TrainLCD/StationAPI:data/README.md",
+            "TrainLCD/MobileApp#950",
+            "TrainLCD/MobileApp#915"
+          ],
+          "calls": 63,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 356105,
+          "output_tokens": 0,
+          "elapsed_ms": 2047
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 20,
+          "selected": [
+            "TrainLCD/MobileApp#1023:0",
+            "TrainLCD/MobileApp#1022:0",
+            "TrainLCD/StationAPI#342:0",
+            "TrainLCD/MobileApp#950:0",
+            "TrainLCD/StationAPI#653:0",
+            "TrainLCD/MobileApp#943:0",
+            "TrainLCD/StationAPI#497:0",
+            "TrainLCD/MobileApp#915:0",
+            "TrainLCD/StationAPI#293:0",
+            "TrainLCD/Website#95:0",
+            "TrainLCD/MobileApp#926:0",
+            "TrainLCD/Website#99:0"
+          ],
+          "calls": 20,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 11587,
+          "output_tokens": 0,
+          "elapsed_ms": 1853
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 4,
+          "selected": [
+            "TrainLCD/MobileApp#1023:0",
+            "TrainLCD/MobileApp#1022:0",
+            "TrainLCD/StationAPI#342:0",
+            "TrainLCD/MobileApp#950:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 1555,
+          "output_tokens": 0,
+          "elapsed_ms": 313
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "total_pages": 5
+      }
+    },
+    {
+      "variant": "after",
+      "query": "直通情報がすぐに反映されない問題",
+      "mode": "search",
+      "round": 1,
+      "http_status": 200,
+      "total_ms": 13207,
+      "server_ms": 7045,
+      "hit_count": 3,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#1023:0",
+        "TrainLCD/MobileApp#1022:0",
+        "TrainLCD/MobileApp#943:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#1023",
+        "TrainLCD/MobileApp#1022",
+        "TrainLCD/MobileApp#943"
+      ],
+      "timings": {
+        "scope_ms": 691,
+        "storage_ms": 684,
+        "model_ms": 5670,
+        "generation_ms": 0,
+        "retrieval_ms": 7045
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group13",
+            "group55",
+            "group105",
+            "group68",
+            "group61",
+            "group56",
+            "group72",
+            "group70",
+            "group106",
+            "group77",
+            "group71",
+            "group67"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203831,
+          "output_tokens": 0,
+          "elapsed_ms": 1177
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 864,
+          "selected": [
+            "TrainLCD/MobileApp#1022",
+            "TrainLCD/Website#99",
+            "TrainLCD/StationAPI:AGENTS.md",
+            "TrainLCD/Website#95",
+            "TrainLCD/MobileApp#943",
+            "TrainLCD/StationAPI#342",
+            "TrainLCD/StationAPI#47",
+            "TrainLCD/StationAPI#469",
+            "TrainLCD/MobileApp#964",
+            "TrainLCD/StationAPI:data/README.md",
+            "TrainLCD/MobileApp#950",
+            "TrainLCD/MobileApp#915"
+          ],
+          "calls": 63,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 356105,
+          "output_tokens": 0,
+          "elapsed_ms": 1734
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 91,
+          "selected": [
+            "TrainLCD/MobileApp#1022:0",
+            "TrainLCD/MobileApp#1023:0",
+            "TrainLCD/MobileApp#943:0",
+            "TrainLCD/Website#99:2",
+            "TrainLCD/Website#99:5",
+            "TrainLCD/Website#99:4",
+            "TrainLCD/StationAPI:AGENTS.md:8",
+            "TrainLCD/MobileApp#919:0",
+            "TrainLCD/MobileApp#964:0",
+            "TrainLCD/BFF#43:2",
+            "TrainLCD/BFF#39:7",
+            "TrainLCD/StationAPI#342:0"
+          ],
+          "calls": 5,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 74782,
+          "output_tokens": 0,
+          "elapsed_ms": 2493
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 3,
+          "selected": [
+            "TrainLCD/MobileApp#1023:0",
+            "TrainLCD/MobileApp#1022:0",
+            "TrainLCD/MobileApp#943:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 1362,
+          "output_tokens": 0,
+          "elapsed_ms": 266
+        }
+      ],
+      "pagination": null
+    },
+    {
+      "variant": "before",
+      "query": "地下鉄で位置更新が止まる問題",
+      "mode": "answer",
+      "round": 1,
+      "http_status": 200,
+      "sources_ms": 14058,
+      "first_draft_ms": 15259,
+      "total_ms": 29631,
+      "server_ms": 23506,
+      "hit_count": 15,
+      "status": "summarized",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#545:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp#402:0",
+        "TrainLCD/MobileApp#546:0",
+        "TrainLCD/MobileApp#263:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp#420:0",
+        "TrainLCD/MobileApp#401:0",
+        "TrainLCD/MobileApp#423:0",
+        "TrainLCD/MobileApp#447:0",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:0",
+        "TrainLCD/MobileApp#267:0",
+        "TrainLCD/MobileApp#448:0",
+        "TrainLCD/MobileApp#237:0",
+        "TrainLCD/MobileApp#236:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#545",
+        "TrainLCD/THQ:docs/location-freeze-regression.md",
+        "TrainLCD/MobileApp#402",
+        "TrainLCD/MobileApp#546",
+        "TrainLCD/MobileApp#263",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+        "TrainLCD/MobileApp#420",
+        "TrainLCD/MobileApp#401",
+        "TrainLCD/MobileApp#423",
+        "TrainLCD/MobileApp#447",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+        "TrainLCD/MobileApp#267",
+        "TrainLCD/MobileApp#448",
+        "TrainLCD/MobileApp#237",
+        "TrainLCD/MobileApp#236"
+      ],
+      "timings": {
+        "scope_ms": 679,
+        "storage_ms": 857,
+        "model_ms": 7162,
+        "generation_ms": 14808,
+        "retrieval_ms": 7825
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group42",
+            "group24",
+            "group22",
+            "group41",
+            "group23",
+            "group21",
+            "group40",
+            "group55",
+            "group11",
+            "group29",
+            "group33",
+            "group56"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203951,
+          "output_tokens": 0,
+          "elapsed_ms": 1201
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1152,
+          "selected": [
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+            "TrainLCD/MobileApp#265",
+            "TrainLCD/MobileApp#237",
+            "TrainLCD/MobileApp#447",
+            "TrainLCD/MobileApp#263",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp:docs/location-simulation.md",
+            "TrainLCD/THQ:docs/location-freeze-regression.md",
+            "TrainLCD/MobileApp#416",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+            "TrainLCD/MobileApp#420"
+          ],
+          "calls": 81,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 515374,
+          "output_tokens": 0,
+          "elapsed_ms": 3473
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 20,
+          "selected": [
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+            "TrainLCD/MobileApp#263:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#447:0",
+            "TrainLCD/MobileApp#448:0"
+          ],
+          "calls": 20,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 13497,
+          "output_tokens": 0,
+          "elapsed_ms": 784
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 15,
+          "selected": [
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#263:0",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp#447:0",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#448:0",
+            "TrainLCD/MobileApp#237:0",
+            "TrainLCD/MobileApp#236:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 7334,
+          "output_tokens": 0,
+          "elapsed_ms": 831
+        },
+        {
+          "stage": "generate_answer",
+          "candidates": 15,
+          "selected": [],
+          "calls": 1,
+          "model": [
+            "@cf/google/gemma-4-26b-a4b-it-external"
+          ],
+          "input_tokens": 7272,
+          "output_tokens": 622,
+          "elapsed_ms": 14808
+        },
+        {
+          "stage": "verify_answer",
+          "candidates": 7,
+          "selected": [],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 8600,
+          "output_tokens": 0,
+          "elapsed_ms": 873
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "total_pages": 5
+      }
+    },
+    {
+      "variant": "after",
+      "query": "地下鉄で位置更新が止まる問題",
+      "mode": "answer",
+      "round": 1,
+      "http_status": 200,
+      "sources_ms": 17317,
+      "first_draft_ms": 18075,
+      "total_ms": 26079,
+      "server_ms": 19986,
+      "hit_count": 28,
+      "status": "summarized",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#420:0",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/MobileApp:docs/location-simulation.md:6",
+        "TrainLCD/MobileApp#545:0",
+        "TrainLCD/MobileApp#423:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+        "TrainLCD/MobileApp#546:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+        "TrainLCD/MobileApp#1:0",
+        "TrainLCD/MobileApp:docs/changelog.md:2",
+        "TrainLCD/MobileApp#402:0",
+        "TrainLCD/MobileApp#348:0",
+        "TrainLCD/MobileApp#401:0",
+        "TrainLCD/MobileApp#267:0",
+        "TrainLCD/MobileApp#761:0",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:2",
+        "TrainLCD/MobileApp:docs/changelog.md:13",
+        "TrainLCD/MobileApp:docs/changelog.md:5",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp#416:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp:docs/location-simulation.md:4",
+        "TrainLCD/MobileApp#27:0",
+        "TrainLCD/MobileApp:docs/location-simulation.md:2",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp#263:0",
+        "TrainLCD/MobileApp:docs/changelog.md:12"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#420",
+        "TrainLCD/MobileApp:docs/changelog.md",
+        "TrainLCD/MobileApp:docs/location-simulation.md",
+        "TrainLCD/MobileApp#545",
+        "TrainLCD/MobileApp#423",
+        "TrainLCD/THQ:docs/location-freeze-regression.md",
+        "TrainLCD/MobileApp#546",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+        "TrainLCD/MobileApp#1",
+        "TrainLCD/MobileApp#402",
+        "TrainLCD/MobileApp#348",
+        "TrainLCD/MobileApp#401",
+        "TrainLCD/MobileApp#267",
+        "TrainLCD/MobileApp#761",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+        "TrainLCD/MobileApp#416",
+        "TrainLCD/MobileApp#27",
+        "TrainLCD/MobileApp#263"
+      ],
+      "timings": {
+        "scope_ms": 629,
+        "storage_ms": 1385,
+        "model_ms": 10809,
+        "generation_ms": 7163,
+        "retrieval_ms": 11119
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group42",
+            "group24",
+            "group22",
+            "group41",
+            "group23",
+            "group21",
+            "group40",
+            "group55",
+            "group11",
+            "group29",
+            "group33",
+            "group56"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203951,
+          "output_tokens": 0,
+          "elapsed_ms": 1306
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1152,
+          "selected": [
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+            "TrainLCD/MobileApp#265",
+            "TrainLCD/MobileApp#237",
+            "TrainLCD/MobileApp#447",
+            "TrainLCD/MobileApp#263",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp:docs/location-simulation.md",
+            "TrainLCD/THQ:docs/location-freeze-regression.md",
+            "TrainLCD/MobileApp#416",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+            "TrainLCD/MobileApp#420"
+          ],
+          "calls": 81,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 515374,
+          "output_tokens": 0,
+          "elapsed_ms": 3614
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 87,
+          "selected": [
+            "TrainLCD/MobileApp:docs/changelog.md:3",
+            "TrainLCD/MobileApp:docs/changelog.md:2",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#1:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp:docs/location-simulation.md:6",
+            "TrainLCD/MobileApp:docs/changelog.md:13",
+            "TrainLCD/MobileApp#761:0"
+          ],
+          "calls": 4,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 65717,
+          "output_tokens": 0,
+          "elapsed_ms": 2551
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 19,
+          "selected": [
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp:docs/changelog.md:3",
+            "TrainLCD/MobileApp:docs/location-simulation.md:6",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp:docs/changelog.md:1",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+            "TrainLCD/MobileApp#1:0",
+            "TrainLCD/MobileApp:docs/changelog.md:2",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#348:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#761:0",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:2",
+            "TrainLCD/MobileApp:docs/changelog.md:13",
+            "TrainLCD/MobileApp:docs/changelog.md:5"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 13326,
+          "output_tokens": 0,
+          "elapsed_ms": 1634
+        },
+        {
+          "stage": "generate_answer",
+          "candidates": 20,
+          "selected": [],
+          "calls": 1,
+          "model": [
+            "@cf/google/gemma-4-26b-a4b-it"
+          ],
+          "input_tokens": 15172,
+          "output_tokens": 364,
+          "elapsed_ms": 7163
+        },
+        {
+          "stage": "verify_answer",
+          "candidates": 6,
+          "selected": [],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 15967,
+          "output_tokens": 0,
+          "elapsed_ms": 1704
+        }
+      ],
+      "pagination": null
+    },
+    {
+      "variant": "after",
+      "query": "地下鉄で位置更新が止まる問題",
+      "mode": "search",
+      "round": 2,
+      "http_status": 200,
+      "total_ms": 16637,
+      "server_ms": 10486,
+      "hit_count": 28,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#420:0",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/MobileApp:docs/location-simulation.md:6",
+        "TrainLCD/MobileApp#545:0",
+        "TrainLCD/MobileApp#423:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+        "TrainLCD/MobileApp#546:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+        "TrainLCD/MobileApp#1:0",
+        "TrainLCD/MobileApp:docs/changelog.md:2",
+        "TrainLCD/MobileApp#402:0",
+        "TrainLCD/MobileApp#348:0",
+        "TrainLCD/MobileApp#401:0",
+        "TrainLCD/MobileApp#267:0",
+        "TrainLCD/MobileApp#761:0",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:2",
+        "TrainLCD/MobileApp:docs/changelog.md:13",
+        "TrainLCD/MobileApp:docs/changelog.md:5",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp#416:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp:docs/location-simulation.md:4",
+        "TrainLCD/MobileApp#27:0",
+        "TrainLCD/MobileApp:docs/location-simulation.md:2",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp#263:0",
+        "TrainLCD/MobileApp:docs/changelog.md:12"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#420",
+        "TrainLCD/MobileApp:docs/changelog.md",
+        "TrainLCD/MobileApp:docs/location-simulation.md",
+        "TrainLCD/MobileApp#545",
+        "TrainLCD/MobileApp#423",
+        "TrainLCD/THQ:docs/location-freeze-regression.md",
+        "TrainLCD/MobileApp#546",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+        "TrainLCD/MobileApp#1",
+        "TrainLCD/MobileApp#402",
+        "TrainLCD/MobileApp#348",
+        "TrainLCD/MobileApp#401",
+        "TrainLCD/MobileApp#267",
+        "TrainLCD/MobileApp#761",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+        "TrainLCD/MobileApp#416",
+        "TrainLCD/MobileApp#27",
+        "TrainLCD/MobileApp#263"
+      ],
+      "timings": {
+        "scope_ms": 682,
+        "storage_ms": 1172,
+        "model_ms": 8632,
+        "generation_ms": 0,
+        "retrieval_ms": 10486
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group42",
+            "group24",
+            "group22",
+            "group41",
+            "group23",
+            "group21",
+            "group40",
+            "group55",
+            "group11",
+            "group29",
+            "group33",
+            "group56"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203951,
+          "output_tokens": 0,
+          "elapsed_ms": 1026
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1152,
+          "selected": [
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+            "TrainLCD/MobileApp#265",
+            "TrainLCD/MobileApp#237",
+            "TrainLCD/MobileApp#447",
+            "TrainLCD/MobileApp#263",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp:docs/location-simulation.md",
+            "TrainLCD/THQ:docs/location-freeze-regression.md",
+            "TrainLCD/MobileApp#416",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+            "TrainLCD/MobileApp#420"
+          ],
+          "calls": 81,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 515374,
+          "output_tokens": 0,
+          "elapsed_ms": 3438
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 87,
+          "selected": [
+            "TrainLCD/MobileApp:docs/changelog.md:3",
+            "TrainLCD/MobileApp:docs/changelog.md:2",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#1:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp:docs/location-simulation.md:6",
+            "TrainLCD/MobileApp:docs/changelog.md:13",
+            "TrainLCD/MobileApp#761:0"
+          ],
+          "calls": 4,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 65717,
+          "output_tokens": 0,
+          "elapsed_ms": 2578
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 19,
+          "selected": [
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp:docs/changelog.md:3",
+            "TrainLCD/MobileApp:docs/location-simulation.md:6",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp:docs/changelog.md:1",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+            "TrainLCD/MobileApp#1:0",
+            "TrainLCD/MobileApp:docs/changelog.md:2",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#348:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#761:0",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:2",
+            "TrainLCD/MobileApp:docs/changelog.md:13",
+            "TrainLCD/MobileApp:docs/changelog.md:5"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 13326,
+          "output_tokens": 0,
+          "elapsed_ms": 1590
+        }
+      ],
+      "pagination": null
+    },
+    {
+      "variant": "before",
+      "query": "地下鉄で位置更新が止まる問題",
+      "mode": "search",
+      "round": 2,
+      "http_status": 200,
+      "total_ms": 15091,
+      "server_ms": 8153,
+      "hit_count": 15,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#545:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp#402:0",
+        "TrainLCD/MobileApp#546:0",
+        "TrainLCD/MobileApp#263:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp#420:0",
+        "TrainLCD/MobileApp#401:0",
+        "TrainLCD/MobileApp#423:0",
+        "TrainLCD/MobileApp#447:0",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:0",
+        "TrainLCD/MobileApp#267:0",
+        "TrainLCD/MobileApp#448:0",
+        "TrainLCD/MobileApp#237:0",
+        "TrainLCD/MobileApp#236:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#545",
+        "TrainLCD/THQ:docs/location-freeze-regression.md",
+        "TrainLCD/MobileApp#402",
+        "TrainLCD/MobileApp#546",
+        "TrainLCD/MobileApp#263",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+        "TrainLCD/MobileApp#420",
+        "TrainLCD/MobileApp#401",
+        "TrainLCD/MobileApp#423",
+        "TrainLCD/MobileApp#447",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+        "TrainLCD/MobileApp#267",
+        "TrainLCD/MobileApp#448",
+        "TrainLCD/MobileApp#237",
+        "TrainLCD/MobileApp#236"
+      ],
+      "timings": {
+        "scope_ms": 759,
+        "storage_ms": 1007,
+        "model_ms": 6387,
+        "generation_ms": 0,
+        "retrieval_ms": 8153
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group42",
+            "group24",
+            "group22",
+            "group41",
+            "group23",
+            "group21",
+            "group40",
+            "group55",
+            "group11",
+            "group29",
+            "group33",
+            "group56"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203951,
+          "output_tokens": 0,
+          "elapsed_ms": 1322
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1152,
+          "selected": [
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+            "TrainLCD/MobileApp#265",
+            "TrainLCD/MobileApp#237",
+            "TrainLCD/MobileApp#447",
+            "TrainLCD/MobileApp#263",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp:docs/location-simulation.md",
+            "TrainLCD/THQ:docs/location-freeze-regression.md",
+            "TrainLCD/MobileApp#416",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+            "TrainLCD/MobileApp#420"
+          ],
+          "calls": 81,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 515374,
+          "output_tokens": 0,
+          "elapsed_ms": 3732
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 20,
+          "selected": [
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+            "TrainLCD/MobileApp#263:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#447:0",
+            "TrainLCD/MobileApp#448:0"
+          ],
+          "calls": 20,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 13497,
+          "output_tokens": 0,
+          "elapsed_ms": 602
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 15,
+          "selected": [
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#263:0",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp#447:0",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#448:0",
+            "TrainLCD/MobileApp#237:0",
+            "TrainLCD/MobileApp#236:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 7334,
+          "output_tokens": 0,
+          "elapsed_ms": 731
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "total_pages": 5
+      }
+    },
+    {
+      "variant": "after",
+      "query": "東京メトロ固有の問題はある？",
+      "mode": "search",
+      "round": 2,
+      "http_status": 200,
+      "total_ms": 15355,
+      "server_ms": 9171,
+      "hit_count": 10,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#830:0",
+        "TrainLCD/MobileApp#27:0",
+        "TrainLCD/MobileApp#261:0",
+        "TrainLCD/MobileApp#268:0",
+        "TrainLCD/MobileApp#831:0",
+        "TrainLCD/MobileApp#257:0",
+        "TrainLCD/MobileApp#259:0",
+        "TrainLCD/MobileApp#262:0",
+        "TrainLCD/MobileApp#269:0",
+        "TrainLCD/MobileApp#686:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#830",
+        "TrainLCD/MobileApp#27",
+        "TrainLCD/MobileApp#261",
+        "TrainLCD/MobileApp#268",
+        "TrainLCD/MobileApp#831",
+        "TrainLCD/MobileApp#257",
+        "TrainLCD/MobileApp#259",
+        "TrainLCD/MobileApp#262",
+        "TrainLCD/MobileApp#269",
+        "TrainLCD/MobileApp#686"
+      ],
+      "timings": {
+        "scope_ms": 657,
+        "storage_ms": 641,
+        "model_ms": 7873,
+        "generation_ms": 0,
+        "retrieval_ms": 9171
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group18",
+            "group16",
+            "group24",
+            "group17",
+            "group13",
+            "group28",
+            "group22",
+            "group14",
+            "group23",
+            "group19",
+            "group53",
+            "group37"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203871,
+          "output_tokens": 0,
+          "elapsed_ms": 1297
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1128,
+          "selected": [
+            "TrainLCD/MobileApp#831",
+            "TrainLCD/MobileApp#1076",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp#268",
+            "TrainLCD/MobileApp#27",
+            "TrainLCD/MobileApp#258",
+            "TrainLCD/MobileApp#686",
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp#257",
+            "TrainLCD/MobileApp#3",
+            "TrainLCD/MobileApp#262",
+            "TrainLCD/MobileApp#1022"
+          ],
+          "calls": 66,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 437454,
+          "output_tokens": 0,
+          "elapsed_ms": 3552
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 54,
+          "selected": [
+            "TrainLCD/MobileApp#830:0",
+            "TrainLCD/MobileApp#261:0",
+            "TrainLCD/MobileApp#831:0",
+            "TrainLCD/MobileApp#262:0",
+            "TrainLCD/MobileApp#268:0",
+            "TrainLCD/MobileApp#259:0",
+            "TrainLCD/MobileApp#269:0",
+            "TrainLCD/MobileApp#257:0",
+            "TrainLCD/MobileApp#686:0",
+            "TrainLCD/MobileApp#27:0",
+            "TrainLCD/MobileApp#256:0",
+            "TrainLCD/MobileApp#258:0"
+          ],
+          "calls": 2,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 25321,
+          "output_tokens": 0,
+          "elapsed_ms": 2393
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 10,
+          "selected": [
+            "TrainLCD/MobileApp#830:0",
+            "TrainLCD/MobileApp#27:0",
+            "TrainLCD/MobileApp#261:0",
+            "TrainLCD/MobileApp#268:0",
+            "TrainLCD/MobileApp#831:0",
+            "TrainLCD/MobileApp#257:0",
+            "TrainLCD/MobileApp#259:0",
+            "TrainLCD/MobileApp#262:0",
+            "TrainLCD/MobileApp#269:0",
+            "TrainLCD/MobileApp#686:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 4332,
+          "output_tokens": 0,
+          "elapsed_ms": 631
+        }
+      ],
+      "pagination": null
+    },
+    {
+      "variant": "before",
+      "query": "東京メトロ固有の問題はある？",
+      "mode": "search",
+      "round": 2,
+      "http_status": 200,
+      "total_ms": 14569,
+      "server_ms": 8356,
+      "hit_count": 14,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#21:0",
+        "TrainLCD/MobileApp#830:0",
+        "TrainLCD/MobileApp#831:0",
+        "TrainLCD/MobileApp#402:0",
+        "TrainLCD/MobileApp#268:0",
+        "TrainLCD/MobileApp#262:0",
+        "TrainLCD/MobileApp#258:0",
+        "TrainLCD/MobileApp#257:0",
+        "TrainLCD/MobileApp#269:0",
+        "TrainLCD/MobileApp#685:0",
+        "TrainLCD/MobileApp#650:0",
+        "TrainLCD/MobileApp#256:0",
+        "TrainLCD/MobileApp#259:0",
+        "TrainLCD/MobileApp#686:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#21",
+        "TrainLCD/MobileApp#830",
+        "TrainLCD/MobileApp#831",
+        "TrainLCD/MobileApp#402",
+        "TrainLCD/MobileApp#268",
+        "TrainLCD/MobileApp#262",
+        "TrainLCD/MobileApp#258",
+        "TrainLCD/MobileApp#257",
+        "TrainLCD/MobileApp#269",
+        "TrainLCD/MobileApp#685",
+        "TrainLCD/MobileApp#650",
+        "TrainLCD/MobileApp#256",
+        "TrainLCD/MobileApp#259",
+        "TrainLCD/MobileApp#686"
+      ],
+      "timings": {
+        "scope_ms": 860,
+        "storage_ms": 1219,
+        "model_ms": 6277,
+        "generation_ms": 0,
+        "retrieval_ms": 8356
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group18",
+            "group16",
+            "group24",
+            "group17",
+            "group13",
+            "group28",
+            "group22",
+            "group14",
+            "group23",
+            "group19",
+            "group53",
+            "group37"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203871,
+          "output_tokens": 0,
+          "elapsed_ms": 1203
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1128,
+          "selected": [
+            "TrainLCD/MobileApp#831",
+            "TrainLCD/MobileApp#1076",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp#268",
+            "TrainLCD/MobileApp#27",
+            "TrainLCD/MobileApp#258",
+            "TrainLCD/MobileApp#686",
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp#257",
+            "TrainLCD/MobileApp#3",
+            "TrainLCD/MobileApp#262",
+            "TrainLCD/MobileApp#1022"
+          ],
+          "calls": 66,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 437454,
+          "output_tokens": 0,
+          "elapsed_ms": 3450
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 20,
+          "selected": [
+            "TrainLCD/MobileApp#831:0",
+            "TrainLCD/MobileApp#268:0",
+            "TrainLCD/MobileApp#269:0",
+            "TrainLCD/MobileApp#262:0",
+            "TrainLCD/MobileApp#830:0",
+            "TrainLCD/MobileApp#257:0",
+            "TrainLCD/MobileApp#258:0",
+            "TrainLCD/MobileApp#256:0",
+            "TrainLCD/MobileApp#686:0",
+            "TrainLCD/MobileApp#259:0",
+            "TrainLCD/MobileApp#685:0",
+            "TrainLCD/MobileApp#650:0"
+          ],
+          "calls": 20,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 11714,
+          "output_tokens": 0,
+          "elapsed_ms": 1061
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 14,
+          "selected": [
+            "TrainLCD/MobileApp#21:0",
+            "TrainLCD/MobileApp#830:0",
+            "TrainLCD/MobileApp#831:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#268:0",
+            "TrainLCD/MobileApp#262:0",
+            "TrainLCD/MobileApp#258:0",
+            "TrainLCD/MobileApp#257:0",
+            "TrainLCD/MobileApp#269:0",
+            "TrainLCD/MobileApp#685:0",
+            "TrainLCD/MobileApp#650:0",
+            "TrainLCD/MobileApp#256:0",
+            "TrainLCD/MobileApp#259:0",
+            "TrainLCD/MobileApp#686:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 5766,
+          "output_tokens": 0,
+          "elapsed_ms": 563
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "total_pages": 3
+      }
+    },
+    {
+      "variant": "after",
+      "query": "直通情報がすぐに反映されない問題",
+      "mode": "search",
+      "round": 2,
+      "http_status": 200,
+      "total_ms": 13086,
+      "server_ms": 7753,
+      "hit_count": 3,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#1023:0",
+        "TrainLCD/MobileApp#1022:0",
+        "TrainLCD/MobileApp#943:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#1023",
+        "TrainLCD/MobileApp#1022",
+        "TrainLCD/MobileApp#943"
+      ],
+      "timings": {
+        "scope_ms": 829,
+        "storage_ms": 1135,
+        "model_ms": 5789,
+        "generation_ms": 0,
+        "retrieval_ms": 7753
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group13",
+            "group55",
+            "group105",
+            "group68",
+            "group61",
+            "group56",
+            "group72",
+            "group70",
+            "group106",
+            "group77",
+            "group71",
+            "group67"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203831,
+          "output_tokens": 0,
+          "elapsed_ms": 1132
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 864,
+          "selected": [
+            "TrainLCD/MobileApp#1022",
+            "TrainLCD/Website#99",
+            "TrainLCD/StationAPI:AGENTS.md",
+            "TrainLCD/Website#95",
+            "TrainLCD/MobileApp#943",
+            "TrainLCD/StationAPI#342",
+            "TrainLCD/StationAPI#47",
+            "TrainLCD/StationAPI#469",
+            "TrainLCD/MobileApp#964",
+            "TrainLCD/StationAPI:data/README.md",
+            "TrainLCD/MobileApp#950",
+            "TrainLCD/MobileApp#915"
+          ],
+          "calls": 63,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 356105,
+          "output_tokens": 0,
+          "elapsed_ms": 1835
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 91,
+          "selected": [
+            "TrainLCD/MobileApp#1022:0",
+            "TrainLCD/MobileApp#1023:0",
+            "TrainLCD/MobileApp#943:0",
+            "TrainLCD/Website#99:2",
+            "TrainLCD/Website#99:5",
+            "TrainLCD/Website#99:4",
+            "TrainLCD/StationAPI:AGENTS.md:8",
+            "TrainLCD/MobileApp#919:0",
+            "TrainLCD/MobileApp#964:0",
+            "TrainLCD/BFF#43:2",
+            "TrainLCD/BFF#39:7",
+            "TrainLCD/StationAPI#342:0"
+          ],
+          "calls": 5,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 74782,
+          "output_tokens": 0,
+          "elapsed_ms": 2551
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 3,
+          "selected": [
+            "TrainLCD/MobileApp#1023:0",
+            "TrainLCD/MobileApp#1022:0",
+            "TrainLCD/MobileApp#943:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 1362,
+          "output_tokens": 0,
+          "elapsed_ms": 271
+        }
+      ],
+      "pagination": null
+    },
+    {
+      "variant": "before",
+      "query": "直通情報がすぐに反映されない問題",
+      "mode": "search",
+      "round": 2,
+      "http_status": 200,
+      "total_ms": 12128,
+      "server_ms": 5957,
+      "hit_count": 4,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#1023:0",
+        "TrainLCD/MobileApp#1022:0",
+        "TrainLCD/StationAPI#342:0",
+        "TrainLCD/MobileApp#950:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#1023",
+        "TrainLCD/MobileApp#1022",
+        "TrainLCD/StationAPI#342",
+        "TrainLCD/MobileApp#950"
+      ],
+      "timings": {
+        "scope_ms": 876,
+        "storage_ms": 1034,
+        "model_ms": 4047,
+        "generation_ms": 0,
+        "retrieval_ms": 5957
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group13",
+            "group55",
+            "group105",
+            "group68",
+            "group61",
+            "group56",
+            "group72",
+            "group70",
+            "group106",
+            "group77",
+            "group71",
+            "group67"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203831,
+          "output_tokens": 0,
+          "elapsed_ms": 1101
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 864,
+          "selected": [
+            "TrainLCD/MobileApp#1022",
+            "TrainLCD/Website#99",
+            "TrainLCD/StationAPI:AGENTS.md",
+            "TrainLCD/Website#95",
+            "TrainLCD/MobileApp#943",
+            "TrainLCD/StationAPI#342",
+            "TrainLCD/StationAPI#47",
+            "TrainLCD/StationAPI#469",
+            "TrainLCD/MobileApp#964",
+            "TrainLCD/StationAPI:data/README.md",
+            "TrainLCD/MobileApp#950",
+            "TrainLCD/MobileApp#915"
+          ],
+          "calls": 63,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 356105,
+          "output_tokens": 0,
+          "elapsed_ms": 1765
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 20,
+          "selected": [
+            "TrainLCD/MobileApp#1023:0",
+            "TrainLCD/MobileApp#1022:0",
+            "TrainLCD/StationAPI#342:0",
+            "TrainLCD/MobileApp#950:0",
+            "TrainLCD/StationAPI#653:0",
+            "TrainLCD/MobileApp#943:0",
+            "TrainLCD/StationAPI#497:0",
+            "TrainLCD/MobileApp#915:0",
+            "TrainLCD/StationAPI#293:0",
+            "TrainLCD/Website#95:0",
+            "TrainLCD/MobileApp#926:0",
+            "TrainLCD/Website#99:0"
+          ],
+          "calls": 20,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 11587,
+          "output_tokens": 0,
+          "elapsed_ms": 831
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 4,
+          "selected": [
+            "TrainLCD/MobileApp#1023:0",
+            "TrainLCD/MobileApp#1022:0",
+            "TrainLCD/StationAPI#342:0",
+            "TrainLCD/MobileApp#950:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 1555,
+          "output_tokens": 0,
+          "elapsed_ms": 350
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "total_pages": 5
+      }
+    },
+    {
+      "variant": "after",
+      "query": "地下鉄で位置更新が止まる問題",
+      "mode": "answer",
+      "round": 2,
+      "http_status": 200,
+      "sources_ms": 16622,
+      "first_draft_ms": 18305,
+      "total_ms": 27459,
+      "server_ms": 21107,
+      "hit_count": 28,
+      "status": "summarized",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#420:0",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/MobileApp:docs/location-simulation.md:6",
+        "TrainLCD/MobileApp#545:0",
+        "TrainLCD/MobileApp#423:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+        "TrainLCD/MobileApp#546:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+        "TrainLCD/MobileApp#1:0",
+        "TrainLCD/MobileApp:docs/changelog.md:2",
+        "TrainLCD/MobileApp#402:0",
+        "TrainLCD/MobileApp#348:0",
+        "TrainLCD/MobileApp#401:0",
+        "TrainLCD/MobileApp#267:0",
+        "TrainLCD/MobileApp#761:0",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:2",
+        "TrainLCD/MobileApp:docs/changelog.md:13",
+        "TrainLCD/MobileApp:docs/changelog.md:5",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp#416:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp:docs/location-simulation.md:4",
+        "TrainLCD/MobileApp#27:0",
+        "TrainLCD/MobileApp:docs/location-simulation.md:2",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp#263:0",
+        "TrainLCD/MobileApp:docs/changelog.md:12"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#420",
+        "TrainLCD/MobileApp:docs/changelog.md",
+        "TrainLCD/MobileApp:docs/location-simulation.md",
+        "TrainLCD/MobileApp#545",
+        "TrainLCD/MobileApp#423",
+        "TrainLCD/THQ:docs/location-freeze-regression.md",
+        "TrainLCD/MobileApp#546",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+        "TrainLCD/MobileApp#1",
+        "TrainLCD/MobileApp#402",
+        "TrainLCD/MobileApp#348",
+        "TrainLCD/MobileApp#401",
+        "TrainLCD/MobileApp#267",
+        "TrainLCD/MobileApp#761",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+        "TrainLCD/MobileApp#416",
+        "TrainLCD/MobileApp#27",
+        "TrainLCD/MobileApp#263"
+      ],
+      "timings": {
+        "scope_ms": 653,
+        "storage_ms": 920,
+        "model_ms": 10496,
+        "generation_ms": 9038,
+        "retrieval_ms": 10252
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group42",
+            "group24",
+            "group22",
+            "group41",
+            "group23",
+            "group21",
+            "group40",
+            "group55",
+            "group11",
+            "group29",
+            "group33",
+            "group56"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203951,
+          "output_tokens": 0,
+          "elapsed_ms": 1298
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1152,
+          "selected": [
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+            "TrainLCD/MobileApp#265",
+            "TrainLCD/MobileApp#237",
+            "TrainLCD/MobileApp#447",
+            "TrainLCD/MobileApp#263",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp:docs/location-simulation.md",
+            "TrainLCD/THQ:docs/location-freeze-regression.md",
+            "TrainLCD/MobileApp#416",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+            "TrainLCD/MobileApp#420"
+          ],
+          "calls": 81,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 515374,
+          "output_tokens": 0,
+          "elapsed_ms": 3215
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 87,
+          "selected": [
+            "TrainLCD/MobileApp:docs/changelog.md:3",
+            "TrainLCD/MobileApp:docs/changelog.md:2",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#1:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp:docs/location-simulation.md:6",
+            "TrainLCD/MobileApp:docs/changelog.md:13",
+            "TrainLCD/MobileApp#761:0"
+          ],
+          "calls": 4,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 65717,
+          "output_tokens": 0,
+          "elapsed_ms": 2613
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 19,
+          "selected": [
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp:docs/changelog.md:3",
+            "TrainLCD/MobileApp:docs/location-simulation.md:6",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp:docs/changelog.md:1",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+            "TrainLCD/MobileApp#1:0",
+            "TrainLCD/MobileApp:docs/changelog.md:2",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#348:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#761:0",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:2",
+            "TrainLCD/MobileApp:docs/changelog.md:13",
+            "TrainLCD/MobileApp:docs/changelog.md:5"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 13326,
+          "output_tokens": 0,
+          "elapsed_ms": 1553
+        },
+        {
+          "stage": "generate_answer",
+          "candidates": 20,
+          "selected": [],
+          "calls": 1,
+          "model": [
+            "@cf/google/gemma-4-26b-a4b-it-external"
+          ],
+          "input_tokens": 15171,
+          "output_tokens": 370,
+          "elapsed_ms": 9038
+        },
+        {
+          "stage": "verify_answer",
+          "candidates": 6,
+          "selected": [],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 15982,
+          "output_tokens": 0,
+          "elapsed_ms": 1817
+        }
+      ],
+      "pagination": null
+    },
+    {
+      "variant": "before",
+      "query": "地下鉄で位置更新が止まる問題",
+      "mode": "answer",
+      "round": 2,
+      "http_status": 200,
+      "sources_ms": 13962,
+      "first_draft_ms": 14435,
+      "total_ms": 27945,
+      "server_ms": 21935,
+      "hit_count": 15,
+      "status": "summarized",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#545:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp#402:0",
+        "TrainLCD/MobileApp#546:0",
+        "TrainLCD/MobileApp#263:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp#420:0",
+        "TrainLCD/MobileApp#401:0",
+        "TrainLCD/MobileApp#423:0",
+        "TrainLCD/MobileApp#447:0",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:0",
+        "TrainLCD/MobileApp#267:0",
+        "TrainLCD/MobileApp#448:0",
+        "TrainLCD/MobileApp#237:0",
+        "TrainLCD/MobileApp#236:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#545",
+        "TrainLCD/THQ:docs/location-freeze-regression.md",
+        "TrainLCD/MobileApp#402",
+        "TrainLCD/MobileApp#546",
+        "TrainLCD/MobileApp#263",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+        "TrainLCD/MobileApp#420",
+        "TrainLCD/MobileApp#401",
+        "TrainLCD/MobileApp#423",
+        "TrainLCD/MobileApp#447",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+        "TrainLCD/MobileApp#267",
+        "TrainLCD/MobileApp#448",
+        "TrainLCD/MobileApp#237",
+        "TrainLCD/MobileApp#236"
+      ],
+      "timings": {
+        "scope_ms": 848,
+        "storage_ms": 724,
+        "model_ms": 7048,
+        "generation_ms": 13315,
+        "retrieval_ms": 7833
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group42",
+            "group24",
+            "group22",
+            "group41",
+            "group23",
+            "group21",
+            "group40",
+            "group55",
+            "group11",
+            "group29",
+            "group33",
+            "group56"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203951,
+          "output_tokens": 0,
+          "elapsed_ms": 1217
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1152,
+          "selected": [
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+            "TrainLCD/MobileApp#265",
+            "TrainLCD/MobileApp#237",
+            "TrainLCD/MobileApp#447",
+            "TrainLCD/MobileApp#263",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp:docs/location-simulation.md",
+            "TrainLCD/THQ:docs/location-freeze-regression.md",
+            "TrainLCD/MobileApp#416",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+            "TrainLCD/MobileApp#420"
+          ],
+          "calls": 81,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 515374,
+          "output_tokens": 0,
+          "elapsed_ms": 3572
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 20,
+          "selected": [
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+            "TrainLCD/MobileApp#263:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#447:0",
+            "TrainLCD/MobileApp#448:0"
+          ],
+          "calls": 20,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 13497,
+          "output_tokens": 0,
+          "elapsed_ms": 624
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 15,
+          "selected": [
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#263:0",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp#447:0",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#448:0",
+            "TrainLCD/MobileApp#237:0",
+            "TrainLCD/MobileApp#236:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 7334,
+          "output_tokens": 0,
+          "elapsed_ms": 848
+        },
+        {
+          "stage": "generate_answer",
+          "candidates": 15,
+          "selected": [],
+          "calls": 1,
+          "model": [
+            "@cf/google/gemma-4-26b-a4b-it-external"
+          ],
+          "input_tokens": 7272,
+          "output_tokens": 584,
+          "elapsed_ms": 13315
+        },
+        {
+          "stage": "verify_answer",
+          "candidates": 7,
+          "selected": [],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 8566,
+          "output_tokens": 0,
+          "elapsed_ms": 787
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "total_pages": 5
+      }
+    },
+    {
+      "variant": "before",
+      "query": "地下鉄で位置更新が止まる問題",
+      "mode": "search",
+      "round": 3,
+      "http_status": 200,
+      "total_ms": 14267,
+      "server_ms": 8138,
+      "hit_count": 15,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#545:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp#402:0",
+        "TrainLCD/MobileApp#546:0",
+        "TrainLCD/MobileApp#263:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp#420:0",
+        "TrainLCD/MobileApp#401:0",
+        "TrainLCD/MobileApp#423:0",
+        "TrainLCD/MobileApp#447:0",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:0",
+        "TrainLCD/MobileApp#267:0",
+        "TrainLCD/MobileApp#448:0",
+        "TrainLCD/MobileApp#237:0",
+        "TrainLCD/MobileApp#236:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#545",
+        "TrainLCD/THQ:docs/location-freeze-regression.md",
+        "TrainLCD/MobileApp#402",
+        "TrainLCD/MobileApp#546",
+        "TrainLCD/MobileApp#263",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+        "TrainLCD/MobileApp#420",
+        "TrainLCD/MobileApp#401",
+        "TrainLCD/MobileApp#423",
+        "TrainLCD/MobileApp#447",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+        "TrainLCD/MobileApp#267",
+        "TrainLCD/MobileApp#448",
+        "TrainLCD/MobileApp#237",
+        "TrainLCD/MobileApp#236"
+      ],
+      "timings": {
+        "scope_ms": 730,
+        "storage_ms": 1156,
+        "model_ms": 6252,
+        "generation_ms": 0,
+        "retrieval_ms": 8138
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group42",
+            "group24",
+            "group22",
+            "group41",
+            "group23",
+            "group21",
+            "group40",
+            "group55",
+            "group11",
+            "group29",
+            "group33",
+            "group56"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203951,
+          "output_tokens": 0,
+          "elapsed_ms": 1172
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1152,
+          "selected": [
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+            "TrainLCD/MobileApp#265",
+            "TrainLCD/MobileApp#237",
+            "TrainLCD/MobileApp#447",
+            "TrainLCD/MobileApp#263",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp:docs/location-simulation.md",
+            "TrainLCD/THQ:docs/location-freeze-regression.md",
+            "TrainLCD/MobileApp#416",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+            "TrainLCD/MobileApp#420"
+          ],
+          "calls": 81,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 515374,
+          "output_tokens": 0,
+          "elapsed_ms": 3392
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 20,
+          "selected": [
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+            "TrainLCD/MobileApp#263:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#447:0",
+            "TrainLCD/MobileApp#448:0"
+          ],
+          "calls": 20,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 13497,
+          "output_tokens": 0,
+          "elapsed_ms": 815
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 15,
+          "selected": [
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#263:0",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp#447:0",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#448:0",
+            "TrainLCD/MobileApp#237:0",
+            "TrainLCD/MobileApp#236:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 7334,
+          "output_tokens": 0,
+          "elapsed_ms": 873
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "total_pages": 5
+      }
+    },
+    {
+      "variant": "after",
+      "query": "地下鉄で位置更新が止まる問題",
+      "mode": "search",
+      "round": 3,
+      "http_status": 200,
+      "total_ms": 17197,
+      "server_ms": 10930,
+      "hit_count": 28,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#420:0",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/MobileApp:docs/location-simulation.md:6",
+        "TrainLCD/MobileApp#545:0",
+        "TrainLCD/MobileApp#423:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+        "TrainLCD/MobileApp#546:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+        "TrainLCD/MobileApp#1:0",
+        "TrainLCD/MobileApp:docs/changelog.md:2",
+        "TrainLCD/MobileApp#402:0",
+        "TrainLCD/MobileApp#348:0",
+        "TrainLCD/MobileApp#401:0",
+        "TrainLCD/MobileApp#267:0",
+        "TrainLCD/MobileApp#761:0",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:2",
+        "TrainLCD/MobileApp:docs/changelog.md:13",
+        "TrainLCD/MobileApp:docs/changelog.md:5",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp#416:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp:docs/location-simulation.md:4",
+        "TrainLCD/MobileApp#27:0",
+        "TrainLCD/MobileApp:docs/location-simulation.md:2",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp#263:0",
+        "TrainLCD/MobileApp:docs/changelog.md:12"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#420",
+        "TrainLCD/MobileApp:docs/changelog.md",
+        "TrainLCD/MobileApp:docs/location-simulation.md",
+        "TrainLCD/MobileApp#545",
+        "TrainLCD/MobileApp#423",
+        "TrainLCD/THQ:docs/location-freeze-regression.md",
+        "TrainLCD/MobileApp#546",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+        "TrainLCD/MobileApp#1",
+        "TrainLCD/MobileApp#402",
+        "TrainLCD/MobileApp#348",
+        "TrainLCD/MobileApp#401",
+        "TrainLCD/MobileApp#267",
+        "TrainLCD/MobileApp#761",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+        "TrainLCD/MobileApp#416",
+        "TrainLCD/MobileApp#27",
+        "TrainLCD/MobileApp#263"
+      ],
+      "timings": {
+        "scope_ms": 718,
+        "storage_ms": 1172,
+        "model_ms": 9040,
+        "generation_ms": 0,
+        "retrieval_ms": 10930
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group42",
+            "group24",
+            "group22",
+            "group41",
+            "group23",
+            "group21",
+            "group40",
+            "group55",
+            "group11",
+            "group29",
+            "group33",
+            "group56"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203951,
+          "output_tokens": 0,
+          "elapsed_ms": 1347
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1152,
+          "selected": [
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+            "TrainLCD/MobileApp#265",
+            "TrainLCD/MobileApp#237",
+            "TrainLCD/MobileApp#447",
+            "TrainLCD/MobileApp#263",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp:docs/location-simulation.md",
+            "TrainLCD/THQ:docs/location-freeze-regression.md",
+            "TrainLCD/MobileApp#416",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+            "TrainLCD/MobileApp#420"
+          ],
+          "calls": 81,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 515374,
+          "output_tokens": 0,
+          "elapsed_ms": 3429
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 87,
+          "selected": [
+            "TrainLCD/MobileApp:docs/changelog.md:3",
+            "TrainLCD/MobileApp:docs/changelog.md:2",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#1:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp:docs/location-simulation.md:6",
+            "TrainLCD/MobileApp:docs/changelog.md:13",
+            "TrainLCD/MobileApp#761:0"
+          ],
+          "calls": 4,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 65717,
+          "output_tokens": 0,
+          "elapsed_ms": 2865
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 19,
+          "selected": [
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp:docs/changelog.md:3",
+            "TrainLCD/MobileApp:docs/location-simulation.md:6",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp:docs/changelog.md:1",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+            "TrainLCD/MobileApp#1:0",
+            "TrainLCD/MobileApp:docs/changelog.md:2",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#348:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#761:0",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:2",
+            "TrainLCD/MobileApp:docs/changelog.md:13",
+            "TrainLCD/MobileApp:docs/changelog.md:5"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 13326,
+          "output_tokens": 0,
+          "elapsed_ms": 1399
+        }
+      ],
+      "pagination": null
+    },
+    {
+      "variant": "before",
+      "query": "東京メトロ固有の問題はある？",
+      "mode": "search",
+      "round": 3,
+      "http_status": 200,
+      "total_ms": 13363,
+      "server_ms": 7308,
+      "hit_count": 14,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#21:0",
+        "TrainLCD/MobileApp#830:0",
+        "TrainLCD/MobileApp#831:0",
+        "TrainLCD/MobileApp#402:0",
+        "TrainLCD/MobileApp#268:0",
+        "TrainLCD/MobileApp#262:0",
+        "TrainLCD/MobileApp#258:0",
+        "TrainLCD/MobileApp#257:0",
+        "TrainLCD/MobileApp#269:0",
+        "TrainLCD/MobileApp#685:0",
+        "TrainLCD/MobileApp#650:0",
+        "TrainLCD/MobileApp#256:0",
+        "TrainLCD/MobileApp#259:0",
+        "TrainLCD/MobileApp#686:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#21",
+        "TrainLCD/MobileApp#830",
+        "TrainLCD/MobileApp#831",
+        "TrainLCD/MobileApp#402",
+        "TrainLCD/MobileApp#268",
+        "TrainLCD/MobileApp#262",
+        "TrainLCD/MobileApp#258",
+        "TrainLCD/MobileApp#257",
+        "TrainLCD/MobileApp#269",
+        "TrainLCD/MobileApp#685",
+        "TrainLCD/MobileApp#650",
+        "TrainLCD/MobileApp#256",
+        "TrainLCD/MobileApp#259",
+        "TrainLCD/MobileApp#686"
+      ],
+      "timings": {
+        "scope_ms": 763,
+        "storage_ms": 913,
+        "model_ms": 5632,
+        "generation_ms": 0,
+        "retrieval_ms": 7308
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group18",
+            "group16",
+            "group24",
+            "group17",
+            "group13",
+            "group28",
+            "group22",
+            "group14",
+            "group23",
+            "group19",
+            "group53",
+            "group37"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203871,
+          "output_tokens": 0,
+          "elapsed_ms": 1128
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1128,
+          "selected": [
+            "TrainLCD/MobileApp#831",
+            "TrainLCD/MobileApp#1076",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp#268",
+            "TrainLCD/MobileApp#27",
+            "TrainLCD/MobileApp#258",
+            "TrainLCD/MobileApp#686",
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp#257",
+            "TrainLCD/MobileApp#3",
+            "TrainLCD/MobileApp#262",
+            "TrainLCD/MobileApp#1022"
+          ],
+          "calls": 66,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 437454,
+          "output_tokens": 0,
+          "elapsed_ms": 3141
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 20,
+          "selected": [
+            "TrainLCD/MobileApp#831:0",
+            "TrainLCD/MobileApp#268:0",
+            "TrainLCD/MobileApp#269:0",
+            "TrainLCD/MobileApp#262:0",
+            "TrainLCD/MobileApp#830:0",
+            "TrainLCD/MobileApp#257:0",
+            "TrainLCD/MobileApp#258:0",
+            "TrainLCD/MobileApp#256:0",
+            "TrainLCD/MobileApp#686:0",
+            "TrainLCD/MobileApp#259:0",
+            "TrainLCD/MobileApp#685:0",
+            "TrainLCD/MobileApp#650:0"
+          ],
+          "calls": 20,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 11714,
+          "output_tokens": 0,
+          "elapsed_ms": 587
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 14,
+          "selected": [
+            "TrainLCD/MobileApp#21:0",
+            "TrainLCD/MobileApp#830:0",
+            "TrainLCD/MobileApp#831:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#268:0",
+            "TrainLCD/MobileApp#262:0",
+            "TrainLCD/MobileApp#258:0",
+            "TrainLCD/MobileApp#257:0",
+            "TrainLCD/MobileApp#269:0",
+            "TrainLCD/MobileApp#685:0",
+            "TrainLCD/MobileApp#650:0",
+            "TrainLCD/MobileApp#256:0",
+            "TrainLCD/MobileApp#259:0",
+            "TrainLCD/MobileApp#686:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 5766,
+          "output_tokens": 0,
+          "elapsed_ms": 776
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "total_pages": 3
+      }
+    },
+    {
+      "variant": "after",
+      "query": "東京メトロ固有の問題はある？",
+      "mode": "search",
+      "round": 3,
+      "http_status": 200,
+      "total_ms": 15733,
+      "server_ms": 9556,
+      "hit_count": 10,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#830:0",
+        "TrainLCD/MobileApp#27:0",
+        "TrainLCD/MobileApp#261:0",
+        "TrainLCD/MobileApp#268:0",
+        "TrainLCD/MobileApp#831:0",
+        "TrainLCD/MobileApp#257:0",
+        "TrainLCD/MobileApp#259:0",
+        "TrainLCD/MobileApp#262:0",
+        "TrainLCD/MobileApp#269:0",
+        "TrainLCD/MobileApp#686:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#830",
+        "TrainLCD/MobileApp#27",
+        "TrainLCD/MobileApp#261",
+        "TrainLCD/MobileApp#268",
+        "TrainLCD/MobileApp#831",
+        "TrainLCD/MobileApp#257",
+        "TrainLCD/MobileApp#259",
+        "TrainLCD/MobileApp#262",
+        "TrainLCD/MobileApp#269",
+        "TrainLCD/MobileApp#686"
+      ],
+      "timings": {
+        "scope_ms": 664,
+        "storage_ms": 1025,
+        "model_ms": 7867,
+        "generation_ms": 0,
+        "retrieval_ms": 9556
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group18",
+            "group16",
+            "group24",
+            "group17",
+            "group13",
+            "group28",
+            "group22",
+            "group14",
+            "group23",
+            "group19",
+            "group53",
+            "group37"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203871,
+          "output_tokens": 0,
+          "elapsed_ms": 1073
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1128,
+          "selected": [
+            "TrainLCD/MobileApp#831",
+            "TrainLCD/MobileApp#1076",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp#268",
+            "TrainLCD/MobileApp#27",
+            "TrainLCD/MobileApp#258",
+            "TrainLCD/MobileApp#686",
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp#257",
+            "TrainLCD/MobileApp#3",
+            "TrainLCD/MobileApp#262",
+            "TrainLCD/MobileApp#1022"
+          ],
+          "calls": 66,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 437454,
+          "output_tokens": 0,
+          "elapsed_ms": 3363
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 54,
+          "selected": [
+            "TrainLCD/MobileApp#830:0",
+            "TrainLCD/MobileApp#261:0",
+            "TrainLCD/MobileApp#831:0",
+            "TrainLCD/MobileApp#262:0",
+            "TrainLCD/MobileApp#268:0",
+            "TrainLCD/MobileApp#259:0",
+            "TrainLCD/MobileApp#269:0",
+            "TrainLCD/MobileApp#257:0",
+            "TrainLCD/MobileApp#686:0",
+            "TrainLCD/MobileApp#27:0",
+            "TrainLCD/MobileApp#256:0",
+            "TrainLCD/MobileApp#258:0"
+          ],
+          "calls": 2,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 25321,
+          "output_tokens": 0,
+          "elapsed_ms": 2853
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 10,
+          "selected": [
+            "TrainLCD/MobileApp#830:0",
+            "TrainLCD/MobileApp#27:0",
+            "TrainLCD/MobileApp#261:0",
+            "TrainLCD/MobileApp#268:0",
+            "TrainLCD/MobileApp#831:0",
+            "TrainLCD/MobileApp#257:0",
+            "TrainLCD/MobileApp#259:0",
+            "TrainLCD/MobileApp#262:0",
+            "TrainLCD/MobileApp#269:0",
+            "TrainLCD/MobileApp#686:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 4332,
+          "output_tokens": 0,
+          "elapsed_ms": 578
+        }
+      ],
+      "pagination": null
+    },
+    {
+      "variant": "before",
+      "query": "直通情報がすぐに反映されない問題",
+      "mode": "search",
+      "round": 3,
+      "http_status": 200,
+      "total_ms": 12095,
+      "server_ms": 6017,
+      "hit_count": 4,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#1023:0",
+        "TrainLCD/MobileApp#1022:0",
+        "TrainLCD/StationAPI#342:0",
+        "TrainLCD/MobileApp#950:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#1023",
+        "TrainLCD/MobileApp#1022",
+        "TrainLCD/StationAPI#342",
+        "TrainLCD/MobileApp#950"
+      ],
+      "timings": {
+        "scope_ms": 768,
+        "storage_ms": 700,
+        "model_ms": 4549,
+        "generation_ms": 0,
+        "retrieval_ms": 6017
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group13",
+            "group55",
+            "group105",
+            "group68",
+            "group61",
+            "group56",
+            "group72",
+            "group70",
+            "group106",
+            "group77",
+            "group71",
+            "group67"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203831,
+          "output_tokens": 0,
+          "elapsed_ms": 1182
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 864,
+          "selected": [
+            "TrainLCD/MobileApp#1022",
+            "TrainLCD/Website#99",
+            "TrainLCD/StationAPI:AGENTS.md",
+            "TrainLCD/Website#95",
+            "TrainLCD/MobileApp#943",
+            "TrainLCD/StationAPI#342",
+            "TrainLCD/StationAPI#47",
+            "TrainLCD/StationAPI#469",
+            "TrainLCD/MobileApp#964",
+            "TrainLCD/StationAPI:data/README.md",
+            "TrainLCD/MobileApp#950",
+            "TrainLCD/MobileApp#915"
+          ],
+          "calls": 63,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 356105,
+          "output_tokens": 0,
+          "elapsed_ms": 1813
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 20,
+          "selected": [
+            "TrainLCD/MobileApp#1023:0",
+            "TrainLCD/MobileApp#1022:0",
+            "TrainLCD/StationAPI#342:0",
+            "TrainLCD/MobileApp#950:0",
+            "TrainLCD/StationAPI#653:0",
+            "TrainLCD/MobileApp#943:0",
+            "TrainLCD/StationAPI#497:0",
+            "TrainLCD/MobileApp#915:0",
+            "TrainLCD/StationAPI#293:0",
+            "TrainLCD/Website#95:0",
+            "TrainLCD/MobileApp#926:0",
+            "TrainLCD/Website#99:0"
+          ],
+          "calls": 20,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 11587,
+          "output_tokens": 0,
+          "elapsed_ms": 1094
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 4,
+          "selected": [
+            "TrainLCD/MobileApp#1023:0",
+            "TrainLCD/MobileApp#1022:0",
+            "TrainLCD/StationAPI#342:0",
+            "TrainLCD/MobileApp#950:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 1555,
+          "output_tokens": 0,
+          "elapsed_ms": 460
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "total_pages": 5
+      }
+    },
+    {
+      "variant": "after",
+      "query": "直通情報がすぐに反映されない問題",
+      "mode": "search",
+      "round": 3,
+      "http_status": 200,
+      "total_ms": 15897,
+      "server_ms": 9738,
+      "hit_count": 3,
+      "status": "retrieved",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#1023:0",
+        "TrainLCD/MobileApp#1022:0",
+        "TrainLCD/MobileApp#943:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#1023",
+        "TrainLCD/MobileApp#1022",
+        "TrainLCD/MobileApp#943"
+      ],
+      "timings": {
+        "scope_ms": 786,
+        "storage_ms": 764,
+        "model_ms": 8188,
+        "generation_ms": 0,
+        "retrieval_ms": 9738
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group13",
+            "group55",
+            "group105",
+            "group68",
+            "group61",
+            "group56",
+            "group72",
+            "group70",
+            "group106",
+            "group77",
+            "group71",
+            "group67"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203831,
+          "output_tokens": 0,
+          "elapsed_ms": 3437
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 864,
+          "selected": [
+            "TrainLCD/MobileApp#1022",
+            "TrainLCD/Website#99",
+            "TrainLCD/StationAPI:AGENTS.md",
+            "TrainLCD/Website#95",
+            "TrainLCD/MobileApp#943",
+            "TrainLCD/StationAPI#342",
+            "TrainLCD/StationAPI#47",
+            "TrainLCD/StationAPI#469",
+            "TrainLCD/MobileApp#964",
+            "TrainLCD/StationAPI:data/README.md",
+            "TrainLCD/MobileApp#950",
+            "TrainLCD/MobileApp#915"
+          ],
+          "calls": 63,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 356105,
+          "output_tokens": 0,
+          "elapsed_ms": 1729
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 91,
+          "selected": [
+            "TrainLCD/MobileApp#1022:0",
+            "TrainLCD/MobileApp#1023:0",
+            "TrainLCD/MobileApp#943:0",
+            "TrainLCD/Website#99:2",
+            "TrainLCD/Website#99:5",
+            "TrainLCD/Website#99:4",
+            "TrainLCD/StationAPI:AGENTS.md:8",
+            "TrainLCD/MobileApp#919:0",
+            "TrainLCD/MobileApp#964:0",
+            "TrainLCD/BFF#43:2",
+            "TrainLCD/BFF#39:7",
+            "TrainLCD/StationAPI#342:0"
+          ],
+          "calls": 5,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 74782,
+          "output_tokens": 0,
+          "elapsed_ms": 2625
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 3,
+          "selected": [
+            "TrainLCD/MobileApp#1023:0",
+            "TrainLCD/MobileApp#1022:0",
+            "TrainLCD/MobileApp#943:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 1362,
+          "output_tokens": 0,
+          "elapsed_ms": 397
+        }
+      ],
+      "pagination": null
+    },
+    {
+      "variant": "before",
+      "query": "地下鉄で位置更新が止まる問題",
+      "mode": "answer",
+      "round": 3,
+      "http_status": 200,
+      "sources_ms": 13862,
+      "first_draft_ms": 14460,
+      "total_ms": 27173,
+      "server_ms": 20615,
+      "hit_count": 15,
+      "status": "summarized",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#545:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp#402:0",
+        "TrainLCD/MobileApp#546:0",
+        "TrainLCD/MobileApp#263:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp#420:0",
+        "TrainLCD/MobileApp#401:0",
+        "TrainLCD/MobileApp#423:0",
+        "TrainLCD/MobileApp#447:0",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:0",
+        "TrainLCD/MobileApp#267:0",
+        "TrainLCD/MobileApp#448:0",
+        "TrainLCD/MobileApp#237:0",
+        "TrainLCD/MobileApp#236:0"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#545",
+        "TrainLCD/THQ:docs/location-freeze-regression.md",
+        "TrainLCD/MobileApp#402",
+        "TrainLCD/MobileApp#546",
+        "TrainLCD/MobileApp#263",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+        "TrainLCD/MobileApp#420",
+        "TrainLCD/MobileApp#401",
+        "TrainLCD/MobileApp#423",
+        "TrainLCD/MobileApp#447",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+        "TrainLCD/MobileApp#267",
+        "TrainLCD/MobileApp#448",
+        "TrainLCD/MobileApp#237",
+        "TrainLCD/MobileApp#236"
+      ],
+      "timings": {
+        "scope_ms": 726,
+        "storage_ms": 661,
+        "model_ms": 6618,
+        "generation_ms": 12610,
+        "retrieval_ms": 7161
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group42",
+            "group24",
+            "group22",
+            "group41",
+            "group23",
+            "group21",
+            "group40",
+            "group55",
+            "group11",
+            "group29",
+            "group33",
+            "group56"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203951,
+          "output_tokens": 0,
+          "elapsed_ms": 1190
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1152,
+          "selected": [
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+            "TrainLCD/MobileApp#265",
+            "TrainLCD/MobileApp#237",
+            "TrainLCD/MobileApp#447",
+            "TrainLCD/MobileApp#263",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp:docs/location-simulation.md",
+            "TrainLCD/THQ:docs/location-freeze-regression.md",
+            "TrainLCD/MobileApp#416",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+            "TrainLCD/MobileApp#420"
+          ],
+          "calls": 81,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 515374,
+          "output_tokens": 0,
+          "elapsed_ms": 3201
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 20,
+          "selected": [
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+            "TrainLCD/MobileApp#263:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#447:0",
+            "TrainLCD/MobileApp#448:0"
+          ],
+          "calls": 20,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 13497,
+          "output_tokens": 0,
+          "elapsed_ms": 632
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 15,
+          "selected": [
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#263:0",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp#447:0",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#448:0",
+            "TrainLCD/MobileApp#237:0",
+            "TrainLCD/MobileApp#236:0"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 7334,
+          "output_tokens": 0,
+          "elapsed_ms": 751
+        },
+        {
+          "stage": "generate_answer",
+          "candidates": 15,
+          "selected": [],
+          "calls": 1,
+          "model": [
+            "@cf/google/gemma-4-26b-a4b-it-external"
+          ],
+          "input_tokens": 7272,
+          "output_tokens": 584,
+          "elapsed_ms": 12610
+        },
+        {
+          "stage": "verify_answer",
+          "candidates": 7,
+          "selected": [],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 8566,
+          "output_tokens": 0,
+          "elapsed_ms": 844
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "total_pages": 5
+      }
+    },
+    {
+      "variant": "after",
+      "query": "地下鉄で位置更新が止まる問題",
+      "mode": "answer",
+      "round": 3,
+      "http_status": 200,
+      "sources_ms": 16204,
+      "first_draft_ms": 17245,
+      "total_ms": 27244,
+      "server_ms": 21571,
+      "hit_count": 28,
+      "status": "summarized",
+      "evidence_ids": [
+        "TrainLCD/MobileApp#420:0",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/MobileApp:docs/location-simulation.md:6",
+        "TrainLCD/MobileApp#545:0",
+        "TrainLCD/MobileApp#423:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+        "TrainLCD/MobileApp#546:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+        "TrainLCD/MobileApp#1:0",
+        "TrainLCD/MobileApp:docs/changelog.md:2",
+        "TrainLCD/MobileApp#402:0",
+        "TrainLCD/MobileApp#348:0",
+        "TrainLCD/MobileApp#401:0",
+        "TrainLCD/MobileApp#267:0",
+        "TrainLCD/MobileApp#761:0",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:2",
+        "TrainLCD/MobileApp:docs/changelog.md:13",
+        "TrainLCD/MobileApp:docs/changelog.md:5",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp#416:0",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp:docs/location-simulation.md:4",
+        "TrainLCD/MobileApp#27:0",
+        "TrainLCD/MobileApp:docs/location-simulation.md:2",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp#263:0",
+        "TrainLCD/MobileApp:docs/changelog.md:12"
+      ],
+      "source_ids": [
+        "TrainLCD/MobileApp#420",
+        "TrainLCD/MobileApp:docs/changelog.md",
+        "TrainLCD/MobileApp:docs/location-simulation.md",
+        "TrainLCD/MobileApp#545",
+        "TrainLCD/MobileApp#423",
+        "TrainLCD/THQ:docs/location-freeze-regression.md",
+        "TrainLCD/MobileApp#546",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+        "TrainLCD/MobileApp#1",
+        "TrainLCD/MobileApp#402",
+        "TrainLCD/MobileApp#348",
+        "TrainLCD/MobileApp#401",
+        "TrainLCD/MobileApp#267",
+        "TrainLCD/MobileApp#761",
+        "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+        "TrainLCD/MobileApp#416",
+        "TrainLCD/MobileApp#27",
+        "TrainLCD/MobileApp#263"
+      ],
+      "timings": {
+        "scope_ms": 837,
+        "storage_ms": 1146,
+        "model_ms": 10359,
+        "generation_ms": 9229,
+        "retrieval_ms": 10433
+      },
+      "trace": [
+        {
+          "stage": "page_screening",
+          "candidates": 114,
+          "selected": [
+            "group42",
+            "group24",
+            "group22",
+            "group41",
+            "group23",
+            "group21",
+            "group40",
+            "group55",
+            "group11",
+            "group29",
+            "group33",
+            "group56"
+          ],
+          "calls": 40,
+          "model": [
+            "clef-flash"
+          ],
+          "input_tokens": 203951,
+          "output_tokens": 0,
+          "elapsed_ms": 1292
+        },
+        {
+          "stage": "document_screening",
+          "candidates": 1152,
+          "selected": [
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+            "TrainLCD/MobileApp#265",
+            "TrainLCD/MobileApp#237",
+            "TrainLCD/MobileApp#447",
+            "TrainLCD/MobileApp#263",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp:docs/location-simulation.md",
+            "TrainLCD/THQ:docs/location-freeze-regression.md",
+            "TrainLCD/MobileApp#416",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+            "TrainLCD/MobileApp#420"
+          ],
+          "calls": 81,
+          "model": [
+            "clef-flash",
+            "clef"
+          ],
+          "input_tokens": 515374,
+          "output_tokens": 0,
+          "elapsed_ms": 3118
+        },
+        {
+          "stage": "passage_scoring",
+          "candidates": 87,
+          "selected": [
+            "TrainLCD/MobileApp:docs/changelog.md:3",
+            "TrainLCD/MobileApp:docs/changelog.md:2",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#1:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp:docs/location-simulation.md:6",
+            "TrainLCD/MobileApp:docs/changelog.md:13",
+            "TrainLCD/MobileApp#761:0"
+          ],
+          "calls": 4,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 65717,
+          "output_tokens": 0,
+          "elapsed_ms": 2506
+        },
+        {
+          "stage": "choice_rerank",
+          "candidates": 19,
+          "selected": [
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp:docs/changelog.md:3",
+            "TrainLCD/MobileApp:docs/location-simulation.md:6",
+            "TrainLCD/MobileApp#545:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+            "TrainLCD/MobileApp#546:0",
+            "TrainLCD/MobileApp:docs/changelog.md:1",
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+            "TrainLCD/MobileApp#1:0",
+            "TrainLCD/MobileApp:docs/changelog.md:2",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#348:0",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#761:0",
+            "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:2",
+            "TrainLCD/MobileApp:docs/changelog.md:13",
+            "TrainLCD/MobileApp:docs/changelog.md:5"
+          ],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 13326,
+          "output_tokens": 0,
+          "elapsed_ms": 1534
+        },
+        {
+          "stage": "generate_answer",
+          "candidates": 20,
+          "selected": [],
+          "calls": 1,
+          "model": [
+            "@cf/google/gemma-4-26b-a4b-it-external"
+          ],
+          "input_tokens": 15171,
+          "output_tokens": 395,
+          "elapsed_ms": 9229
+        },
+        {
+          "stage": "verify_answer",
+          "candidates": 7,
+          "selected": [],
+          "calls": 1,
+          "model": [
+            "clef"
+          ],
+          "input_tokens": 16246,
+          "output_tokens": 0,
+          "elapsed_ms": 1909
+        }
+      ],
+      "pagination": null
+    }
+  ],
+  "finished_at": "2026-11-11T11:44:54.009Z"
+}
