@@ -109,7 +109,7 @@ export class Jev implements Judge {
     const documentScreening = stage === 'document_screening';
     const navigation = documentScreening || stage === 'branch_screening' || stage === 'page_screening';
     const useClef = (candidate: Candidate) => this.env.SCREENING_MODEL === 'clef' || (documentScreening && candidate.kind === 'doc');
-    const batchLimit = stage === 'passage_scoring' ? (candidates.length <= 20 ? 5 : passageBatchSize) : 64;
+    const batchLimit = stage === 'passage_scoring' ? (candidates.length <= 20 ? 1 : passageBatchSize) : 64;
     const charLimit = stage === 'passage_scoring' ? maxPassageBatchChars : maxBatchChars;
     const batches: T[][] = [];
     let batch: T[] = [], chars = 0;
@@ -142,7 +142,7 @@ export class Jev implements Judge {
         return [...await scoreBatch(items.slice(0, middle)), ...await scoreBatch(items.slice(middle))];
       }
     };
-    const responses = (await mapConcurrent(batches, stage === 'branch_screening' ? 4 : navigation ? 12 : 6, scoreBatch)).flat();
+    const responses = (await mapConcurrent(batches, stage === 'branch_screening' ? 4 : navigation || candidates.length <= 20 ? 12 : 6, scoreBatch)).flat();
     const scored = responses.flatMap(r => r.scored).sort((a, b) => b.probability - a.probability);
     this.trace.push({ stage, candidates: candidates.length, selected: scored.slice(0, 12).map(r => r.item.id),
       calls, model: [...new Set(responses.map(r => r.result.model))],
@@ -152,20 +152,7 @@ export class Jev implements Judge {
   }
   /** Screen passages and compare the shortlist, combining both judgments when all candidates fit. */
   async rankPassages<T extends Candidate>(query: string, candidates: T[], shortlistSize: number): Promise<Scored<T>[]> {
-    // When no passage would be pruned, both judgments can share one request.
-    if (candidates.length >= 2 && candidates.length <= Math.min(shortlistSize, 5) &&
-      candidates.every(c => c.description.length <= maxCandidateChars) &&
-      candidates.reduce((chars, c) => chars + c.description.length, 0) <= maxChoiceChars) {
-      const start = Date.now();
-      const ids = candidates.map((_, i) => candidateId(i));
-      const result = await this.call({ query, candidates: Object.fromEntries(candidates.map((c, i) => [ids[i], c.description])) },
-        { ...binaryQuestions(candidates), best: choiceQuestion(ids) });
-      const ranked = choiceOrder(binaryScores(candidates, result), result, ids).filter(isRelevant);
-      this.trace.push({ stage: 'passage_ranking', candidates: candidates.length, selected: ranked.map(r => r.item.id),
-        calls: 1, model: [result.model], ...result.usage, elapsed_ms: Date.now() - start });
-      return ranked;
-    }
-
+    // Page passages are classified in isolated contexts before comparative ranking.
     const hits = (await this.score(query, candidates, 'passage_scoring')).filter(isRelevant);
     const shortlist = hits.slice(0, shortlistSize);
     let chars = 0;
