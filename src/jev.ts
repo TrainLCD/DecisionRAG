@@ -108,6 +108,7 @@ export class Jev implements Judge {
     // Candidates within a request share the full context; this is not one request per item.
     const documentScreening = stage === 'document_screening';
     const navigation = documentScreening || stage === 'branch_screening' || stage === 'page_screening';
+    const screeningBudget = this.env.SCREENING_MODEL === 'clef' ? clefTextTokenBudget : flashTextTokenBudget;
     const batchLimit = stage === 'passage_scoring' ? passageBatchSize : 64;
     const charLimit = stage === 'passage_scoring' ? maxPassageBatchChars : maxBatchChars;
     const batches: T[][] = [];
@@ -115,7 +116,7 @@ export class Jev implements Judge {
     for (const c of candidates) {
       if (c.description.length > maxCandidateChars) throw new HttpError(503, 'candidate_too_large');
       if (batch.length && (batch.length >= batchLimit || chars + c.description.length > charLimit ||
-        (navigation && screeningRequest(query, [...batch, c], documentScreening, stage === 'page_screening').tokenUpperBound > flashTextTokenBudget))) {
+        (navigation && screeningRequest(query, [...batch, c], documentScreening, stage === 'page_screening').tokenUpperBound > screeningBudget))) {
         batches.push(batch); batch = []; chars = 0;
       }
       batch.push(c); chars += c.description.length;

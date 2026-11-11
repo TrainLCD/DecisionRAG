@@ -76,10 +76,12 @@ export async function planRetrieval(query: string, store: RetrievalStore, judge:
     }
     const scoredGroups = await judge.score(query, groups, 'page_screening');
     documents = scoredGroups.filter((row, index) => index < 4 || row.probability > 0.2).flatMap(row => row.item.members);
+    judge.trace.push({ stage: 'group_candidates', candidates: direct.length, selected: documents.map(item => item.id), calls: 0, model: [], input_tokens: 0, output_tokens: 0, elapsed_ms: 0 });
   }
   const documentScores = await judge.score(query, documents, 'document_screening');
   // Keep the strongest candidates even when title-level scores are uncertain.
   const selectedDocs = documentScores.filter((r, index) => index < budget.documents || r.probability > 0.5).map(r => r.item.id);
+  judge.trace.push({ stage: 'document_candidates', candidates: documents.length, selected: selectedDocs, calls: 0, model: [], input_tokens: 0, output_tokens: 0, elapsed_ms: 0 });
   return { ids: selectedDocs };
 }
 /** Evaluate only this page's passages; planning can be reused across requests. */
