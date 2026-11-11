@@ -60,14 +60,43 @@ async function search(request: Request, env: Env, path: string): Promise<Respons
   const judge = new Jev(env);
   const { evidence, hitCount } = await retrieve(query, d1Store(env, scope, timings), judge, { ...DEFAULT_BUDGETS, maxDocuments });
   timings.retrieval_ms = Date.now() - start;
-  const result = path === '/answer' ? await answer(query, evidence, env, judge) : { status: evidence.length ? 'retrieved' : 'empty' };
-  for (const step of judge.trace) {
-    if (step.stage === 'generate_answer') timings.generation_ms += step.elapsed_ms;
-    else timings.model_ms += step.elapsed_ms;
-  }
   const excerpts = evidence.map(item => ({ ...item, text_html: passageHtml(item.text) }));
-  return Response.json({ ...result, evidence: excerpts, hit_count: hitCount, trace: judge.trace, timings, elapsed_ms: Date.now() - start,
-    retrieval: 'hierarchical_decision', release_inference: 'github_release_commit_ancestry' });
+  const finish = (result: object) => {
+    for (const step of judge.trace) {
+      if (step.stage === 'generate_answer') timings.generation_ms += step.elapsed_ms;
+      else timings.model_ms += step.elapsed_ms;
+    }
+    return { ...result, evidence: excerpts, hit_count: hitCount, trace: judge.trace, timings, elapsed_ms: Date.now() - start,
+      retrieval: 'hierarchical_decision', release_inference: 'github_release_commit_ancestry' };
+  };
+  if (path === '/answer' && request.headers.get('accept')?.includes('text/event-stream')) {
+    const abort = new AbortController();
+    const signal = AbortSignal.any([abort.signal, request.signal, AbortSignal.timeout(180_000)]);
+    const encoder = new TextEncoder();
+    let closed = false;
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        const send = (event: string, data: unknown) => {
+          if (!closed && !signal.aborted) controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+        };
+        send('sources', { evidence: excerpts, hit_count: hitCount, elapsed_ms: Date.now() - start });
+        void (async () => {
+          try {
+            const result = await answer(query, evidence, env, judge, draft => send('draft', draft), signal);
+            send('result', finish(result));
+          } catch (error) {
+            send('error', { error: error instanceof HttpError ? error.message : 'generation_unavailable' });
+          } finally {
+            if (!closed) { closed = true; controller.close(); }
+          }
+        })();
+      },
+      cancel() { closed = true; abort.abort(); },
+    });
+    return new Response(stream, { headers: { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store' } });
+  }
+  const result = path === '/answer' ? await answer(query, evidence, env, judge) : { status: evidence.length ? 'retrieved' : 'empty' };
+  return Response.json(finish(result));
 }
 
 /** Dispatch public endpoints before applying the authentication gate for admin routes. */
@@ -139,3 +168,4 @@ const worker: ExportedHandler<Env, SyncJob> = {
   },
 };
 export default worker;
+

@@ -213,7 +213,7 @@ function disconnect(message = "接続を解除しました。") {
   settingsNotice(message);
   if (settings.open) $("token").focus();
 }
-async function api(path, options = {}, credential = token) {
+async function api(path, options = {}, credential = token, onEvent) {
   const controller = new AbortController();
   requests.add(controller);
   const timeout = setTimeout(() => controller.abort(), 180000);
@@ -224,6 +224,7 @@ async function api(path, options = {}, credential = token) {
       cache: "no-store",
       credentials: "omit",
       headers: {
+        ...(onEvent ? { Accept: "text/event-stream" } : {}),
         ...(credential ? { Authorization: "Bearer " + credential } : {}),
         ...(options.body ? { "Content-Type": "application/json" } : {}),
       },
@@ -233,6 +234,8 @@ async function api(path, options = {}, credential = token) {
         disconnect("認証が無効になりました。接続し直してください。");
       else forgetSavedToken(credential);
     }
+    if (response.ok && onEvent && response.headers.get("content-type")?.includes("text/event-stream"))
+      return await readAnswerStream(response, onEvent);
     let data;
     try {
       data = await response.json();
@@ -257,6 +260,63 @@ async function api(path, options = {}, credential = token) {
   } finally {
     clearTimeout(timeout);
     requests.delete(controller);
+  }
+}
+/** Read SSE without waiting for the full response; a terminal result is mandatory. */
+async function readAnswerStream(response, onEvent) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let pending = "", event = "", lines = [], result;
+  function line(value) {
+    if (value === "") {
+      if (lines.length) {
+        const data = JSON.parse(lines.join("\n"));
+        if (event === "error") throw new Error(errors[data.error] || "要約の生成に失敗しました。もう一度お試しください。");
+        if (event === "result") result = data;
+        else if (result === undefined) onEvent(event, data);
+      }
+      event = "";
+      lines = [];
+    } else if (value.startsWith("event:")) event = value.slice(6).trim();
+    else if (value.startsWith("data:")) lines.push(value.slice(5).replace(/^ /, ""));
+  }
+  try {
+    for (;;) {
+      const part = await reader.read();
+      if (part.done) break;
+      pending += decoder.decode(part.value, { stream: true });
+      let index;
+      while ((index = pending.indexOf("\n")) >= 0) {
+        line(pending.slice(0, index).replace(/\r$/, ""));
+        pending = pending.slice(index + 1);
+      }
+      if (result !== undefined) return result;
+    }
+    pending += decoder.decode();
+    if (pending) line(pending.replace(/\r$/, ""));
+    line("");
+    if (result === undefined) throw new Error("受信が途中で切れました。もう一度お試しください。");
+    return result;
+  } finally {
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
+}
+/** Show provisional prose while generation runs; final verification replaces this panel. */
+function renderAnswerProgress(event, data, query) {
+  if (event === "sources") {
+    renderResult({ ...data, status: "retrieved" }, "answer", query);
+    notice("回答を生成しています…", "loading");
+  } else if (event === "draft") {
+    const panel = $("answer-panel");
+    panel.hidden = false;
+    panel.replaceChildren(element("p", "muted", "生成中・出典は未検証"), element("h3", "", "質問への回答"));
+    for (const text of data.answer || []) panel.append(element("p", "", text));
+    if (data.summaries?.length) {
+      panel.append(element("h3", "", "各チケットの要約"));
+      for (const text of data.summaries) panel.append(element("p", "", text));
+    }
+    notice("回答を生成・検証しています…", "loading");
   }
 }
 function renderSync(data) {
@@ -619,7 +679,9 @@ $("search-form").addEventListener("submit", async (event) => {
     const data = await api("/" + mode, {
       method: "POST",
       body: JSON.stringify({ query, include_feedback: includeFeedback }),
-    }, includeFeedback ? token : "");
+    }, includeFeedback ? token : "", mode === "answer" ? (event, data) => {
+      if (current === session) renderAnswerProgress(event, data, query);
+    } : undefined);
     if (current === session) {
       renderResult(data, mode, query);
       if (queryField.value === submittedText) {
@@ -628,7 +690,11 @@ $("search-form").addEventListener("submit", async (event) => {
       }
     }
   } catch (error) {
-    if (current === session) notice(error.message, "error");
+    if (current === session) {
+      $("answer-panel").replaceChildren();
+      $("answer-panel").hidden = true;
+      notice(error.message, "error");
+    }
   } finally {
     if (current === session) {
       searching = false;

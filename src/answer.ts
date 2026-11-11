@@ -1,3 +1,4 @@
+import { collectGeneration, type draftPreview } from './stream.js';
 import { jsonRequest } from './http.js';
 import type { CitedClaim, Judge } from './jev.js';
 import { gate, type Evidence } from './retrieval.js';
@@ -60,7 +61,8 @@ function readClaim(value: unknown, valid: Set<string>): CitedClaim | null {
 }
 
 /** Generate cited claims and withhold drafts when the retrieved sources conflict. */
-export async function answer(query: string, evidence: Evidence[], env: Env, judge: Judge) {
+export async function answer(query: string, evidence: Evidence[], env: Env, judge: Judge,
+  onDraft?: (preview: ReturnType<typeof draftPreview>) => void, signal = AbortSignal.timeout(180_000)) {
   if (!evidence.length) return { status: 'insufficient_evidence', answer: null, citations: [] };
   const answerEvidence = evidence.slice(0, verificationPassageLimit);
   const external = env.ANSWER_MODEL && env.ANSWER_API_KEY;
@@ -86,7 +88,27 @@ export async function answer(query: string, evidence: Evidence[], env: Env, judg
   }
   const started = Date.now();
   try {
-    if (base) {
+    if (onDraft) {
+      let stream: ReadableStream<Uint8Array>;
+      if (base) {
+        const response = await fetch(base.toString().replace(/\/$/, '') + '/chat/completions', {
+          method: 'POST', redirect: 'manual', signal,
+          headers: { Authorization: `Bearer ${env.ANSWER_API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: env.ANSWER_MODEL, max_completion_tokens: 3000,
+            response_format: responseFormat, messages, stream: true, stream_options: { include_usage: true } }),
+        });
+        if (!response.ok || !response.body) {
+          await response.body?.cancel();
+          throw new HttpError(502, `upstream_http_${response.status}`);
+        }
+        stream = response.body;
+      } else {
+        stream = await env.AI!.run(model, { messages, stream: true, max_completion_tokens: 3000, temperature: 0,
+          response_format: { type: 'json_schema', json_schema: { name: 'cited_claims', strict: true, schema: claimSchema([...valid]) } },
+          chat_template_kwargs: { enable_thinking: false } });
+      }
+      generation = await collectGeneration(stream, signal, onDraft);
+    } else if (base) {
       generation = await jsonRequest<GenerationResponse>(base.toString().replace(/\/$/, '') + '/chat/completions', {
         method: 'POST', headers: { Authorization: `Bearer ${env.ANSWER_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ model: env.ANSWER_MODEL, max_completion_tokens: 3000, response_format: responseFormat, messages }),
