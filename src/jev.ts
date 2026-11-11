@@ -108,14 +108,15 @@ export class Jev implements Judge {
     // Candidates within a request share the full context; this is not one request per item.
     const documentScreening = stage === 'document_screening';
     const navigation = documentScreening || stage === 'branch_screening' || stage === 'page_screening';
-    const screeningBudget = this.env.SCREENING_MODEL === 'clef' ? clefTextTokenBudget : flashTextTokenBudget;
+    const useClef = (candidate: Candidate) => this.env.SCREENING_MODEL === 'clef' || (documentScreening && candidate.kind === 'doc');
     const batchLimit = stage === 'passage_scoring' ? passageBatchSize : 64;
     const charLimit = stage === 'passage_scoring' ? maxPassageBatchChars : maxBatchChars;
     const batches: T[][] = [];
     let batch: T[] = [], chars = 0;
     for (const c of candidates) {
       if (c.description.length > maxCandidateChars) throw new HttpError(503, 'candidate_too_large');
-      if (batch.length && (batch.length >= batchLimit || chars + c.description.length > charLimit ||
+      const screeningBudget = useClef(c) ? clefTextTokenBudget : flashTextTokenBudget;
+      if (batch.length && ((navigation && useClef(batch[0]!) !== useClef(c)) || batch.length >= batchLimit || chars + c.description.length > charLimit ||
         (navigation && screeningRequest(query, [...batch, c], documentScreening, stage === 'page_screening').tokenUpperBound > screeningBudget))) {
         batches.push(batch); batch = []; chars = 0;
       }
@@ -132,7 +133,7 @@ export class Jev implements Judge {
       try {
         const request = screeningRequest(query, items, documentScreening, stage === 'page_screening');
         const result = await this.call(request.state, request.questions,
-          navigation && this.env.SCREENING_MODEL !== 'clef' && request.tokenUpperBound <= flashTextTokenBudget);
+          navigation && !useClef(items[0]!) && request.tokenUpperBound <= flashTextTokenBudget);
         return [{ result, scored: binaryScores(items, result) }];
       } catch (error) {
         if (!(error instanceof HttpError) || error.code !== 'upstream_context_limit' || items.length < 2) throw error;

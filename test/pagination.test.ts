@@ -117,3 +117,22 @@ test('long sources do not crowd short relevant sources out of the first page', a
     assert.equal(new Set([...first.evidence, ...next.evidence].map(p => p.id)).size, 22);
   } finally { sqlite.close(); }
 });
+
+test('linked passage context contains scoped body evidence and does not alter returned source text', async () => {
+  const { env, sqlite } = fixture();
+  const judge = new Jev(env);
+  const base = { ordinal: 0, url: 'https://example.test', repo: 'TrainLCD/App', kind: 'issue' as const, metadata: {}, updated_at: 'now' };
+  const passages = [{ ...base, id: 'fix:0', source_id: 'TrainLCD/App#2', title: 'Fix', text: 'related: #1 and #3' },
+    { ...base, id: 'issue:0', source_id: 'TrainLCD/App#1', title: 'Report', text: 'Body-only evidence about underground accuracy' }];
+  judge.rankPassages = async (_query, items) => {
+    assert.ok(items[0]!.description.includes('Body-only evidence about underground accuracy'));
+    assert.ok(!items[0]!.description.includes('TrainLCD/App#3:'));
+    return items.map(item => ({ item, probability: 0.9 }));
+  };
+  try {
+    const page = await retrievePlannedPage('query', { documents: async () => [], branches: async () => [], documentPages: async () => [], passages: async () => passages }, judge,
+      { ids: ['TrainLCD/App#2', 'TrainLCD/App#1'] });
+    assert.equal(page.evidence[0]!.text, 'related: #1 and #3');
+    assert.ok(!('description' in page.evidence[0]!));
+  } finally { sqlite.close(); }
+});

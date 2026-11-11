@@ -25,7 +25,7 @@ export interface Passage {
   title: string; url: string; repo: string; kind: Kind;
   metadata: Record<string, unknown>; updated_at: string;
 }
-export interface Candidate { id: string; description: string; overview?: string; references?: string[] }
+export interface Candidate { kind?: Kind; id: string; description: string; overview?: string; references?: string[] }
 export interface Scored<T> { item: T; probability: number }
 export interface Trace {
   stage: string; candidates: number; selected: string[];
