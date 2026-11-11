@@ -92,7 +92,7 @@ CI は `wrangler versions upload` と `wrangler versions deploy` でコードの
 
 同一リポジトリの PR は CI 成功後、`Preview PR` ジョブで本番 Worker の未公開バージョンをアップロードする。Actions のジョブ Summary にある **Open preview** から確認できる。URL は各アップロードに固定され、`pr-番号` のエイリアスも発行する。本番トラフィックの切り替えは行わない。
 
-本番 D1、Cloudflare 登録済みの変数・Secrets、Jev、生成 AI を共有する。画面は PR のコードと静的ファイルで動作する。プレビュー専用の `src/preview.ts` は検索・回答・ヘルスチェック・認証済み同期状況の参照だけを許可し、同期、削除、Webhook は 403 を返す。Queue バインディングと Cron を除外し、バックグラウンドのハンドラーも公開しない。リモートマイグレーションは実行しない。未適用のスキーマ変更に依存する PR は、本番スキーマとの互換性が必要になる。
+本番 D1、Cloudflare 登録済みの変数・Secrets、Jev、生成 AI を共有する。画面は PR のコードと静的ファイルで動作する。プレビュー専用の `src/preview.ts` は検索・回答・ヘルスチェック・認証済み同期状況の参照だけを許可し、同期、削除、Webhook は 403 を返す。Queue バインディングと Cron を除外し、既存 Worker の検証に必要なバックグラウンドハンドラーは処理を実行せず拒否する。リモートマイグレーションは実行しない。未適用のスキーマ変更に依存する PR は、本番スキーマとの互換性が必要になる。
 
 既存の `production` GitHub Environment の Cloudflare Secrets と D1 ID、および `DECISIONRAG_DEPLOY_ENABLED=true` を再利用するため、キーの複製は不要。Environment のブランチ制限を設定する場合は、プレビュー対象の `refs/pull/*/merge` も許可する必要がある。本番ジョブ自体は引き続きデフォルトブランチだけで実行する。Cloudflare の既存 Worker では Version URLs（旧 Preview URLs）を有効にする。無効な場合、URL が取得できずジョブは失敗する。
 

@@ -16,8 +16,8 @@ test('preview rejects mutations even with valid admin credentials', async () => 
       assert.deepEqual(await response.json(), { error: 'preview_read_only' });
     }
     assert.equal(jobs.length, 0);
-    assert.equal('queue' in preview, false);
-    assert.equal('scheduled' in preview, false);
+    await assert.rejects(preview.queue(), /preview_read_only/);
+    await assert.rejects(preview.scheduled(), /preview_read_only/);
   } finally { sqlite.close(); }
 });
 
