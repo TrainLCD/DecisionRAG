@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { encodeCursor, decodeCursor } from '../src/search-cursor.js';
 import { fixture, mockFetch } from './helpers.js';
-import { saveSource, documentsFor } from '../src/store.js';
+import { saveSource, documentsFor, localReferences } from '../src/store.js';
 import worker from '../src/index.js';
 import { planRetrieval } from '../src/retrieval.js';
 import { Jev } from '../src/jev.js';
@@ -82,7 +82,7 @@ test('coarse routing considers body-only evidence and retains uncertain groups',
   } finally { sqlite.close(); }
 });
 
- test('explicit references retain terse fixes without crossing the loaded search scope', async () => {
+test('explicit references retain terse fixes without crossing the loaded search scope', async () => {
   const { env, sqlite } = fixture();
   const judge = new Jev(env);
   const docs = [{ id: 'TrainLCD/App#1', description: 'underground failure', references: [] },
@@ -93,5 +93,24 @@ test('coarse routing considers body-only evidence and retains uncertain groups',
     const plan = await planRetrieval('underground', { documents: async () => docs, branches: async () => [], documentPages: async () => [], passages: async () => [] }, judge,
       { branches: 6, documents: 1, maxDocuments: 100, maxPassages: 4000 });
     assert.deepEqual(plan.ids, ['TrainLCD/App#1', 'TrainLCD/App#2']);
+  } finally { sqlite.close(); }
+});
+
+
+test('local references never reinterpret cross-repository links as local issues', () => {
+  assert.deepEqual(localReferences('TrainLCD/App#2', 'closes #1 related: #3 #1 Other/Repo#4 https://example.test/#5'),
+    ['TrainLCD/App#1', 'TrainLCD/App#3']);
+});
+
+test('uncertain excerpts remain candidates for later full-passage evaluation', async () => {
+  const { env, sqlite } = fixture();
+  const judge = new Jev(env);
+  const docs = [{ id: 'strong', description: 'strong evidence' }, { id: 'uncertain', description: 'incomplete body excerpt' },
+    { id: 'irrelevant', description: 'unrelated' }];
+  judge.score = async (_query, items) => items.map((item, i) => ({ item, probability: [0.9, 0.3, 0.01][i]! }));
+  try {
+    const plan = await planRetrieval('query', { documents: async () => docs, branches: async () => [], documentPages: async () => [], passages: async () => [] }, judge,
+      { branches: 6, documents: 1, maxDocuments: 100, maxPassages: 4000 });
+    assert.deepEqual(plan.ids, ['strong', 'uncertain']);
   } finally { sqlite.close(); }
 });

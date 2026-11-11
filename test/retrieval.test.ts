@@ -87,7 +87,7 @@ test('direct title screening expands relevant documents beyond the fallback shor
   const { env, sqlite } = fixture();
   const documents = Array.from({ length: 16 }, (_, i) => ({ id: `doc${i}`, description: `title ${i}` }));
   const judge = new Jev(env);
-  judge.score = async (_query, items) => items.map(item => ({ item, probability: item.id === 'doc15' ? 0.4 : 0.6 }));
+  judge.score = async (_query, items) => items.map(item => ({ item, probability: item.id === 'doc15' ? 0.1 : 0.6 }));
   try {
     await retrieve('query', {
       documents: async () => documents,
