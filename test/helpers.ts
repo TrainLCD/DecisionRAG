@@ -26,7 +26,7 @@ export function fixture() {
   const env: Env = { DB: db, SYNC_QUEUE: { send: async (job: SyncJob) => { jobs.push(job); } } as unknown as Queue<SyncJob>,
     API_TOKEN: 'test-private-token', WEBHOOK_SECRET: 'test-webhook-secret', GITHUB_TOKEN: 'test-github-token',
     GITHUB_ORG: 'TrainLCD', AI: { async run(model: string, input: Record<string, unknown>) {
-      if (model !== '@cf/cloudflare/clef') throw new Error('Generation is not configured in this fixture');
+      if (model !== '@cf/cloudflare/clef-flash' && model !== '@cf/cloudflare/clef') throw new Error('Generation is not configured in this fixture');
       if (!mockUpstream) throw new Error('Missing decision mock');
       const response = await mockUpstream('https://workers-ai.test/decision', { body: JSON.stringify(input) });
       const data = await response.json() as Record<string, unknown>;

@@ -11,7 +11,7 @@ TrainLCD org の Issue・PR・リポジトリ文書・ユーザーフィード�
 3. 選んだ文書の本文区間を評価し、関連あり（NoulのYes確率が50%を超える）と判定した全区間を数える。
 4. 関連ありの全区間を返す。上位20区間のうち入力上限に収まるものをChoiceで並べ替え、残りはNoulの順位を使う。本文候補全体が20区間以内で一つのリクエストに収まる場合は、関連性の判定とChoiceをまとめて行う。
 
-候補集合は枝64件、文書64件、本文区間60件を上限とし、1バッチの説明文は枝と文書で70,000文字、本文で38,000文字以内に分ける。各リクエストは64問以内に制限する。Choiceに渡す説明文は28,000文字以内とする。本文は見出し・段落を優先し、最大2,400文字の区間に分割する。
+候補集合は枝64件、文書64件、本文区間60件を上限とし、1バッチの説明文は枝と文書で70,000文字、本文で38,000文字以内に分ける。各リクエストは64問以内に制限する。flashのスクリーニングは、クエリ・質問文・JSONを含むUTF-8バイト数をテキストのトークン数の保守的な上界として使い、テンプレート用4,096トークンを除いた20,480以内に分割する。単独でflashの予算を超える候補はClefに送り、同様に61,440を超える場合は切り捨てずエラーにする。Choiceに渡す説明文は28,000文字以内とする。本文は見出し・段落を優先し、最大2,400文字の区間に分割する。
 
 `/answer` は検索で見つかった資料から、出典付きの回答または要約を作る。引用IDを照合し、上位20区間を使ってClefで主張ごとの裏付け、回答の十分性、根拠間の矛盾を判定する。質問に完全には答えられなくても、出典で確認できる内容を要約として返せる。矛盾の確率が `CONFLICT_THRESHOLD` に達した場合は回答を保留する。
 
@@ -53,7 +53,7 @@ npx wrangler secret put GITHUB_TOKEN
 - `API_TOKEN`: フィードバック検索・同期・管理用のBearerトークン。十分長いランダム値を設定する。
 - `WEBHOOK_SECRET`: GitHub Webhookと同じ値。
 - `GITHUB_TOKEN`: org内対象リポジトリのMetadata・Contents・Issues・Pull requestsの読み取り権限が必要。リポジトリ作成・書き込み権限は不要。
-- 判定は既存の `AI` バインディングから Cloudflare Workers AI の `@cf/cloudflare/clef` を呼び出す。TypesafeのAPIキーは不要。既存の `TYPESAFE_API_KEY`・`JEV_MODEL` 設定は参照しない。
+- 判定は既存の `AI` バインディングを使う。タイトル・枝の選択は `@cf/cloudflare/clef-flash`、本文評価・並べ替え・回答検証は `@cf/cloudflare/clef` を呼び出す。TypesafeのAPIキーは不要。既存の `TYPESAFE_API_KEY`・`JEV_MODEL` 設定は参照しない。
 
 既定の文章生成には Cloudflare Workers AI の `AI` バインディングを使う。別の生成サービスを使う場合は、`ANSWER_MODEL`・`ANSWER_BASE_URL` を設定し、`wrangler secret put ANSWER_API_KEY` を実行する。OpenAI互換の `/chat/completions` とJSON object出力に対応するプロバイダーを想定する。サンプルWebアプリではSSEストリーミング（`stream: true`、`stream_options.include_usage: true`）への対応も必要となる。非ストリーミングへのフォールバックはなく、未対応のプロバイダーではWebアプリの要約が失敗する場合がある。Acceptヘッダーを省略したJSON APIは引き続き非ストリーミングで動作する。根拠の本文はClefと設定された生成サービスに送信される。
 

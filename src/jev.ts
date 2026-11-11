@@ -28,6 +28,20 @@ const passageBatchSize = 60;
 const candidateId = (index: number) => `c${index}`;
 const passageId = (index: number) => `p${index}`;
 const isRelevant = (row: Scored<Candidate>) => row.probability > 0.5;
+// Byte-level BPE cannot produce more text tokens than UTF-8 bytes. Include
+// state, query, question instructions and JSON, reserving 4,096 tokens for
+// the provider's template. This is a conservative upper bound, not chars/4.
+const flashTextTokenBudget = 24_576 - 4_096;
+const clefTextTokenBudget = 65_536 - 4_096;
+const encoder = new TextEncoder();
+
+/** Bound text tokens for the complete screening payload without truncation. */
+function screeningRequest(query: string, items: Candidate[], documentScreening: boolean) {
+  const state = { query, candidates: Object.fromEntries(items.map((c, i) => [candidateId(i), c.description])) };
+  const questions = binaryQuestions(items, documentScreening);
+  const tokenUpperBound = encoder.encode(JSON.stringify({ state, questions })).byteLength;
+  return { state, questions, tokenUpperBound };
+}
 
 /** Assign one relevance question to each candidate in the shared context. */
 function binaryQuestions(candidates: Candidate[], documentScreening = false) {
@@ -64,14 +78,16 @@ function choiceOrder<T extends Candidate>(candidates: Scored<T>[], result: Resul
 export class Jev implements Judge {
   trace: Trace[] = [];
   constructor(private env: Env) {}
-  private async call(state: unknown, questions: Record<string, unknown>): Promise<Result> {
+  /** Invoke the selected decision model and reject malformed responses. */
+  private async call(state: unknown, questions: Record<string, unknown>, flash = false): Promise<Result> {
     if (!this.env.AI) throw new HttpError(503, 'decision_not_configured');
     if (Object.keys(questions).length > 64) throw new HttpError(503, 'decision_question_limit');
     const signal = AbortSignal.timeout(25_000);
     let result: Result;
     try {
-      result = await this.env.AI.run('@cf/cloudflare/clef', {
-        model: 'clef', state, questions,
+      const model = flash ? 'clef-flash' : 'clef';
+      result = await this.env.AI.run(flash ? '@cf/cloudflare/clef-flash' : '@cf/cloudflare/clef', {
+        model, state, questions,
       }, { signal }) as unknown as Result;
     } catch (error) {
       if (signal.aborted) throw new HttpError(502, 'upstream_timeout');
@@ -83,29 +99,37 @@ export class Jev implements Judge {
       throw new HttpError(502, 'invalid_jev_response');
     return result;
   }
+  /** Score bounded batches while preserving every candidate and its full text. */
   async score<T extends Candidate>(query: string, candidates: T[], stage: string): Promise<Scored<T>[]> {
     if (!candidates.length) return [];
     const start = Date.now();
     // Candidates within a request share the full context; this is not one request per item.
     const documentScreening = stage === 'document_screening';
+    const navigation = documentScreening || stage === 'branch_screening';
     const batchLimit = stage === 'passage_scoring' ? passageBatchSize : 64;
     const charLimit = stage === 'passage_scoring' ? maxPassageBatchChars : maxBatchChars;
     const batches: T[][] = [];
     let batch: T[] = [], chars = 0;
     for (const c of candidates) {
       if (c.description.length > maxCandidateChars) throw new HttpError(503, 'candidate_too_large');
-      if (batch.length && (batch.length >= batchLimit || chars + c.description.length > charLimit)) {
+      if (batch.length && (batch.length >= batchLimit || chars + c.description.length > charLimit ||
+        (navigation && screeningRequest(query, [...batch, c], documentScreening).tokenUpperBound > flashTextTokenBudget))) {
         batches.push(batch); batch = []; chars = 0;
       }
       batch.push(c); chars += c.description.length;
     }
     if (batch.length) batches.push(batch);
+    // A single large candidate cannot be split without changing its meaning.
+    // Use Clef's larger context, or fail before any model call if even it cannot fit.
+    if (navigation && batches.some(items => screeningRequest(query, items, documentScreening).tokenUpperBound > clefTextTokenBudget))
+      throw new HttpError(503, 'candidate_too_large');
     let calls = 0;
     const scoreBatch = async (items: T[]): Promise<ScoredBatch<T>[]> => {
       calls++;
       try {
-        const result = await this.call({ query, candidates: Object.fromEntries(items.map((c, i) => [candidateId(i), c.description])) },
-          binaryQuestions(items, documentScreening));
+        const request = screeningRequest(query, items, documentScreening);
+        const result = await this.call(request.state, request.questions,
+          navigation && request.tokenUpperBound <= flashTextTokenBudget);
         return [{ result, scored: binaryScores(items, result) }];
       } catch (error) {
         if (!(error instanceof HttpError) || error.code !== 'upstream_context_limit' || items.length < 2) throw error;
