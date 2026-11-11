@@ -3,7 +3,8 @@ import { answer } from './answer.js';
 import { GitHub } from './github.js';
 import { readText } from './http.js';
 import { Jev } from './jev.js';
-import { DEFAULT_BUDGETS, d1Store, retrieve } from './retrieval.js';
+import { DEFAULT_BUDGETS, d1Store, retrieve, planRetrieval, retrievePlannedPage } from './retrieval.js';
+import { encodeCursor, decodeCursor } from './search-cursor.js';
 import { enqueue, sync } from './sync.js';
 import { boundedNumber, HttpError, type Env, type SyncJob } from './types.js';
 import { purgeRepo, secureEqual, webhook } from './webhook.js';
@@ -22,7 +23,7 @@ function passageHtml(text: string): string | undefined {
 async function bodyJson(request: Request): Promise<Record<string, unknown>> {
   if (!request.headers.get('content-type')?.startsWith('application/json')) throw new HttpError(415, 'json_required');
   try {
-    const parsed: unknown = JSON.parse(await readText(new Response(request.body), 16_000));
+    const parsed: unknown = JSON.parse(await readText(new Response(request.body), 256_000));
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error();
     return parsed as Record<string, unknown>;
   } catch (e) { if (e instanceof HttpError) throw e; throw new HttpError(400, 'invalid_json'); }
@@ -40,6 +41,8 @@ async function search(request: Request, env: Env, path: string): Promise<Respons
   if (body.include_feedback !== undefined && typeof body.include_feedback !== 'boolean')
     throw new HttpError(400, 'invalid_feedback_scope');
 
+  if (body.paginated !== undefined && typeof body.paginated !== 'boolean') throw new HttpError(400, 'invalid_pagination');
+  if (body.cursor !== undefined && (typeof body.cursor !== 'string' || body.paginated !== true)) throw new HttpError(400, 'invalid_search_cursor');
   const hasToken = request.headers.has('authorization');
   if (hasToken || body.include_feedback === true) await requireToken(request, env);
   const start = Date.now();
@@ -58,7 +61,22 @@ async function search(request: Request, env: Env, path: string): Promise<Respons
   });
   const query = body.query.trim();
   const judge = new Jev(env);
-  const { evidence, hitCount } = await retrieve(query, d1Store(env, scope, timings), judge, { ...DEFAULT_BUDGETS, maxDocuments });
+  const store = d1Store(env, scope, timings);
+  const budgets = { ...DEFAULT_BUDGETS, maxDocuments };
+  let pagination: { page: number; total_pages: number; next_cursor: string | null } | undefined;
+  let retrieved;
+  if (body.paginated === true) {
+    const scopeKey = JSON.stringify([hasToken, body.include_feedback ?? null]);
+    const previous = typeof body.cursor === 'string' ? await decodeCursor(body.cursor, env.API_TOKEN, query, scopeKey) : undefined;
+    // Every request still awaits a fresh scope check through the store, including continuation requests.
+    const plan = previous ? { ids: previous.ids } : await planRetrieval(query, store, judge, budgets);
+    const page = await retrievePlannedPage(query, store, judge, plan, previous?.offset ?? 0, 20, budgets, previous?.revision);
+    const next = page.nextOffset === null ? null : await encodeCursor({ query, scope: scopeKey, ids: plan.ids,
+      offset: page.nextOffset, revision: page.revision, expires: previous?.expires ?? Date.now() + 15 * 60_000 }, env.API_TOKEN);
+    pagination = { page: page.page, total_pages: page.totalPages, next_cursor: next };
+    retrieved = page;
+  } else retrieved = await retrieve(query, store, judge, budgets);
+  const { evidence, hitCount } = retrieved;
   timings.retrieval_ms = Date.now() - start;
   const excerpts = evidence.map(item => ({ ...item, text_html: passageHtml(item.text) }));
   /** Attach search evidence and phase timings to a final answer. */
@@ -67,7 +85,7 @@ async function search(request: Request, env: Env, path: string): Promise<Respons
       if (step.stage === 'generate_answer') timings.generation_ms += step.elapsed_ms;
       else timings.model_ms += step.elapsed_ms;
     }
-    return { ...result, evidence: excerpts, hit_count: hitCount, trace: judge.trace, timings, elapsed_ms: Date.now() - start,
+    return { ...result, evidence: excerpts, hit_count: hitCount, pagination, trace: judge.trace, timings, elapsed_ms: Date.now() - start,
       retrieval: 'hierarchical_decision', release_inference: 'github_release_commit_ancestry' };
   };
   if (path === '/answer' && request.headers.get('accept')?.includes('text/event-stream')) {
@@ -80,7 +98,7 @@ async function search(request: Request, env: Env, path: string): Promise<Respons
         const send = (event: string, data: unknown) => {
           if (!closed && !signal.aborted) controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
         };
-        send('sources', { evidence: excerpts, hit_count: hitCount, elapsed_ms: Date.now() - start });
+        send('sources', { evidence: excerpts, hit_count: hitCount, pagination, elapsed_ms: Date.now() - start });
         void (async () => {
           try {
             const result = await answer(query, evidence, env, judge, draft => send('draft', draft), signal);

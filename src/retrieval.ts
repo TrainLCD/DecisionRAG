@@ -35,6 +35,7 @@ export function d1Store(env: Env, scope?: Promise<SearchScope>, timings = { stor
 }
 export interface Evidence extends Passage { citation: string; relevance: number }
 interface RetrievalResult { evidence: Evidence[]; hitCount: number }
+export interface RetrievalPlan { ids: string[] }
 /** Route large collections by repository and source type before scanning their titles. */
 async function routedDocuments(query: string, store: RetrievalStore, judge: Judge, budget: Budgets): Promise<Candidate[]> {
   const roots = await store.branches();
@@ -60,24 +61,51 @@ async function routedDocuments(query: string, store: RetrievalStore, judge: Judg
   return branchesToScreen.flatMap(state => state.documents);
 }
 
-/** Let Jev screen titles and then passages, routing only when the collection is too large. */
-export async function retrieve(query: string, store: RetrievalStore, judge: Judge, budget: Budgets = DEFAULT_BUDGETS): Promise<RetrievalResult> {
+/** Select coarse groups using titles and body samples, retaining uncertain groups. */
+export async function planRetrieval(query: string, store: RetrievalStore, judge: Judge, budget: Budgets = DEFAULT_BUDGETS): Promise<RetrievalPlan> {
   const directLimit = Math.min(directDocumentLimit, Math.floor(budget.maxDocuments));
   const direct = await store.documents(directLimit + 1);
-  const documents = direct.length <= directLimit ? direct : await routedDocuments(query, store, judge, budget);
+  let documents = direct.length <= directLimit ? direct : await routedDocuments(query, store, judge, budget);
+  if (documents.length > 128) {
+    const groups = [];
+    for (let i = 0; i < documents.length; i += 24) {
+      const members = documents.slice(i, i + 24);
+      groups.push({ id: `group${i / 24}`, members,
+        description: 'A group of documents. Explore if ANY member may contain relevant evidence; body samples are incomplete, so uncertainty is not evidence of irrelevance.\n' +
+          members.map((item, index) => `${index + 1}. ${item.overview ?? item.description}`).join('\n\n') });
+    }
+    const scoredGroups = await judge.score(query, groups, 'page_screening');
+    documents = scoredGroups.filter((row, index) => index < 4 || row.probability > 0.2).flatMap(row => row.item.members);
+  }
   const documentScores = await judge.score(query, documents, 'document_screening');
   // Keep the strongest candidates even when title-level scores are uncertain.
   const selectedDocs = documentScores.filter((r, index) => index < budget.documents || r.probability > 0.5).map(r => r.item.id);
-  const passages = await store.passages(selectedDocs, budget.maxPassages + 1);
+  return { ids: selectedDocs };
+}
+/** Evaluate only this page's passages; planning can be reused across requests. */
+export async function retrievePlannedPage(query: string, store: RetrievalStore, judge: Judge, plan: RetrievalPlan,
+  offset = 0, pageSize = 20, budget: Budgets = DEFAULT_BUDGETS, expectedRevision?: string) {
+  const passages = await store.passages(plan.ids, budget.maxPassages + 1);
   if (passages.length > budget.maxPassages) throw new HttpError(422, 'passage_screening_budget_exceeded');
-  const candidates = passages.map(p => ({ ...p,
+  const order = new Map(plan.ids.map((id, index) => [id, index]));
+  passages.sort((a, b) => (order.get(a.source_id) ?? 0) - (order.get(b.source_id) ?? 0) || a.ordinal - b.ordinal);
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(passages)));
+  const revision = Array.from(new Uint8Array(digest), value => value.toString(16).padStart(2, '0')).join('');
+  if (expectedRevision && revision !== expectedRevision) throw new HttpError(409, 'search_results_changed');
+  const candidates = passages.slice(offset, offset + pageSize).map(p => ({ ...p,
     description: `${p.title}\nRepository: ${p.repo}\nMetadata: ${JSON.stringify(p.metadata)}\n${p.text}` }));
   const ranked = await judge.rankPassages(query, candidates, choiceShortlistSize);
   const evidence = ranked.map((r, i) => {
     const { description: _, ...passage } = r.item;
     return { ...passage, citation: `p${i + 1}`, relevance: r.probability };
   });
-  return { evidence, hitCount: evidence.length };
+  return { evidence, hitCount: evidence.length, revision, page: Math.floor(offset / pageSize) + 1,
+    totalPages: Math.ceil(passages.length / pageSize), nextOffset: offset + pageSize < passages.length ? offset + pageSize : null };
+}
+/** Retrieve all matching passages for legacy API clients. */
+export async function retrieve(query: string, store: RetrievalStore, judge: Judge, budget: Budgets = DEFAULT_BUDGETS): Promise<RetrievalResult> {
+  const plan = await planRetrieval(query, store, judge, budget);
+  return retrievePlannedPage(query, store, judge, plan, 0, budget.maxPassages, budget);
 }
 export function gate(env: Env, decision: { supported: number; conflict: number }): 'ready' | 'insufficient_evidence' | 'conflicting_evidence' {
   const support = boundedNumber(env.SUPPORT_THRESHOLD, 0.85, 0, 1);
@@ -85,3 +113,4 @@ export function gate(env: Env, decision: { supported: number; conflict: number }
   if (decision.conflict >= conflict) return 'conflicting_evidence';
   return decision.supported >= support ? 'ready' : 'insufficient_evidence';
 }
+

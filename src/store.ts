@@ -59,21 +59,23 @@ export const DOCUMENT_PAGE_SIZE = 540;
 /** Load scoped titles together so small collections can skip repository routing. */
 export async function documentsFor(env: Env, limit: number, scope?: SearchScope): Promise<Candidate[]> {
   const result = await env.DB.prepare(`SELECT s.id,s.kind,s.title,s.metadata,
-      CASE WHEN s.kind='doc' THEN substr(s.body,1,140) ELSE '' END AS introduction
-    FROM sources s JOIN repositories r ON s.repo=r.repo ${scope ? `WHERE ${scopedSources}` : ''}
+      CASE WHEN s.kind='doc' THEN substr(s.body,1,140) ELSE '' END AS introduction,
+      substr(s.body,1,60)||' … '||substr(s.body,max(1,length(s.body)/2-20),40)||' … '||substr(s.body,-40) AS sample
+    FROM sources s JOIN repositories r ON s.repo=r.repo ${scope ? `WHERE ${scopedSources}` : 'WHERE 1=1'}
+      AND (s.kind<>'pr' OR instr(s.body,char(10)||'PENDING'||char(10))=0)
     ORDER BY s.repo,s.kind,s.id LIMIT ?`)
     .bind(...(scope ? [JSON.stringify(scope.publicRepos), scope.feedbackRepo ?? null] : []), limit)
-    .all<{ id: string; kind: Kind; title: string; metadata: string; introduction: string }>();
-  return result.results.map(({ id, kind, title, metadata, introduction }) => ({
-    id, description: `${title}\n${id} (${kind})\n${metadata}${introduction ? '\n' + introduction : ''}`,
+    .all<{ id: string; kind: Kind; title: string; metadata: string; introduction: string; sample: string }>();
+  return result.results.map(({ id, kind, title, metadata, introduction, sample }) => ({
+    id, overview: `${title} (${kind})\n${sample}`, description: `${title}\n${id} (${kind})\n${metadata}\nBody excerpts: ${sample}${introduction ? '\n' + introduction : ''}`,
   }));
 }
 /** Advance each branch's document cursor in one D1 round trip. */
 export async function documentPages(env: Env, cursors: DocumentCursor[]): Promise<Candidate[][]> {
-  const results = await env.DB.batch<{ id: string; title: string; metadata: string }>(cursors.map(({ branch, after }) =>
-    env.DB.prepare(`SELECT id,title,metadata FROM sources
-      WHERE repo=? AND kind=? AND id>? ORDER BY id LIMIT ?`).bind(branch.repo, branch.kind, after, DOCUMENT_PAGE_SIZE)));
-  return results.map(result => result.results.map(r => ({ id: r.id, description: `${r.title}\n${r.metadata}` })));
+  const results = await env.DB.batch<{ id: string; title: string; metadata: string; sample: string }>(cursors.map(({ branch, after }) =>
+    env.DB.prepare(`SELECT id,title,metadata,substr(body,1,60)||' … '||substr(body,max(1,length(body)/2-20),40)||' … '||substr(body,-40) AS sample FROM sources
+      WHERE repo=? AND kind=? AND id>? AND (kind<>'pr' OR instr(body,char(10)||'PENDING'||char(10))=0) ORDER BY id LIMIT ?`).bind(branch.repo, branch.kind, after, DOCUMENT_PAGE_SIZE)));
+  return results.map(result => result.results.map(r => ({ id: r.id, overview: `${r.title}\n${r.sample}`, description: `${r.title}\n${r.metadata}\nBody excerpts: ${r.sample}` })));
 }
 /** Load passage text after reapplying the search scope to the selected sources. */
 export async function passagesFor(env: Env, ids: string[], limit: number, scope?: SearchScope): Promise<Passage[]> {
@@ -102,3 +104,4 @@ export async function passagesFor(env: Env, ids: string[], limit: number, scope?
 export async function repoRow(env: Env, repo: string): Promise<RepoRow | null> {
   return env.DB.prepare('SELECT * FROM repositories WHERE repo=?').bind(repo).first<RepoRow>();
 }
+

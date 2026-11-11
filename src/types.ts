@@ -9,6 +9,7 @@ export interface Env {
   GITHUB_ORG: string;
   ANSWER_API_KEY?: string;
   ANSWER_MODEL?: string;
+  SCREENING_MODEL?: 'clef' | 'clef-flash';
   ANSWER_BASE_URL?: string;
   SUPPORT_THRESHOLD?: string;
   CONFLICT_THRESHOLD?: string;
@@ -24,7 +25,7 @@ export interface Passage {
   title: string; url: string; repo: string; kind: Kind;
   metadata: Record<string, unknown>; updated_at: string;
 }
-export interface Candidate { id: string; description: string }
+export interface Candidate { id: string; description: string; overview?: string }
 export interface Scored<T> { item: T; probability: number }
 export interface Trace {
   stage: string; candidates: number; selected: string[];

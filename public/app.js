@@ -12,6 +12,10 @@ let refreshing = false;
 const RESULT_PAGE_SIZE = 20;
 let resultEvidence = [];
 let resultPage = 0;
+let searchContext = null;
+let serverPagination = null;
+let serverPages = [];
+let serverPage = 0;
 const requests = new Set();
 const number = (value) =>
   Number.isFinite(Number(value)) ? Number(value).toLocaleString("ja-JP") : "—";
@@ -49,6 +53,9 @@ const errors = {
   authentication_not_configured: "サーバーにAPI_TOKENが設定されていません。",
   public_search_rate_limited: "検索回数の上限に達しました。少し待ってから再実行してください。",
   public_search_unavailable: "公開資料の検索は現在利用できません。",
+  invalid_search_cursor: "検索の続きの有効期限が切れました。もう一度検索してください。",
+  search_results_changed: "資料が更新されました。もう一度検索してください。",
+  search_plan_too_large: "候補が多すぎます。質問を絞って検索してください。",
   decision_not_configured: "サーバーの判定モデルが設定されていません。",
   decision_upstream_error: "判定サービスでエラーが発生しました。時間をおいて再実行してください。",
   upstream_http_401:
@@ -187,6 +194,9 @@ function forgetSavedToken(credential) {
 }
 function disconnect(message = "接続を解除しました。") {
   session++;
+  searchContext = null;
+  serverPages = [];
+  serverPagination = null;
   for (const controller of requests) controller.abort();
   requests.clear();
   forgetSavedToken(token);
@@ -413,13 +423,15 @@ function renderResult(data, mode, query) {
   $("empty-state").hidden = true;
   const evidence = Array.isArray(data.evidence) ? data.evidence : [];
   resultEvidence = evidence;
+  serverPagination = data.pagination || null;
   const label = statuses[data.status] || ["結果を取得しました", ""];
   const summary = $("result-summary");
-  const hitCount = "関連する本文：" + number(data.hit_count) + "件";
+  const hitCount = (serverPagination ? "このページの関連本文：" : "関連する本文：") + number(data.hit_count) + "件";
   summary.replaceChildren(
     element("strong", "", hitCount),
     element("span", "muted", (mode === "answer" ? "回答時間：" : "検索時間：") + (Number(data.elapsed_ms) / 1000).toFixed(2) + "秒"),
   );
+  if (serverPagination && mode === "answer") summary.append(element("span", "muted", "回答・要約はこのページの資料に基づきます。"));
   summary.hidden = false;
   if (data.status === "summarized") {
     notice("質問: " + query);
@@ -459,7 +471,7 @@ function renderResult(data, mode, query) {
     $("trace-list").append(row);
   }
   for (const step of trace) {
-    const stageNames = { branch_screening: "検索する分野の選択", document_screening: "文書の選択", passage_scoring: "本文の評価", passage_ranking: "本文の評価と表示順の決定", shared_shortlist: "本文の再評価", choice_rerank: "表示順の決定", assess_evidence: "回答できるかの確認", generate_answer: "要約の生成", verify_answer: "回答の検証" };
+    const stageNames = { page_screening: "関連する資料グループの選択", branch_screening: "検索する分野の選択", document_screening: "文書の選択", passage_scoring: "本文の評価", passage_ranking: "本文の評価と表示順の決定", shared_shortlist: "本文の再評価", choice_rerank: "表示順の決定", assess_evidence: "回答できるかの確認", generate_answer: "要約の生成", verify_answer: "回答の検証" };
     const row = element("div", "trace-row", stageNames[step.stage] || step.stage);
     row.append(
       element(
@@ -482,17 +494,19 @@ function renderResult(data, mode, query) {
 }
 /** Render a page of evidence with the full text of each retrieved passage. */
 function renderEvidencePage() {
-  const start = resultPage * RESULT_PAGE_SIZE;
-  const end = Math.min(start + RESULT_PAGE_SIZE, resultEvidence.length);
+  const start = serverPagination ? 0 : resultPage * RESULT_PAGE_SIZE;
+  const end = serverPagination ? resultEvidence.length : Math.min(start + RESULT_PAGE_SIZE, resultEvidence.length);
   const pages = Math.ceil(resultEvidence.length / RESULT_PAGE_SIZE);
   $("evidence-list").replaceChildren();
   document.querySelectorAll(".result-pagination").forEach((nav) => {
-    nav.hidden = pages <= 1;
-    nav.querySelector("[data-page-label]").textContent = resultEvidence.length
+    nav.hidden = serverPagination ? serverPagination.total_pages <= 1 : pages <= 1;
+    nav.querySelector("[data-page-label]").textContent = serverPagination
+      ? number(serverPagination.page) + " / " + number(serverPagination.total_pages) + "ページ（関連本文 " + number(resultEvidence.length) + "件）"
+      : resultEvidence.length
       ? number(resultPage + 1) + " / " + number(pages) + "ページ（" + number(start + 1) + "〜" + number(end) + "件 / " + number(resultEvidence.length) + "件）"
       : "";
-    nav.querySelector('[data-page-step="-1"]').disabled = resultPage === 0;
-    nav.querySelector('[data-page-step="1"]').disabled = resultPage + 1 >= pages;
+    nav.querySelector('[data-page-step="-1"]').disabled = searching || (serverPagination ? serverPage === 0 : resultPage === 0);
+    nav.querySelector('[data-page-step="1"]').disabled = searching || (serverPagination ? !serverPagination.next_cursor : resultPage + 1 >= pages);
   });
   if (!resultEvidence.length) {
     $("evidence-list").append(
@@ -569,6 +583,7 @@ window.addEventListener("hashchange", () => {
 document.querySelectorAll("[data-page-step]").forEach((button) => {
   button.addEventListener("click", () => {
     if (searching || button.disabled) return;
+    if (serverPagination) { void loadServerPage(Number(button.dataset.pageStep)); return; }
     const next = resultPage + Number(button.dataset.pageStep);
     if (next < 0 || next >= Math.ceil(resultEvidence.length / RESULT_PAGE_SIZE)) return;
     resultPage = next;
@@ -577,6 +592,49 @@ document.querySelectorAll("[data-page-step]").forEach((button) => {
     $("evidence-list").focus?.({ preventScroll: true });
   });
 });
+/** Fetch the next evidence page only on demand; previous pages stay in memory. */
+async function loadServerPage(step) {
+  const context = searchContext;
+  const next = serverPage + step;
+  if (!context || next < 0 || searching) return;
+  if (serverPages[next]) {
+    serverPage = next;
+    renderResult(serverPages[next], context.mode, context.query);
+    $("workspace").scrollTop = 0;
+    return;
+  }
+  const cursor = serverPagination?.next_cursor;
+  if (step !== 1 || !cursor) return;
+  const current = session;
+  const previous = serverPage;
+  searching = true;
+  controls();
+  notice("次のページを検索しています…", "loading");
+  try {
+    serverPage = next;
+    const data = await api("/" + context.mode, { method: "POST",
+      body: JSON.stringify({ query: context.query, include_feedback: context.includeFeedback, paginated: true, cursor }),
+    }, context.includeFeedback ? token : "", context.mode === "answer" ? (event, data) => {
+      if (current === session && context === searchContext) renderAnswerProgress(event, data, context.query);
+    } : undefined);
+    if (current !== session || context !== searchContext) return;
+    serverPages[next] = data;
+    renderResult(data, context.mode, context.query);
+    $("workspace").scrollTop = 0;
+  } catch (error) {
+    if (current === session && context === searchContext) {
+      serverPage = previous;
+      renderResult(serverPages[previous], context.mode, context.query);
+      notice(error.message, "error");
+    }
+  } finally {
+    if (current === session && context === searchContext) {
+      searching = false;
+      controls();
+      renderEvidencePage();
+    }
+  }
+}
 function openSettings() {
   if (!settings.open) settings.showModal();
   if (!token && !connecting) $("token").focus();
@@ -672,6 +730,10 @@ $("search-form").addEventListener("submit", async (event) => {
     askForFeedbackKey();
     return;
   }
+  searchContext = { query, mode, includeFeedback };
+  serverPages = [];
+  serverPage = 0;
+  serverPagination = null;
   searching = true;
   clearResults();
   controls();
@@ -680,11 +742,12 @@ $("search-form").addEventListener("submit", async (event) => {
   try {
     const data = await api("/" + mode, {
       method: "POST",
-      body: JSON.stringify({ query, include_feedback: includeFeedback }),
+      body: JSON.stringify({ query, include_feedback: includeFeedback, paginated: true }),
     }, includeFeedback ? token : "", mode === "answer" ? (event, data) => {
       if (current === session) renderAnswerProgress(event, data, query);
     } : undefined);
     if (current === session) {
+      serverPages[0] = data;
       renderResult(data, mode, query);
       if (queryField.value === submittedText) {
         queryField.value = "";
@@ -701,6 +764,7 @@ $("search-form").addEventListener("submit", async (event) => {
     if (current === session) {
       searching = false;
       controls();
+      renderEvidencePage();
     }
   }
 });
