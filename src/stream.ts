@@ -8,6 +8,7 @@ export async function readSse(stream: ReadableStream<Uint8Array>, signal: AbortS
   let pending = '', lines: string[] = [], bytes = 0;
   const abort = () => { void reader.cancel().catch(() => {}); };
   signal.addEventListener('abort', abort, { once: true });
+  /** Dispatch one SSE event when its terminating blank line arrives. */
   const line = (value: string) => {
     if (!value) { if (lines.length) onData(lines.join('\n')); lines = []; }
     else if (value.startsWith('data:')) lines.push(value.slice(5).replace(/^ /, ''));
@@ -78,11 +79,19 @@ export function draftPreview(json: string) {
 /** Consume provider tokens immediately while retaining the JSON for final verification. */
 export async function collectGeneration(stream: ReadableStream<Uint8Array>, signal: AbortSignal,
   onDraft: (preview: ReturnType<typeof draftPreview>) => void) {
-  let content = '', done = false;
+  let content = '', done = false, lastDraft = -Infinity, publishedLength = 0;
+  /** Keep optional previews bounded in frequency and independent of final generation. */
+  const publishDraft = (force = false) => {
+    const now = Date.now();
+    if (content.length === publishedLength || !force && now - lastDraft < 100) return;
+    lastDraft = now;
+    publishedLength = content.length;
+    try { onDraft(draftPreview(content)); } catch { /* Final JSON still undergoes validation. */ }
+  };
   let model: string | undefined;
   let usage: { prompt_tokens?: number; completion_tokens?: number } | undefined;
   await readSse(stream, signal, data => {
-    if (data === '[DONE]') { done = true; return; }
+    if (data === '[DONE]') { done = true; publishDraft(true); return; }
     if (done) return;
     const chunk = JSON.parse(data);
     if (chunk.error) throw new HttpError(502, 'generation_unavailable');
@@ -91,7 +100,7 @@ export async function collectGeneration(stream: ReadableStream<Uint8Array>, sign
     const delta = chunk.choices?.[0]?.delta?.content ?? chunk.response;
     if (typeof delta === 'string') {
       content += delta;
-      onDraft(draftPreview(content));
+      publishDraft();
     }
   });
   if (!done) throw new HttpError(502, 'incomplete_generation_stream');

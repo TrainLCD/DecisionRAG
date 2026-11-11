@@ -61,6 +61,7 @@ async function search(request: Request, env: Env, path: string): Promise<Respons
   const { evidence, hitCount } = await retrieve(query, d1Store(env, scope, timings), judge, { ...DEFAULT_BUDGETS, maxDocuments });
   timings.retrieval_ms = Date.now() - start;
   const excerpts = evidence.map(item => ({ ...item, text_html: passageHtml(item.text) }));
+  /** Attach search evidence and phase timings to a final answer. */
   const finish = (result: object) => {
     for (const step of judge.trace) {
       if (step.stage === 'generate_answer') timings.generation_ms += step.elapsed_ms;

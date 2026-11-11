@@ -63,3 +63,21 @@ test('streamed provisional claims still pass through verification and can be wit
   assert.equal(result.status, 'verification_failed');
   assert.equal(result.answer, null);
 });
+
+test('preview updates are throttled with a final flush; preview failures cannot discard generation', async (t) => {
+  let clock = 1000;
+  t.mock.method(Date, 'now', () => clock);
+  const parts = ['{"claims":[{"text":"a', 'b', 'c', 'd', '","citations":["p1"]}],"summaries":[]}'];
+  let i = 0, calls = 0;
+  const stream = new ReadableStream<Uint8Array>({ pull(controller) {
+    clock += 20;
+    if (i < parts.length) controller.enqueue(encoder.encode(frame(parts[i++]!)));
+    else { controller.enqueue(encoder.encode('data: [DONE]\n\n')); controller.close(); }
+  } });
+  const result = await collectGeneration(stream, new AbortController().signal, () => {
+    calls++;
+    throw new Error('Preview unavailable');
+  });
+  assert.equal(calls, 2);
+  assert.equal(JSON.parse(result.choices[0]!.message.content).claims[0].text, 'abcd');
+});

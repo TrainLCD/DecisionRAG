@@ -267,6 +267,7 @@ async function readAnswerStream(response, onEvent) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let pending = "", event = "", lines = [], result;
+  /** Dispatch each complete SSE event and retain its terminal result. */
   function line(value) {
     if (value === "") {
       if (lines.length) {
