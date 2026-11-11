@@ -141,7 +141,7 @@ svg { width: 1.25rem; height: 1.25rem; flex: none; }
   scroll-margin-top: 0.5rem;
 }
 .evidence-card:target { background: #eef5fe; }
-.evidence-card h3 { margin: 0.375rem 0 0.25rem; }
+.evidence-card > h3 { margin: 0.375rem 0 0.25rem; }
 .evidence-top { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; font-size: 0.75rem; }
 .evidence-kind { padding: 0.125rem 0.5rem; border-radius: 6px; background: var(--field); color: var(--muted); }
 .evidence-kind[data-kind="issue"] { background: #dcfce7; color: #166534; }
@@ -156,8 +156,6 @@ svg { width: 1.25rem; height: 1.25rem; flex: none; }
 .evidence-excerpt {
   max-height: 20rem;
   overflow: auto;
-  line-height: 1.6;
-  white-space: pre-wrap;
 }
 #evidence-list > p { padding-block: 1rem; }
 .evidence-card:last-child { border-bottom: 0; }
@@ -170,6 +168,7 @@ svg { width: 1.25rem; height: 1.25rem; flex: none; }
 }
 .answer-panel h3 { margin-bottom: 0.5rem; }
 .markdown-body { line-height: 1.8; overflow-wrap: anywhere; }
+.evidence-excerpt.markdown-body { line-height: 1.6; }
 .plain-text { white-space: pre-wrap; }
 .markdown-body :is(h1, h2, h3, h4, h5, h6) { font-size: 0.9375rem; line-height: 1.6; margin: 1em 0 0.4em; }
 .markdown-body p { margin: 0 0 0.8em; }
@@ -181,6 +180,7 @@ svg { width: 1.25rem; height: 1.25rem; flex: none; }
 .markdown-body table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 0.8em 0; }
 .markdown-body th, .markdown-body td { border: 1px solid #d4d4d8; padding: 0.375rem 0.625rem; }
 .markdown-body .contains-task-list { list-style: none; padding-left: 0.4em; }
+.markdown-body li:has(> input[type="checkbox"]) { list-style: none; }
 .markdown-body > :first-child { margin-top: 0; }
 .markdown-body > :last-child { margin-bottom: 0; }
 #trace-panel { padding-block: 0.875rem; }

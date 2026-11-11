@@ -163,8 +163,9 @@ test('public search and answers keep private and feedback sources out of model r
   const { env, sqlite } = fixture();
   const app = { ...env, PUBLIC_SEARCH_RATE_LIMIT: { limit: async () => ({ success: true }) } };
   const context = {} as ExecutionContext;
+  const markdown = '## Public passage\n\n- **Detail**\n- [x] Verified\n\n<script>alert(1)</script>';
   const sources = [
-    { repo: 'TrainLCD/MobileApp', kind: 'issue', title: 'Public issue', body: 'Public passage' },
+    { repo: 'TrainLCD/MobileApp', kind: 'issue', title: 'Public issue', body: markdown },
     { repo: 'TrainLCD/MobileApp', kind: 'pr', title: 'Public PR', body: 'PR text\nPENDING\nUnpublished review' },
     { repo: 'TrainLCD/Issues', kind: 'feedback', title: 'Private feedback', body: 'Restricted feedback' },
     { repo: 'TrainLCD/Issues', kind: 'doc', title: 'Private feedback README', body: 'Restricted README' },
@@ -213,9 +214,13 @@ test('public search and answers keep private and feedback sources out of model r
     for (const path of ['search', 'answer']) {
       const response = await worker.fetch!(request(path, false), { ...app, API_TOKEN: '' }, context);
       assert.equal(response.status, 200);
-      const payload = await response.json() as { hit_count: number; evidence: { title: string }[] };
+      const payload = await response.json() as { hit_count: number; evidence: { title: string; text: string; text_html: string }[] };
       assert.equal(payload.hit_count, 1);
       assert.deepEqual(payload.evidence.map(item => item.title), ['Public issue']);
+      assert.equal(payload.evidence[0]?.text, markdown);
+      assert.match(payload.evidence[0]!.text_html, /<h2>Public passage<\/h2>[\s\S]*<strong>Detail<\/strong>/);
+      assert.match(payload.evidence[0]!.text_html, /<input checked="" disabled="" type="checkbox">/);
+      assert.doesNotMatch(payload.evidence[0]!.text_html, /<script/);
       assert.doesNotMatch(JSON.stringify(payload), /TrainLCD\/(Issues|Private)|Unpublished review/);
     }
     assert.doesNotMatch(inputs.join('\n'), /TrainLCD\/(Issues|Private)|Restricted|Unpublished review/);

@@ -21,5 +21,8 @@
     "@types/node": "22.20.5",
     "typescript": "5.9.3",
     "wrangler": "4.158.0"
+  },
+  "dependencies": {
+    "marked": "18.1.3"
   }
 }
