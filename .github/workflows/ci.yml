@@ -15,6 +15,7 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
+      - run: npm run build:pwa
       - run: npm run check
       - run: npm test
       - run: npx wrangler d1 migrations apply trainlcd-decision-rag --local
@@ -41,6 +42,7 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
+      - run: npm run build:pwa
       - name: Prepare production Wrangler config
         env:
           DECISIONRAG_D1_DATABASE_ID: ${{ vars.DECISIONRAG_D1_DATABASE_ID }}
@@ -99,3 +101,4 @@ jobs:
           fi
           npx --no-install wrangler versions deploy "${version_id}@100%" \
             --config wrangler.production.json --message "Deploy $GITHUB_SHA" --yes
+

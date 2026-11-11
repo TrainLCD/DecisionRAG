@@ -10,9 +10,11 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "check": "tsc --noEmit",
-    "test": "tsc -p tsconfig.test.json && node --test dist-test/test/*.test.js",
+    "test": "tsc -p tsconfig.test.json && node --test dist-test/test/*.test.js && node --test test/*.test.mjs",
     "db:local": "wrangler d1 migrations apply trainlcd-decision-rag --local",
-    "db:remote": "wrangler d1 migrations apply trainlcd-decision-rag --remote"
+    "db:remote": "wrangler d1 migrations apply trainlcd-decision-rag --remote",
+    "build:pwa": "node scripts/build-pwa.mjs",
+    "predeploy": "npm run build:pwa"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261106.1",
