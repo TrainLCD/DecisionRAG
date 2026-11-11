@@ -81,8 +81,8 @@ export async function planRetrieval(query: string, store: RetrievalStore, judge:
     if (groupTrace?.stage === 'page_screening') groupTrace.selected = documents.map(item => item.id);
   }
   const documentScores = await judge.score(query, documents, 'document_screening');
-  // Keep the strongest candidates even when title-level scores are uncertain.
-  const selectedDocs = documentScores.filter((r, index) => index < budget.documents || r.probability > 0.5).map(r => r.item.id);
+  // Excerpts are incomplete: retain uncertain documents for full-passage evaluation.
+  const selectedDocs = documentScores.filter((r, index) => index < budget.documents || r.probability > 0.2).map(r => r.item.id);
   // Explicit links preserve the context of terse fix PRs. One hop only, scoped on both ends.
   const seeds = new Set(selectedDocs);
   const related = new Set(scopedDocuments.filter(doc => seeds.has(doc.id)).flatMap(doc => doc.references ?? []));
