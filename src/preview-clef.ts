@@ -6,7 +6,7 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     if (request.method === 'GET' && new URL(request.url).pathname === '/health') {
       const response = await fetch('https://api.github.com/orgs/' + encodeURIComponent(env.GITHUB_ORG) + '/repos?type=public&per_page=100&page=1', {
-        redirect: 'error',
+        redirect: 'manual', signal: AbortSignal.timeout(25000),
         headers: { Authorization: 'Bearer ' + env.GITHUB_TOKEN, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'TrainLCD-DecisionRAG' },
       });
       let reason = 'none';
