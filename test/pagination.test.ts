@@ -4,7 +4,7 @@ import { encodeCursor, decodeCursor } from '../src/search-cursor.js';
 import { fixture, mockFetch } from './helpers.js';
 import { saveSource, documentsFor, localReferences } from '../src/store.js';
 import worker from '../src/index.js';
-import { planRetrieval } from '../src/retrieval.js';
+import { planRetrieval, retrievePlannedPage } from '../src/retrieval.js';
 import { Jev } from '../src/jev.js';
 
 test('continuations are encrypted, scoped, authenticated and expire', async () => {
@@ -102,15 +102,18 @@ test('local references never reinterpret cross-repository links as local issues'
     ['TrainLCD/App#1', 'TrainLCD/App#3']);
 });
 
-test('uncertain excerpts remain candidates for later full-passage evaluation', async () => {
+test('long sources do not crowd short relevant sources out of the first page', async () => {
   const { env, sqlite } = fixture();
   const judge = new Jev(env);
-  const docs = [{ id: 'strong', description: 'strong evidence' }, { id: 'uncertain', description: 'incomplete body excerpt' },
-    { id: 'irrelevant', description: 'unrelated' }];
-  judge.score = async (_query, items) => items.map((item, i) => ({ item, probability: [0.9, 0.3, 0.01][i]! }));
+  judge.rankPassages = async (_query, items) => items.map(item => ({ item, probability: 0.9 }));
+  const passages = Array.from({ length: 21 }, (_, i) => ({ id: `long:${i}`, source_id: 'long', ordinal: i,
+    title: 'Long document', text: `section ${i}`, url: 'https://example.test/long', repo: 'TrainLCD/App', kind: 'doc' as const, metadata: {}, updated_at: 'now' }));
+  passages.push({ ...passages[0]!, id: 'short:0', source_id: 'short', title: 'Short issue' });
+  const store = { documents: async () => [], branches: async () => [], documentPages: async () => [], passages: async () => passages.map(p => ({ ...p })) };
   try {
-    const plan = await planRetrieval('query', { documents: async () => docs, branches: async () => [], documentPages: async () => [], passages: async () => [] }, judge,
-      { branches: 6, documents: 1, maxDocuments: 100, maxPassages: 4000 });
-    assert.deepEqual(plan.ids, ['strong', 'uncertain']);
+    const first = await retrievePlannedPage('query', store, judge, { ids: ['long', 'short'] });
+    assert.deepEqual(first.evidence.slice(0, 3).map(p => p.id), ['long:0', 'short:0', 'long:1']);
+    const next = await retrievePlannedPage('query', store, judge, { ids: ['long', 'short'] }, 20, 20, undefined, first.revision);
+    assert.equal(new Set([...first.evidence, ...next.evidence].map(p => p.id)).size, 22);
   } finally { sqlite.close(); }
 });

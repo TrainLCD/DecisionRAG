@@ -81,8 +81,8 @@ export async function planRetrieval(query: string, store: RetrievalStore, judge:
     if (groupTrace?.stage === 'page_screening') groupTrace.selected = documents.map(item => item.id);
   }
   const documentScores = await judge.score(query, documents, 'document_screening');
-  // Excerpts are incomplete: retain uncertain documents for full-passage evaluation.
-  const selectedDocs = documentScores.filter((r, index) => index < budget.documents || r.probability > 0.2).map(r => r.item.id);
+  // Keep the strongest candidates even when their excerpt-level scores are uncertain.
+  const selectedDocs = documentScores.filter((r, index) => index < budget.documents || r.probability > 0.5).map(r => r.item.id);
   // Explicit links preserve the context of terse fix PRs. One hop only, scoped on both ends.
   const seeds = new Set(selectedDocs);
   const related = new Set(scopedDocuments.filter(doc => seeds.has(doc.id)).flatMap(doc => doc.references ?? []));
@@ -99,7 +99,8 @@ export async function retrievePlannedPage(query: string, store: RetrievalStore, 
   const passages = await store.passages(plan.ids, budget.maxPassages + 1);
   if (passages.length > budget.maxPassages) throw new HttpError(422, 'passage_screening_budget_exceeded');
   const order = new Map(plan.ids.map((id, index) => [id, index]));
-  passages.sort((a, b) => (order.get(a.source_id) ?? 0) - (order.get(b.source_id) ?? 0) || a.ordinal - b.ordinal);
+  // Interleave sources so a long document cannot occupy the entire first page.
+  passages.sort((a, b) => a.ordinal - b.ordinal || (order.get(a.source_id) ?? 0) - (order.get(b.source_id) ?? 0));
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(passages)));
   const revision = Array.from(new Uint8Array(digest), value => value.toString(16).padStart(2, '0')).join('');
   if (expectedRevision && revision !== expectedRevision) throw new HttpError(409, 'search_results_changed');
