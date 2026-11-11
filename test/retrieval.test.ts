@@ -121,7 +121,7 @@ test('Jev retries only the overlong batch without losing candidates', async () =
   } finally { restore(); sqlite.close(); }
 });
 
-test('passage ranking counts all matches before limiting the Choice shortlist', async () => {
+test('passage ranking retains matches outside the Choice shortlist', async () => {
   const { env, sqlite } = fixture();
   const calls: string[][] = [];
   const restore = mockFetch((_url, init) => {
@@ -135,10 +135,9 @@ test('passage ranking counts all matches before limiting the Choice shortlist', 
   });
   try {
     const judge = new Jev(env);
-    const { ranked, hitCount } = await judge.rankPassages('query', ['one', 'two', 'three', 'four'].map(id => ({ id, description: id })), 2);
-    assert.equal(hitCount, 3);
+    const ranked = await judge.rankPassages('query', ['one', 'two', 'three', 'four'].map(id => ({ id, description: id })), 2);
     assert.deepEqual(calls, [['one', 'two', 'three', 'four'], ['four', 'three']]);
-    assert.deepEqual(ranked.map(({ item, probability }) => [item.id, probability]), [['three', 0.7], ['four', 0.8]]);
+    assert.deepEqual(ranked.map(({ item, probability }) => [item.id, probability]), [['three', 0.7], ['four', 0.8], ['two', 0.6]]);
   } finally { restore(); sqlite.close(); }
 });
 
@@ -157,9 +156,8 @@ test('combined passage ranking uses Choice order and preserves binary relevance'
   });
   try {
     const judge = new Jev(env);
-    const { ranked, hitCount } = await judge.rankPassages('query', ['first', 'second'].map(id => ({ id, description: id })), 2);
+    const ranked = await judge.rankPassages('query', ['first', 'second'].map(id => ({ id, description: id })), 2);
     assert.equal(calls, 1);
-    assert.equal(hitCount, 2);
     assert.deepEqual(ranked.map(({ item, probability }) => [item.id, probability]), [['second', 0.6], ['first', 0.9]]);
   } finally { restore(); sqlite.close(); }
 });
