@@ -1,5 +1,5 @@
 import { branches, DOCUMENT_PAGE_SIZE, documentPages, documentsFor, passagesFor, localReferences, type Branch, type DocumentCursor, type SearchScope } from './store.js';
-import type { Judge } from './jev.js';
+import { maxCandidateChars, type Judge } from './jev.js';
 import { boundedNumber, HttpError, type Candidate, type Env, type Passage } from './types.js';
 export interface RetrievalStore {
   documents(limit: number): Promise<Candidate[]>;
@@ -68,13 +68,24 @@ export async function planRetrieval(query: string, store: RetrievalStore, judge:
   let documents = direct.length <= directLimit ? direct : await routedDocuments(query, store, judge, budget);
   const scopedDocuments = documents;
   if (documents.length > 128) {
-    const groups = [];
-    for (let i = 0; i < documents.length; i += 24) {
-      const members = documents.slice(i, i + 24);
-      groups.push({ id: `group${i / 24}`, members,
-        description: 'A group of documents. Explore if ANY member may contain relevant evidence; body samples are incomplete, so uncertainty is not evidence of irrelevance.\n' +
-          members.map((item, index) => `${index + 1}. ${item.overview ?? item.description}`).join('\n\n') });
+    const groups: { id: string; members: Candidate[]; description: string }[] = [];
+    const describe = (members: Candidate[]) => {
+      const description = 'A group of documents. Explore if ANY member may contain relevant evidence; body samples are incomplete, so uncertainty is not evidence of irrelevance.\n' +
+        members.map((item, index) => `${index + 1}. ${item.overview ?? item.description}`).join('\n\n');
+      // A valid standalone candidate need not leave room for an optional group wrapper.
+      return members.length === 1 && description.length > maxCandidateChars
+        ? members[0]!.overview ?? members[0]!.description : description;
+    };
+    let members: Candidate[] = [];
+    const flush = () => {
+      if (members.length) groups.push({ id: `group${groups.length}`, members, description: describe(members) });
+      members = [];
+    };
+    for (const document of documents) {
+      if (members.length && (members.length >= 24 || describe([...members, document]).length > maxCandidateChars)) flush();
+      members.push(document);
     }
+    flush();
     const scoredGroups = await judge.score(query, groups, 'page_screening');
     documents = scoredGroups.filter((row, index) => index < 4 || row.probability > 0.2).flatMap(row => row.item.members);
   }

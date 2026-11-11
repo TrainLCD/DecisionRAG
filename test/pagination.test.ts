@@ -151,3 +151,18 @@ test('references inside the loaded introduction survive both document loading pa
     assert.deepEqual(page![0]!.references, ['TrainLCD/App#123']);
   } finally { sqlite.close(); }
 });
+
+
+test('coarse routing splits long descriptions without losing candidates or exceeding the judge limit', async () => {
+  const { env, sqlite } = fixture();
+  const docs = Array.from({ length: 130 }, (_, i) => ({ id: `d${i}`, description: '本文'.repeat(i === 0 ? 12000 : 1000) }));
+  const judge = new Jev(env);
+  judge.score = async (_query, items) => {
+    assert.ok(items.every(item => item.description.length <= 24000));
+    return items.map(item => ({ item, probability: 0.9 }));
+  };
+  try {
+    const plan = await planRetrieval('本文', { documents: async () => docs, branches: async () => [], documentPages: async () => [], passages: async () => [] }, judge);
+    assert.deepEqual(new Set(plan.ids), new Set(docs.map(doc => doc.id)));
+  } finally { sqlite.close(); }
+});
