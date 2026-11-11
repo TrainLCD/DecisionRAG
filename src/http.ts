@@ -57,12 +57,16 @@ export async function jsonRequest<T>(url: string, init: RequestInit = {}, maxByt
 export async function mapConcurrent<T, R>(items: T[], concurrency: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const results = new Array<R>(items.length);
   let next = 0;
+  let failed = false;
   await Promise.all(Array.from({ length: Math.min(items.length, concurrency) }, async () => {
     for (;;) {
+      if (failed) return;
       const index = next++;
       if (index >= items.length) return;
-      results[index] = await fn(items[index]!);
+      try { results[index] = await fn(items[index]!); }
+      catch (error) { failed = true; throw error; }
     }
   }));
   return results;
 }
+

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { jsonRequest } from '../src/http.js';
+import { jsonRequest, mapConcurrent } from '../src/http.js';
 
 test('upstream redirects are rejected without following them', async (t) => {
   const redirectingFetch: typeof globalThis.fetch = async (_url, init) => {
@@ -24,4 +24,21 @@ test('a deadline reached while reading the response body is reported as a timeou
   }, { highWaterMark: 0 }));
   t.mock.method(globalThis, 'fetch', fetchWithStalledBody);
   await assert.rejects(jsonRequest('https://api.github.com/test'), { status: 502, code: 'upstream_timeout' });
+});
+
+
+test('failed concurrent work does not keep dispatching queued provider calls', async () => {
+  let release!: () => void;
+  const pending = new Promise<void>(resolve => { release = resolve; });
+  const seen: number[] = [];
+  const work = mapConcurrent([0, 1, 2, 3, 4], 2, async item => {
+    seen.push(item);
+    if (item === 0) throw new Error('capacity');
+    await pending;
+    return item;
+  });
+  await assert.rejects(work, /capacity/);
+  release();
+  await new Promise<void>(resolve => setImmediate(resolve));
+  assert.deepEqual(seen, [0, 1]);
 });
