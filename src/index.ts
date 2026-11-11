@@ -54,20 +54,20 @@ async function search(request: Request, env: Env, path: string): Promise<Respons
   const maxDocuments = boundedNumber(env.MAX_SCREENED_DOCUMENTS, 20_000, 1, 100_000);
   // Existing Bearer callers that omit the scope retain their authenticated search.
   const timings = { scope_ms: 0, storage_ms: 0, model_ms: 0, generation_ms: 0, retrieval_ms: 0 };
+  const query = body.query.trim();
+  const scopeKey = JSON.stringify([hasToken, body.include_feedback ?? null]);
+  const previous = typeof body.cursor === 'string' ? await decodeCursor(body.cursor, env.API_TOKEN, query, scopeKey) : undefined;
   const scopeStart = Date.now();
   const scope = hasToken && body.include_feedback === undefined ? undefined : new GitHub(env).publicRepositories().then(publicRepos => {
     timings.scope_ms = Date.now() - scopeStart;
     return { publicRepos, feedbackRepo: body.include_feedback ? `${env.GITHUB_ORG.toLowerCase()}/issues` : undefined };
   });
-  const query = body.query.trim();
   const judge = new Jev(env);
   const store = d1Store(env, scope, timings);
   const budgets = { ...DEFAULT_BUDGETS, maxDocuments };
   let pagination: { page: number; total_pages: number; next_cursor: string | null } | undefined;
   let retrieved;
   if (body.paginated === true) {
-    const scopeKey = JSON.stringify([hasToken, body.include_feedback ?? null]);
-    const previous = typeof body.cursor === 'string' ? await decodeCursor(body.cursor, env.API_TOKEN, query, scopeKey) : undefined;
     // Every request still awaits a fresh scope check through the store, including continuation requests.
     const plan = previous ? { ids: previous.ids } : await planRetrieval(query, store, judge, budgets);
     const page = await retrievePlannedPage(query, store, judge, plan, previous?.offset ?? 0, 20, budgets, previous?.revision);

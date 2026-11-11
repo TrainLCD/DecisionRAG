@@ -14,7 +14,7 @@ test('continuations are encrypted, scoped, authenticated and expire', async () =
   assert.deepEqual(await decodeCursor(token, 'secret', value.query, value.scope), value);
   for (const [candidate, secret, query, scope] of [[token, 'wrong', value.query, value.scope],
     [token, 'secret', 'different', value.scope], [token, 'secret', value.query, '[false,false]'],
-    ['A' + token.slice(1), 'secret', value.query, value.scope]])
+    [(token[0] === 'A' ? 'B' : 'A') + token.slice(1), 'secret', value.query, value.scope]])
     await assert.rejects(decodeCursor(candidate!, secret!, query!, scope!), /invalid_search_cursor/);
   const expired = await encodeCursor({ ...value, expires: 0 }, 'secret');
   await assert.rejects(decodeCursor(expired, 'secret', value.query, value.scope), /invalid_search_cursor/);
