@@ -96,6 +96,11 @@ export class Jev implements Judge {
     } catch (error) {
       if (signal.aborted) throw new HttpError(502, 'upstream_timeout');
       if (error instanceof HttpError) throw error;
+      // Return fixed categories only; provider messages may contain private input.
+      const message = error instanceof Error ? error.message : '';
+      if (/\b3036\b/u.test(message)) throw new HttpError(503, 'decision_quota_exceeded');
+      if (/\b3040\b|capacity (?:temporarily )?exceeded/iu.test(message)) throw new HttpError(503, 'decision_capacity_exceeded');
+      if (/\b429\b|rate[ -]?limit/iu.test(message)) throw new HttpError(429, 'decision_rate_limited');
       throw new HttpError(502, 'decision_upstream_error');
     }
     if (!result || !result.answers || typeof result.model !== 'string' || !result.usage ||
@@ -144,7 +149,7 @@ export class Jev implements Judge {
         return [...await scoreBatch(items.slice(0, middle)), ...await scoreBatch(items.slice(middle))];
       }
     };
-    const responses = (await mapConcurrent(batches, stage === 'branch_screening' ? 4 : navigation ? 24 : candidates.length <= 20 ? 12 : 6, scoreBatch)).flat();
+    const responses = (await mapConcurrent(batches, stage === 'branch_screening' ? 4 : navigation ? 16 : candidates.length <= 20 ? 12 : 6, scoreBatch)).flat();
     const scored = responses.flatMap(r => r.scored).sort((a, b) => b.probability - a.probability);
     this.trace.push({ stage, candidates: candidates.length, selected: scored.slice(0, 12).map(r => r.item.id),
       calls, model: [...new Set(responses.map(r => r.result.model))],

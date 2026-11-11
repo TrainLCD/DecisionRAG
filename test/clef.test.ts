@@ -80,3 +80,16 @@ test('document screening uses Clef for documentation without upgrading neighbori
     { model: '@cf/cloudflare/clef-flash', descriptions: ['fix body'] },
   ]);
 });
+
+
+test('provider capacity and rate failures expose only fixed recoverable categories', async () => {
+  for (const [message, status, code] of [
+    ['3040: Capacity temporarily exceeded private data', 503, 'decision_capacity_exceeded'],
+    ['429: Rate limit exceeded private data', 429, 'decision_rate_limited'],
+    ['3036: Account limited private data', 503, 'decision_quota_exceeded'],
+  ] as const) {
+    const env = { AI: { async run() { throw new Error(message); } } } as unknown as Env;
+    await assert.rejects(new Jev(env).score('q', [{ id: 'x', description: 'x' }], 'document_screening'),
+      (error: any) => error.status === status && error.code === code && !error.message.includes('private'));
+  }
+});

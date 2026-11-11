@@ -57,6 +57,9 @@ const errors = {
   search_results_changed: "資料が更新されました。もう一度検索してください。",
   search_plan_too_large: "候補が多すぎます。質問を絞って検索してください。",
   decision_not_configured: "サーバーの判定モデルが設定されていません。",
+  decision_capacity_exceeded: "判定サービスが混雑しています。少し待ってから再実行してください。",
+  decision_rate_limited: "判定サービスの利用制限に達しました。1分ほど待ってから再実行してください。",
+  decision_quota_exceeded: "判定サービスの利用枠に達しました。管理者による確認が必要です。",
   decision_upstream_error: "判定サービスでエラーが発生しました。時間をおいて再実行してください。",
   upstream_http_401:
     "外部サービスの認証に失敗しました。サーバーのAPIキーを確認してください。",

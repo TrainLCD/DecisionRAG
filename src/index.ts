@@ -160,7 +160,7 @@ const worker: ExportedHandler<Env, SyncJob> = {
       const code = e instanceof HttpError ? e.code : 'internal_error';
       console.error(JSON.stringify({ event: 'request_error', status, code }));
       return Response.json({ error: code }, { status, headers: { 'Cache-Control': 'no-store',
-        ...(code === 'public_search_rate_limited' ? { 'Retry-After': '60' } : {}) } });
+        ...((code === 'public_search_rate_limited' || code === 'decision_rate_limited') ? { 'Retry-After': '60' } : {}) } });
     }
   },
   async scheduled(_controller, env) { await enqueue(env, { type: 'org', page: 1 }); },
