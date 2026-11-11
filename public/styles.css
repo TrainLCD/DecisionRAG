@@ -115,7 +115,7 @@ svg { width: 1.25rem; height: 1.25rem; flex: none; }
 }
 .notice.error { background: #fee7ef; color: #931443; }
 .notice.loading { background: var(--primary-soft); color: #004b9e; }
-#results[aria-busy="true"] { display: none; }
+#results[aria-busy="true"] #empty-state { display: none; }
 #result-summary {
   display: flex;
   flex-wrap: wrap;
