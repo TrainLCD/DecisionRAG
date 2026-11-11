@@ -369,10 +369,20 @@ function renderResult(data, mode, query) {
   if (data.status !== "retrieved") {
     const panel = $("answer-panel");
     panel.hidden = false;
-    panel.append(element("h3", "", label[0]));
-    panel.append(["answered", "summarized"].includes(data.status) && typeof data.answer === "string"
+    const hasAnswer = ["answered", "summarized"].includes(data.status);
+    panel.append(element("h3", "", hasAnswer ? "質問への回答" : label[0]));
+    panel.append(hasAnswer && typeof data.answer === "string"
       ? linkAnswerCitations(markdownContent(data.answer, data.answer_html))
-      : element("p", "", label[1]));
+      : element("p", "", hasAnswer ? "資料から質問への回答を確認できませんでした。確認できた内容を以下に示します。" : label[1]));
+    if (hasAnswer && Array.isArray(data.ticket_summaries) && data.ticket_summaries.length) {
+      panel.append(element("h3", "", "各チケットの要約"));
+      for (const item of data.ticket_summaries) {
+        const source = evidence.find(entry => entry.source_id === item.source_id);
+        if (!source || typeof item.text !== "string") continue;
+        panel.append(linkAnswerCitations(element("h4", "", "[" + source.citation + "]")));
+        panel.append(element("p", "", item.text));
+      }
+    }
   }
   renderEvidencePage();
   const trace = Array.isArray(data.trace) ? data.trace : [];
@@ -668,3 +678,4 @@ $("sync-button").addEventListener("click", async () => {
 });
 controls();
 void connect(readSavedToken(), true);
+
