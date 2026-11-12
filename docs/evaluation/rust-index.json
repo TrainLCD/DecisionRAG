@@ -1,0 +1,146 @@
+{
+  "scope": "Synthetic SQLite full scan, one matching tail document, no network/generation, warm isolate, local wall-clock not Workers CPU. WASM linear memory excludes host JS and SQLite.",
+  "results": [
+    {
+      "documents": 1000,
+      "elapsed_ms": 72.767979,
+      "wasm_memory_bytes": 5177344,
+      "hit_count": 1,
+      "trace": [
+        {
+          "calls": 0,
+          "candidates": 1000,
+          "elapsed_ms": 54,
+          "input_tokens": 0,
+          "model": [
+            "rust-rules-v1"
+          ],
+          "output_tokens": 0,
+          "selected": [
+            "doc000999",
+            "doc000000",
+            "doc000001",
+            "doc000002",
+            "doc000003",
+            "doc000004",
+            "doc000005",
+            "doc000006",
+            "doc000007",
+            "doc000008",
+            "doc000009",
+            "doc000010"
+          ],
+          "stage": "document_screening"
+        },
+        {
+          "calls": 0,
+          "candidates": 30,
+          "elapsed_ms": 1,
+          "input_tokens": 0,
+          "model": [
+            "rust-rules-v1"
+          ],
+          "output_tokens": 0,
+          "selected": [
+            "doc000999:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ]
+    },
+    {
+      "documents": 5000,
+      "elapsed_ms": 228.19095,
+      "wasm_memory_bytes": 18612224,
+      "hit_count": 1,
+      "trace": [
+        {
+          "calls": 0,
+          "candidates": 5000,
+          "elapsed_ms": 221,
+          "input_tokens": 0,
+          "model": [
+            "rust-rules-v1"
+          ],
+          "output_tokens": 0,
+          "selected": [
+            "doc004999",
+            "doc000000",
+            "doc000001",
+            "doc000002",
+            "doc000003",
+            "doc000004",
+            "doc000005",
+            "doc000006",
+            "doc000007",
+            "doc000008",
+            "doc000009",
+            "doc000010"
+          ],
+          "stage": "document_screening"
+        },
+        {
+          "calls": 0,
+          "candidates": 30,
+          "elapsed_ms": 1,
+          "input_tokens": 0,
+          "model": [
+            "rust-rules-v1"
+          ],
+          "output_tokens": 0,
+          "selected": [
+            "doc004999:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ]
+    },
+    {
+      "documents": 20000,
+      "elapsed_ms": 788.780581,
+      "wasm_memory_bytes": 69795840,
+      "hit_count": 1,
+      "trace": [
+        {
+          "calls": 0,
+          "candidates": 20000,
+          "elapsed_ms": 768,
+          "input_tokens": 0,
+          "model": [
+            "rust-rules-v1"
+          ],
+          "output_tokens": 0,
+          "selected": [
+            "doc019999",
+            "doc000000",
+            "doc000001",
+            "doc000002",
+            "doc000003",
+            "doc000004",
+            "doc000005",
+            "doc000006",
+            "doc000007",
+            "doc000008",
+            "doc000009",
+            "doc000010"
+          ],
+          "stage": "document_screening"
+        },
+        {
+          "calls": 0,
+          "candidates": 30,
+          "elapsed_ms": 1,
+          "input_tokens": 0,
+          "model": [
+            "rust-rules-v1"
+          ],
+          "output_tokens": 0,
+          "selected": [
+            "doc019999:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ]
+    }
+  ]
+}

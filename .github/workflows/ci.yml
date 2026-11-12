@@ -14,10 +14,45 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        id: rust
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: cargo-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust.outputs.cachekey }}-${{ hashFiles('Cargo.lock') }}
+      - uses: actions/cache/restore@v4
+        id: bindgen
+        with:
+          path: ~/.cargo/bin/wasm-bindgen
+          key: wasm-bindgen-${{ runner.os }}-${{ runner.arch }}-0.2.129
+      - if: steps.bindgen.outputs.cache-hit != 'true'
+        run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
+      - uses: actions/cache/save@v4
+        if: steps.bindgen.outputs.cache-hit != 'true'
+        with:
+          path: ~/.cargo/bin/wasm-bindgen
+          key: wasm-bindgen-${{ runner.os }}-${{ runner.arch }}-0.2.129
       - run: npm ci
       - run: npm run build:pwa
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace --locked
+      - run: npm run build:rust
       - run: npm run check
       - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rust-browser-${{ github.event_name }}
+          path: test-results/
+          if-no-files-found: ignore
       - run: npx wrangler d1 migrations apply trainlcd-decision-rag --local
       - run: npx wrangler deploy --dry-run --outdir dist
 
@@ -41,6 +76,29 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        id: rust
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: cargo-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust.outputs.cachekey }}-${{ hashFiles('Cargo.lock') }}
+      - uses: actions/cache/restore@v4
+        id: bindgen
+        with:
+          path: ~/.cargo/bin/wasm-bindgen
+          key: wasm-bindgen-${{ runner.os }}-${{ runner.arch }}-0.2.129
+      - if: steps.bindgen.outputs.cache-hit != 'true'
+        run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
+      - uses: actions/cache/save@v4
+        if: steps.bindgen.outputs.cache-hit != 'true'
+        with:
+          path: ~/.cargo/bin/wasm-bindgen
+          key: wasm-bindgen-${{ runner.os }}-${{ runner.arch }}-0.2.129
       - run: npm ci
       - run: npm run build:pwa
       - name: Prepare production Wrangler config
@@ -127,6 +185,29 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        id: rust
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: cargo-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust.outputs.cachekey }}-${{ hashFiles('Cargo.lock') }}
+      - uses: actions/cache/restore@v4
+        id: bindgen
+        with:
+          path: ~/.cargo/bin/wasm-bindgen
+          key: wasm-bindgen-${{ runner.os }}-${{ runner.arch }}-0.2.129
+      - if: steps.bindgen.outputs.cache-hit != 'true'
+        run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
+      - uses: actions/cache/save@v4
+        if: steps.bindgen.outputs.cache-hit != 'true'
+        with:
+          path: ~/.cargo/bin/wasm-bindgen
+          key: wasm-bindgen-${{ runner.os }}-${{ runner.arch }}-0.2.129
       - run: npm ci
       - run: npm run build:pwa
       - name: Prepare read-only preview

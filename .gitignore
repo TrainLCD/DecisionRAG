@@ -7,3 +7,8 @@ dist-test/
 .dev.vars
 .env
 *.log
+
+/target/
+/generated/
+
+/test-results/

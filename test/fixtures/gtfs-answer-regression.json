@@ -1,0 +1,57 @@
+{
+  "evidence": [
+    {
+      "citation": "p1",
+      "kind": "doc",
+      "repo": "TrainLCD/StationAPI",
+      "source_id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md",
+      "text": "# GTFS都営バスデータ導入に関する調査報告書\n\n> **追記 (2026-05、2026-09 更新)**: 本書は実装に着手する前にまとめた調査・設計検討の資料である。実際の統合方針は実装の段階で確定しており、本書の案とは異なる部分が多い。主な違いは次のとおり。\n>\n> - GTFS 用のテーブル群は設けず、バスのデータを既存の `lines` / `stations` / `types` / `station_station_types` に投影した。`stations` と `lines` には `transport_type` 列 (0: 鉄道、1: バス) を加えた。\n> - バス用のコードは FNV-1a ハッシュで決定的に割り当てる。値域は `line_cd` / `type_cd` / `line_group_cd` が 100,000,000 以上、`station_cd` / `station_g_cd` が 200,000,000 以上で、鉄道のコードとは重ならない。\n> - `(route_id, shape_id)` ごとの運行パターンを、`TrainTypeKind::BusRoute` (= 7) の列車種別として登録した。\n> - GTFS から読むのは routes・stops・trips・stop_times・translations だけで、calendar による運行日の管理は取り込んでいない。\n> - 取り込み対象は都営バスだけでなく、GTFS フィード 6 本 (都営バス・西武バス・京王バスと、東急バスが運行する大田区・品川区・目黒区のコミュニティバス) と、東急バスの一般路線の ODPT JSON に広がった。\n>\n> 最新の実装は [`architecture.md` のデータパイプライン節](./architecture.md#データパイプライン) (特に[バスのコード生成](./architecture.md#バスのコード生成)) と `preprocessor/src/gtfs/` を参照のこと。\n> また、本書が前提としている gRPC + PostgreSQL の構成は、その後 Cloudflare Workers 上の GraphQL に置き換えられた。\n\n## 概要\n\n本書は、日本の鉄道駅データを提供する gRPC API である StationAPI に、GTFS 形式の都営バスデータを導入する際の懸念点をまとめたものである。\n\n---\n\n## 1. 調査当時のStationAPIの構造\n\n以下は調査を行った時点の構成であり、現在は Cloudflare Workers 上の GraphQL API に置き換わっている。\n\n### 1.1 技術スタック\n\n| 項目 | 技術 |\n|------|------|\n| 言語 | Rust (edition 2021) |\n| 非同期ランタイム | Tokio |\n| API | gRPC (Tonic) + gRPC-Web |\n| データベース | PostgreSQL 18 |\n| ORM | SQLx |\n\n### 1.2 データモデル\n\n```text\ncompanies (鉄道会社)\n    ↓\nlines (路線)\n    ↓\nstations (駅)\n    ↓\nstation_station_types (駅と列車種別の関連)\n    ↓\ntypes (列車種別)\n```\n\n### 1.3 主要テーブル\n\n| テーブル | レコード数 | 説明 |\n|----------|-----------|------|\n| companies | 173 | 鉄道会社 |\n| lines | 623 | 路線 |\n| stations | 11,141 | 駅 |\n| types | 317 | 列車種別 |\n| station_station_types | 41,005 | 駅と列車種別の関連 |\n| connections | 17,664 | 駅と駅の接続 |\n\n### 1.4 主要なAPIエンドポイント\n\n- `get_station_by_id` - ID を指定して駅を取得する\n- `get_stations_by_coordinates` - 座標から周辺の駅を取得する\n- `get_stations_by_line_id` - 路線に属する駅を取得する\n- `get_stations_by_name` - 駅名で検索する (複数言語に対応)\n- `get_train_types_by_station_id` - 駅に停車する列車種別を取得する\n- `get_routes` - 経路を検索する\n\n---\n\n## 2. GTFSフォーマットの構造\n\n### 2.1 標準ファイル構成\n\n#### 必須ファイル\n\n| ファイル | 説明 |\n|----------|------|\n| agency.txt | 交通事業者 |\n| stops.txt | 停留所・駅 |\n| routes.txt | 路線 |\n| trips.txt | 便 (トリップ) |\n| stop_times.txt | 各便の停留所ごとの到着・出発時刻 |\n\n#### 条件付き必須ファイル",
+      "title": "docs/gtfs-bus-integration-research.md",
+      "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/gtfs-bus-integration-research.md"
+    },
+    {
+      "citation": "p2",
+      "kind": "doc",
+      "repo": "TrainLCD/StationAPI",
+      "source_id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md",
+      "text": "- 循環する路線や枝分かれする路線が多い\n- 同じ系統番号でも経路のパターンが複数ある\n- 行き先 (headsign) による区別が重要になる\n- 系統番号で管理されている\n\n#### 懸念点\n\n- 現在の `lines` テーブルの `line_type` に「バス」を足すだけでは足りない。\n- バス特有の「系統」という概念をどうモデル化するか。\n- 経路の形状 (shapes.txt) をどう保存し、どう活用するか。\n\n---\n\n### 3.5 列車種別 vs 運行パターン\n\n#### 現在の train_type モデル\n\n```sql\n-- types テーブル\ntype_cd      -- 列車種別コード\ntype_name    -- 種別名（快速、急行等）\ncolor        -- 表示色\ndirection    -- 方向（0:方向制限なし, 1:上り, 2:下り）\nkind         -- 種別区分（0:基本, 1:支線, 2:快速, 3:急行, 4:特急, 5:高速運転快速）\n\n-- 停車条件（station_station_types テーブルの pass フィールド）\n0: 停車\n1: 通過\n2: 一部通過\n3: 平日停車\n4: 休日停車\n5: 一部停車\n```\n\n#### バスの運行パターン\n\n- 急行・各停といった区別はあまりない (一部の路線を除く)\n- 時間帯によって運行が変わる (深夜バス、早朝便など)\n- 曜日や祝日によって運行するかどうかが変わる\n- GTFS では `trip` 単位と `calendar` の組み合わせで管理する\n\n#### 懸念点\n\n- 既存の `station_station_types` の設計では、バスの運行パターンを表現しにくい。\n- カレンダーに基づいて運行を管理するモデルを新たに追加する必要がある。\n\n---\n\n### 3.6 APIエンドポイントへの影響\n\n#### 既存エンドポイントの課題\n\n| エンドポイント | 課題 |\n|---------------|------|\n| `get_station_by_id` | バス停も返すか。ID 体系の違いをどう扱うか |\n| `get_stations_by_coordinates` | バス停が大量に返り、レスポンスが肥大化する |\n| `get_stations_by_line_id` | バスの系統 ID をどう扱うか |\n| `get_stations_by_name` | 「○○バス停」「○○前」などの検索にどう対応するか |\n| `get_train_types_by_station_id` | バスには当てはまらない |\n| `get_routes` | 鉄道とバスをまたぐ乗換検索が複雑になる |\n\n#### 対応案\n\n```protobuf\n// 案1: フィルタパラメータの追加\nmessage GetStationsByCoordinatesRequest {\n  double latitude = 1;\n  double longitude = 2;\n  int32 limit = 3;\n  TransportType transport_type = 4;  // RAIL, BUS, ALL\n}\n\n// 案2: バス専用エンドポイントの追加\nservice BusStopApi {\n  rpc GetBusStopById(GetBusStopByIdRequest) returns (BusStopResponse);\n  rpc GetBusStopsByRouteId(GetBusStopsByRouteIdRequest) returns (MultipleBusStopResponse);\n}\n```\n\n---\n\n### 3.7 データベースへの影響\n\n#### スキーマ拡張案\n\n```sql\n-- 案1: GTFSテーブルを別途追加\nCREATE TABLE gtfs_agencies (\n    agency_id VARCHAR PRIMARY KEY,\n    agency_name VARCHAR NOT NULL,\n    agency_url VARCHAR,\n    agency_timezone VARCHAR\n);\n\nCREATE TABLE gtfs_stops (\n    stop_id VARCHAR PRIMARY KEY,\n    stop_code VARCHAR,\n    stop_name VARCHAR NOT NULL,\n    stop_lat DOUBLE PRECISION,\n    stop_lon DOUBLE PRECISION,\n    location_type INT  -- 0:停留所, 1:駅\n);\n\nCREATE TABLE gtfs_routes (\n    route_id VARCHAR PRIMARY KEY,\n    agency_id VARCHAR REFERENCES gtfs_agencies,\n    route_short_name VARCHAR,\n    route_long_name VARCHAR,\n    route_type INT,  -- 3:バス\n    route_color VARCHAR\n);",
+      "title": "docs/gtfs-bus-integration-research.md",
+      "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/gtfs-bus-integration-research.md"
+    },
+    {
+      "citation": "p3",
+      "kind": "doc",
+      "repo": "TrainLCD/StationAPI",
+      "source_id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md",
+      "text": "### 3.10 多言語対応の差異\n\n#### 現在の多言語フィールド\n\n```rust\nstation_name: String,              // 日本語\nstation_name_k: String,            // カタカナ\nstation_name_r: Option<String>,    // ローマ字\nstation_name_zh: Option<String>,   // 中国語\nstation_name_ko: Option<String>,   // 韓国語\n```\n\n#### GTFSの多言語対応\n\n- 翻訳は `translations.txt` で提供されるが、このファイル自体がオプショナルである。\n- 都営バスの GTFS にすべての言語が含まれる保証はない。\n\n#### 懸念点\n\n- 多言語データが欠けている場合の扱い (NULL を許容するか)。\n- 既存の言語サポートの水準とどう揃えるか。\n- ローマ字を自動生成するロジックを検討する必要がある。\n\n---\n\n### 3.11 「乗り換え」の複雑化\n\n#### 現在の接続モデル\n\n```sql\n-- connections テーブル\nstation_cd1  -- 駅コード1\nstation_cd2  -- 駅コード2\ndistance     -- 駅間距離（メートル）\n```\n\n#### バス導入後の複雑性\n\n| 乗り換えパターン | 現在 | バス導入後 |\n|-----------------|------|-----------|\n| 鉄道 ↔ 鉄道 | 対応済み | 継続 |\n| 鉄道 ↔ バス | - | **新規対応必要** |\n| バス ↔ バス | - | **新規対応必要** |\n\n#### 追加考慮事項\n\n- 徒歩圏内にあるバス停をまとめる\n- 時刻表に基づいて乗り換えられるかを判定する\n- 乗り換えにかかる時間を推定する\n- GTFS の `transfers.txt` を活用する\n\n---\n\n## 4. 対応アプローチ案\n\n### 4.1 アプローチ比較\n\n| アプローチ | 概要 | メリット | デメリット |\n|-----------|------|---------|-----------|\n| **A. 完全分離** | GTFS データを別の DB で管理し、API も分ける | 既存部分に影響しない。段階的に開発できる | コードが重複する。まとめて検索しにくい |\n| **B. 統合拡張** | 既存のスキーマを拡張し、統一した API で提供する | API が一本になる。乗換検索がしやすい | 大規模なリファクタリングが要る。複雑になる |\n| **C. アダプタ層** | GTFS 標準の形のまま保持し、変換層を設ける | GTFS 標準に準拠し、外部との互換性がある | 変換のオーバーヘッドがかかる |\n\n### 4.2 推奨アプローチ\n\n#### 段階的な統合拡張（B案のバリエーション）\n\n#### Phase 1: 基盤整備\n\n- transport_type を導入する (鉄道 = 0、バス = 1)\n- ID 体系の統一を検討する\n- GTFS のパーサーを実装する\n\n#### Phase 2: バス停留所の導入\n\n- stations テーブルを拡張する\n- 座標検索を最適化する\n- バス停用のインデックスを追加する\n\n#### Phase 3: 路線・時刻表の導入\n\n- GTFS のテーブル群を追加する\n- 時刻表を検索する API を追加する\n- 運行カレンダーに対応する\n\n#### Phase 4: 統合検索\n\n- 鉄道とバスをまたぐ乗換検索\n- 最適な経路の探索\n\n---\n\n## 5. まとめ\n\n### 主要懸念点\n\n1. **データモデルの拡張**: 時刻表・便・カレンダーという概念を加える必要がある\n2. **ID体系**: 数値と文字列の違いを吸収し、名前空間の衝突を避ける\n3. **データ量**: バス停の追加による DB の肥大化と性能の低下\n4. **API設計**: 後方互換性と新機能のバランス\n5. **更新運用**: GTFS データを定期的に取り込むパイプライン\n6. **乗り換え検索**: 鉄道とバスをまたぐ複雑な経路検索\n\n### 次のステップ\n\n1. 都営バス GTFS の実データを取得して分析する\n2. ID 体系の統一方針を決める\n3. スキーマ設計を詳細化する\n4. プロトタイプを実装して検証する\n\n---\n\n## 参考資料\n\n### GTFS関連\n\n- [GTFS.org - General Transit Feed Specification](https://gtfs.org/)\n- [GTFS Reference](https://gtfs.org/documentation/schedule/reference/)\n- [GTFS.JP - 標準的なバス情報フォーマット](https://www.gtfs.jp/)\n\n### 都営バス・東京交通データ\n\n- [公共交通オープンデータセンター (ODPT)](https://www.odpt.org/)\n- [東京公共交通オープンデータチャレンジ](https://tokyochallenge.odpt.org/)\n\n### 国土交通省",
+      "title": "docs/gtfs-bus-integration-research.md",
+      "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/gtfs-bus-integration-research.md"
+    }
+  ],
+  "draft": {
+    "answer": [
+      "GTFSデータの導入にあたっては、専用のテーブルを新設するのではなく、既存の `lines` や `stations` といったテーブルにバスのデータを投影して管理する方針が採用されました。",
+      "バス特有の「系統」の概念や、時間帯・曜日によって変化する運行パターンを既存のモデルでどう表現するか、また、バス停の追加によるデータ量の増大や検索パフォーマンスへの影響が課題として議論されました。",
+      "鉄道とバスのID体系の衝突回避、多言語データの欠落への対応、および鉄道とバスを跨ぐ乗り換え検索の複雑化といった点が検討事項として挙げられました。"
+    ],
+    "summaries": [
+      "GTFS導入に関する調査報告書です。当初はGTFS用のテーブルを別途作る案もありましたが、最終的には既存の `lines` や `stations` テーブルに `transport_type` 列を追加してバスデータを投影する形になりました。また、バスのコードは鉄道と重ならないよう FNV-1a ハッシュを用いて決定的に割り当て、運行パターンは `TrainTypeKind::BusRoute` として登録しています。",
+      "バスデータの特性に関する検討内容です。循環・枝分かれ路線や、系統番号による管理、行き先による区別の重要性といったバス特有の性質が挙げられています。これに伴い、既存の `line_type` への追加だけでは不十分であることや、経路形状（shapes.txt）の扱い、運行パターンのモデル化が課題として示されています。",
+      "多言語対応や乗り換えに関する検討内容です。GTFSの翻訳データが不完全な場合の扱い（NULL許容など）や、鉄道とバスを組み合わせた乗り換え検索の複雑化（徒歩圏内の集約や時刻表に基づく判定など）が議論されています。また、導入にあたっての主要な懸念として、ID体系の統一、データ量増加による性能低下、更新パイプラインの構築などがまとめられています。"
+    ]
+  },
+  "query": "gtfs導入の際の課題と議論",
+  "provenance": "Public PR #27 preview SSE reproduced on 2026-11-12; citations in replay refer to the same research document.",
+  "followup_draft": {
+    "answer": [
+      "GTFSデータの導入にあたっては、専用のテーブルを新設するのではなく、既存の `lines` や `stations` といったテーブルにバスのデータを投影し、`transport_type` 列を追加して鉄道と区別する方式を採用しました。",
+      "バス特有の系統番号や運行パターンの管理、および大量のバス停追加によるデータベースの肥大化や検索パフォーマンスの低下が、設計上の大きな懸念事項として議論されました。",
+      "既存のAPIエンドポイントにおいて、バス停の追加によるレスポンスの肥大化や、鉄道とバスを跨ぐ複雑な乗り換え検索への対応が課題として挙げられました。"
+    ],
+    "summaries": [
+      "GTFS（都営バス等）の導入に関する調査報告書です。当初はGTFS用の新テーブル作成などが検討されましたが、最終的には既存の `lines` や `stations` テーブルにバスデータを投影し、`transport_type` 列で鉄道とバスを分ける実装方針が確定しました。また、バス用のコードはFNC-1aハッシュを用いて鉄道と衝突しないように割り当て、運行パターンは列車種別として登録しています。",
+      "バスデータの特性に伴う技術的な懸念をまとめています。循環・枝分かれ路線や系統番号の扱い、経路形状（shapes.txt）の保存方法、および既存の `station_station_types` 設計では表現しにくいバスの運行パターン（時間帯や曜日による変化）への対応が課題として示されています。",
+      "多言語対応や乗り換え検索における課題を記述しています。GTFSの翻訳データが不足している場合の挙動や、鉄道とバス、あるいはバス同士の乗り換えをどのようにモデル化し、検索に組み込むかが議論の焦点となっています。"
+    ]
+  }
+}

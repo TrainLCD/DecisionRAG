@@ -122,3 +122,93 @@ test('answer stream exposes full hits before completion and preserves them throu
     assert.equal(c.requests.length, 1);
   } finally { c.close(); }
 });
+
+for (const transport of ['json', 'sse']) {
+  test(`${transport} timing breakdown renders local decisions and the actual stage metrics`, async () => {
+    let data = {
+      ...result(1), status: 'summarized',
+      timings: { scope_ms: 813, storage_ms: 122, model_ms: 784, generation_ms: 11130 },
+      trace: [
+        { stage: 'document_screening', candidates: 3342, calls: 0, elapsed_ms: 784, model: ['rust-rules-v1'] },
+        { stage: 'passage_scoring', candidates: 472, calls: 0, elapsed_ms: 0, model: ['rust-rules-v1'] },
+        { stage: 'generate_answer', candidates: 20, calls: 1, elapsed_ms: 11130, model: ['@cf/google/gemma-4-26b-a4b-it'] },
+        { stage: 'verify_answer', candidates: 4, calls: 0, elapsed_ms: 0, model: ['rust-rules-v1'] },
+      ],
+    };
+    const c = client(() => transport === 'json' ? Response.json(data) : new Response(
+      `event: sources\ndata: ${JSON.stringify(result(1))}\n\nevent: result\ndata: ${JSON.stringify(data)}\n\n`,
+      { headers: { 'Content-Type': 'text/event-stream' } },
+    ));
+    const rows = () => [...c.$('trace-list').querySelectorAll('.trace-row')].map(row =>
+      [row.firstChild.textContent, row.querySelector('span').textContent]);
+    try {
+      c.submit(transport === 'sse');
+      await until(() => !c.$('search-button').disabled);
+      assert.equal(c.$('trace-panel').hidden, false);
+      assert.deepEqual(rows(), [
+        ['所要時間の内訳', '公開範囲の確認 813 ms / DB取得 122 ms / ローカル判定 784 ms / 要約生成 11,130 ms'],
+        ['文書の選択', '候補 3,342 · API 0 回 · 784 ms · rust-rules-v1'],
+        ['本文の評価', '候補 472 · API 0 回 · 0 ms · rust-rules-v1'],
+        ['要約の生成', '候補 20 · API 1 回 · 11,130 ms · @cf/google/gemma-4-26b-a4b-it'],
+        ['回答の検証', '候補 4 · API 0 回 · 0 ms · rust-rules-v1'],
+      ]);
+      assert.doesNotMatch(c.$('trace-panel').textContent, /clef/i);
+
+      // A subsequent search must replace old timings and retain meaningful zeros.
+      data = { ...result(1), timings: { scope_ms: 0, storage_ms: 0, model_ms: 0, generation_ms: 0 },
+        trace: [{ stage: 'document_screening', candidates: 0, calls: 0, elapsed_ms: 0, model: ['rust-rules-v1'] }] };
+      c.submit(transport === 'sse');
+      await until(() => !c.$('search-button').disabled);
+      assert.deepEqual(rows(), [
+        ['所要時間の内訳', 'DB取得 0 ms / ローカル判定 0 ms'],
+        ['文書の選択', '候補 0 · API 0 回 · 0 ms · rust-rules-v1'],
+      ]);
+    } finally { c.close(); }
+  });
+}
+
+for (const transport of ['json', 'sse']) {
+  test(`${transport}: final paraphrased answer remains visible before ticket summaries`, async () => {
+    const payload = { ...result(1), status: 'summarized', answer: 'GPS位置情報の更新を修正しています。 [p1]', ticket_summaries: [{ source_id: 'source-0', text: '位置情報の更新処理を修正。', citations: ['p1'] }], verification: { semantic_status: 'unknown' } };
+    const c = client(() => transport === 'json' ? Response.json(payload) : new Response(`event: sources\ndata: ${JSON.stringify(payload)}\n\nevent: draft\ndata: ${JSON.stringify({ answer: ['GPS位置情報の更新を修正しています。'], summaries: [] })}\n\nevent: result\ndata: ${JSON.stringify(payload)}\n\n`, { headers: { 'Content-Type': 'text/event-stream' } }));
+    try {
+      c.submit(true);
+      await until(() => !c.$('search-button').disabled);
+      const panel = c.$('answer-panel');
+      assert.match(panel.textContent, /質問への回答GPS位置情報の更新を修正しています/);
+      assert.doesNotMatch(panel.textContent, /資料から質問への回答を確認できませんでした/);
+      assert.ok(panel.textContent.indexOf('GPS位置情報') < panel.textContent.indexOf('各チケットの要約'));
+      assert.equal(panel.querySelector('a').getAttribute('href'), '#evidence-p1');
+    } finally { c.close(); }
+  });
+}
+
+test('streaming and final summaries use sanitized Markdown with safe citation links', async () => {
+  let controller;
+  const c = client(() => new Response(new ReadableStream({ start(value) { controller = value; } }), { headers: { 'Content-Type': 'text/event-stream' } }));
+  const markup = '<h2>変更点</h2><ul><li><strong>GPS</strong>と<code>更新</code> [p1]</li></ul><a href="javascript:alert(1)">危険</a><script>alert(1)</script>';
+  const text = '## 変更点\n- **GPS**と`更新` [p1]';
+  const emit = (event, data) => controller.enqueue(new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+  const check = () => {
+    const panel = c.$('answer-panel');
+    assert.equal(panel.querySelector('h2').textContent, '変更点');
+    assert.equal(panel.querySelector('li strong').textContent, 'GPS');
+    assert.equal(panel.querySelector('li code').textContent, '更新');
+    assert.equal(panel.querySelector('li a').getAttribute('href'), '#evidence-p1');
+    assert.equal(panel.querySelector('script, [href^="javascript:"]'), null);
+    assert.doesNotMatch(panel.textContent, /\*\*GPS\*\*/);
+  };
+  try {
+    c.submit(true);
+    await until(() => !!controller);
+    emit('sources', result(1));
+    emit('draft', { answer: ['回答'], summaries: [text], summaries_html: [markup] });
+    await until(() => !!c.$('answer-panel').querySelector('h2'));
+    check();
+    emit('result', { ...result(1), status: 'summarized', answer: '回答 [p1]', answer_html: '<p>回答 [p1]</p>', ticket_summaries: [{ source_id: 'source-0', text, text_html: markup }] });
+    controller.close();
+    await until(() => !c.$('search-button').disabled);
+    check();
+    assert.doesNotMatch(c.$('answer-panel').textContent, /生成中/);
+  } finally { c.close(); }
+});

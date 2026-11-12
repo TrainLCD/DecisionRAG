@@ -1,0 +1,195 @@
+{
+  "scope": "Local API using captured 40-passage corpus and SQLite D1 adapter. Authenticated scope; excludes remote GitHub, D1 latency and generation. Not a production latency comparison.",
+  "runs": [
+    {
+      "query": "地下鉄で位置更新が止まる問題",
+      "hit_count": 27,
+      "median_ms": 16.47048000000001,
+      "selected": [
+        "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/MobileApp:docs/location-simulation.md:5",
+        "TrainLCD/MobileApp:docs/location-simulation.md:6",
+        "TrainLCD/MobileApp#401:0",
+        "TrainLCD/MobileApp#402:0",
+        "TrainLCD/MobileApp#420:0",
+        "TrainLCD/MobileApp#423:0",
+        "TrainLCD/MobileApp#1510:0",
+        "TrainLCD/MobileApp#267:0",
+        "TrainLCD/MobileApp#545:0",
+        "TrainLCD/MobileApp#546:0",
+        "TrainLCD/MobileApp#761:0",
+        "TrainLCD/MobileApp#764:0",
+        "TrainLCD/MobileApp#263:0",
+        "TrainLCD/MobileApp#3:0",
+        "TrainLCD/MobileApp#1:0",
+        "TrainLCD/MobileApp#348:0",
+        "TrainLCD/MobileApp:docs/location-simulation.md:2",
+        "TrainLCD/MobileApp:docs/changelog.md:2",
+        "TrainLCD/MobileApp:docs/location-simulation.md:4",
+        "TrainLCD/MobileApp#1145:0",
+        "TrainLCD/MobileApp#1138:0",
+        "TrainLCD/MobileApp:docs/location-simulation.md:3",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1"
+      ],
+      "trace": [
+        {
+          "calls": 0,
+          "candidates": 27,
+          "elapsed_ms": 5,
+          "input_tokens": 0,
+          "model": [
+            "rust-rules-v1"
+          ],
+          "output_tokens": 0,
+          "selected": [
+            "TrainLCD/THQ:docs/location-freeze-regression.md",
+            "TrainLCD/MobileApp#401",
+            "TrainLCD/MobileApp#402",
+            "TrainLCD/MobileApp#420",
+            "TrainLCD/MobileApp#423",
+            "TrainLCD/MobileApp#1510",
+            "TrainLCD/MobileApp#267",
+            "TrainLCD/MobileApp#263",
+            "TrainLCD/MobileApp#545",
+            "TrainLCD/MobileApp#546",
+            "TrainLCD/MobileApp#761",
+            "TrainLCD/MobileApp#764"
+          ],
+          "stage": "document_screening"
+        },
+        {
+          "calls": 0,
+          "candidates": 40,
+          "elapsed_ms": 5,
+          "input_tokens": 0,
+          "model": [
+            "rust-rules-v1"
+          ],
+          "output_tokens": 0,
+          "selected": [
+            "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+            "TrainLCD/MobileApp:docs/changelog.md:0",
+            "TrainLCD/MobileApp:docs/changelog.md:3",
+            "TrainLCD/MobileApp:docs/location-simulation.md:5",
+            "TrainLCD/MobileApp:docs/location-simulation.md:6",
+            "TrainLCD/MobileApp#401:0",
+            "TrainLCD/MobileApp#402:0",
+            "TrainLCD/MobileApp#420:0",
+            "TrainLCD/MobileApp#423:0",
+            "TrainLCD/MobileApp#1510:0",
+            "TrainLCD/MobileApp#267:0",
+            "TrainLCD/MobileApp#545:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ]
+    },
+    {
+      "query": "ウィジェットの駅番号の表示",
+      "hit_count": 3,
+      "median_ms": 11.959389000000044,
+      "selected": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3"
+      ],
+      "trace": [
+        {
+          "calls": 0,
+          "candidates": 27,
+          "elapsed_ms": 4,
+          "input_tokens": 0,
+          "model": [
+            "rust-rules-v1"
+          ],
+          "output_tokens": 0,
+          "selected": [
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md",
+            "TrainLCD/MobileApp:docs/square-running-screen.md",
+            "TrainLCD/MobileApp#1",
+            "TrainLCD/MobileApp#1138",
+            "TrainLCD/MobileApp#1145",
+            "TrainLCD/MobileApp#1510",
+            "TrainLCD/MobileApp#1652",
+            "TrainLCD/MobileApp#263",
+            "TrainLCD/MobileApp#267",
+            "TrainLCD/MobileApp#3",
+            "TrainLCD/MobileApp#348",
+            "TrainLCD/MobileApp#401"
+          ],
+          "stage": "document_screening"
+        },
+        {
+          "calls": 0,
+          "candidates": 40,
+          "elapsed_ms": 4,
+          "input_tokens": 0,
+          "model": [
+            "rust-rules-v1"
+          ],
+          "output_tokens": 0,
+          "selected": [
+            "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:3"
+          ],
+          "stage": "passage_scoring"
+        }
+      ]
+    },
+    {
+      "query": "バスの乗換案内と音声読み上げ",
+      "hit_count": 2,
+      "median_ms": 12.356308000000013,
+      "selected": [
+        "TrainLCD/MobileApp#7403:0",
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+      ],
+      "trace": [
+        {
+          "calls": 0,
+          "candidates": 27,
+          "elapsed_ms": 4,
+          "input_tokens": 0,
+          "model": [
+            "rust-rules-v1"
+          ],
+          "output_tokens": 0,
+          "selected": [
+            "TrainLCD/MobileApp#7403",
+            "TrainLCD/MobileApp:docs/square-running-screen.md",
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md",
+            "TrainLCD/MobileApp#1",
+            "TrainLCD/MobileApp#1138",
+            "TrainLCD/MobileApp#1145",
+            "TrainLCD/MobileApp#1510",
+            "TrainLCD/MobileApp#1652",
+            "TrainLCD/MobileApp#263",
+            "TrainLCD/MobileApp#267",
+            "TrainLCD/MobileApp#3",
+            "TrainLCD/MobileApp#348"
+          ],
+          "stage": "document_screening"
+        },
+        {
+          "calls": 0,
+          "candidates": 40,
+          "elapsed_ms": 5,
+          "input_tokens": 0,
+          "model": [
+            "rust-rules-v1"
+          ],
+          "output_tokens": 0,
+          "selected": [
+            "TrainLCD/MobileApp#7403:0",
+            "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ]
+    }
+  ]
+}

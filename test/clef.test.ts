@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Jev } from '../src/jev.js';
-import type { Env } from '../src/types.js';
+import { Jev } from './legacy-judge.js';
+import type { Env } from './reference/types.js';
 
 test('Clef screens every candidate within the 64-question limit without Typesafe credentials', async () => {
   const sizes: number[] = [];

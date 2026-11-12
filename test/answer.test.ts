@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { answer } from '../src/answer.js';
-import type { CitedClaim, Judge } from '../src/jev.js';
-import type { Evidence } from '../src/retrieval.js';
-import type { Env } from '../src/types.js';
+import { answer } from './reference/answer.js';
+import type { CitedClaim, Judge } from './legacy-judge.js';
+import type { Evidence } from './reference/retrieval.js';
+import type { Env } from './reference/types.js';
 
 const evidence: Evidence[] = ['a', 'a', 'b'].map((source_id, i) => ({
   id: String(i), source_id, ordinal: i, text: 'Reported issue', title: source_id,

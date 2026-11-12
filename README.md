@@ -1,21 +1,20 @@
 # TrainLCD DecisionRAG
 
-TrainLCD org の Issue・PR・リポジトリ文書・ユーザーフィードバックを、Clefで階層的に探索するヘッドレスAPI。Cloudflare Workers + D1 + Queues、TypeScript製。
+TrainLCD org の Issue・PR・リポジトリ文書・ユーザーフィードバックを検索するヘッドレスAPI。関連性の判定、順位付け、参照文書の選択、引用検査を **Rust/WASMのローカルルール**で実行する。Decisionの外部API、モデル重み、GPUは不要。
 
-検索方式は **[Retriever-Free Retrieval: Navigating Documents with Decision Models](https://arxiv.org/abs/2610.35868) の §3・Algorithm 1 に基づく階層ナビゲーション**。Embedding、ベクトルDB、BM25、FTSによる候補の事前絞り込みは行わない。D1は文書・階層・本文区間の保存に用いる。
+ヘッドレス側のルーティング・認証・検索・D1操作・GitHub同期・リリース判定・Webhook・Queues・回答検査・SSE処理は `backend/` のRust実装。`src/host.ts` と `src/worker.ts` はCloudflareのI/Oバインディングだけを担当する。判定コアはネイティブのJSON Lines CLIとしても動作する。
 
 ## 検索方法
 
-1. 検索範囲が5,000文書以下で設定された上限内なら全ての文書候補を読み込む。超える場合は `リポジトリ × 種類` の上位6枝を探索する。
-2. 128文書を超える場合は最大24文書・24,000文字以内で、質問を含む要求のUTF-8バイト数も上限内に収まるグループを、タイトルと本文の先頭・中間・末尾の抜粋で評価する。上位4グループとYes確率20%超のグループを残す。
-3. 残した文書をタイトル・本文抜粋・先頭480文字（ドキュメントは先頭1,400文字と本文の1/4・1/2・3/4・末尾各400文字）で個別に評価する。上位30文書とYes確率50%超の文書に加え、選択文書との明示的な同一リポジトリ内Issue参照を1段だけたどる。参照先も読み込み済みの検索範囲に限定する。本文判定にも、明示的に参照した・参照された資料のタイトルと本文抜粋を最大3件添える。
-4. Webアプリは本文20区間ごとに評価する。関連性は1区間ずつ独立した入力で並列判定し、通過した区間の表示順をChoiceで決める。長い文書が最初のページを占めないよう、文書をまたいで本文区間を順番に配置する。次ページの本文評価・要約は、そのページを開いたときに実行する。
+1. 公開範囲を確認してからD1の文書候補を読む。540文書ずつ読み込み、許可された範囲を全件走査する。`MAX_SCREENED_DOCUMENTS`を超えれば422で終了し、部分的な走査を成功扱いしない。
+2. RustでNFKC正規化、日英の用語対応、技術識別子、番号、未知の日本語名を照合する。語のカバー率と見出しの一致を重み付けする。語彙と間接的な手掛かりは `rust/rules.rs` と `rust/lib.rs` に置く。
+3. 上位30文書とスコア0.5超の文書を残し、検索範囲内の明示的な同一リポジトリ参照を1段だけたどる。従来のAIによる粗いグループ選別は行わない。
+4. 本文区間をRustで独立採点し、0.5超を関連本文とする。同点は元の順番を維持する。APIの `relevance` および内部互換名 `probability` は**ルールスコアであり、校正された確率ではない**。
+5. Webは全関連本文を取得後に10件ずつ表示する。全件数・総ページ数は同じ結果集合から算出し、ページ送りでは検索・判定・文章生成を再実行しない。
 
-本文抜粋は完全な要約ではない。関連資料を取りこぼす可能性は残るため、実データで質問ごとの精度と時間を確認する。検索精度の実測記録は [pagination-evaluation.md](docs/pagination-evaluation.md) を参照。
+`/answer` の文章生成接続とSSEは維持する。ローカル検査は引用ID、原文一致、用語の対応、否定・条件・推測表現、数値、原因・配信・変更の断定を検査する。原文と完全一致しないだけで回答を削除せず、引用先と関連があり明示的なルール違反が見つからない言い換えも返す。語句の類似は意味の証明ではないため、`verification.method=local_support_rules`、`semantic_status=unknown` とし、`reasons`で原文一致・ルールによる支持・意味的支持の未確定を区別する。回答の完全性と意味的な矛盾検出も`unknown`である。引用先不明・関連なし・検出可能な否定反転や根拠のない配信断定などは除外し、残る回答がなければ原文を「資料の記載」として引用する。
 
-各バッチの候補数は枝64件、文書64件、従来APIの本文区間60件を上限とする。検索対象全体の上限ではなく、候補全体を複数バッチに分けて評価する。1バッチの説明文は枝と文書で70,000文字、本文で38,000文字以内に分ける。各リクエストは64問以内に制限する。20区間以下の本文評価は1区間ずつのリクエストに分ける。並列数は枝4、文書・グループ16、小さい本文ページ12、従来の大きい本文集合6を上限とする。flashのスクリーニングは、クエリ・質問文・JSONを含むUTF-8バイト数をテキストのトークン数の保守的な上界として使い、テンプレート用4,096トークンを除いた20,480以内に分割する。単独でflashの予算を超える候補はClefに送り、同様に61,440を超える場合は切り捨てずエラーにする。Choiceに渡す説明文は28,000文字以内とする。本文は見出し・段落を優先し、最大2,400文字の区間に分割する。
-
-`/answer` は検索で見つかった資料から、出典付きの回答または要約を作る。引用IDを照合し、上位20区間を使ってClefで主張ごとの裏付け、回答の十分性、根拠間の矛盾を判定する。質問に完全には答えられなくても、出典で確認できる内容を要約として返せる。矛盾の確率が `CONFLICT_THRESHOLD` に達した場合は回答を保留する。
+検索結果は以前のモデルと一致するとは限らない。実資料40区間での再現可能な比較と未検証範囲は [rust-local-decisions.md](docs/rust-local-decisions.md) を参照。
 
 ## 情報源と同期
 
@@ -32,10 +31,14 @@ TrainLCD org の Issue・PR・リポジトリ文書・ユーザーフィード�
 
 ## セットアップ
 
-Node.js 24以降を推奨する。テストは `node:sqlite` を使う。
+Node.js 24以降とRust stableが必要。テストは `node:sqlite` を使う。
 
 ```sh
+rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version 0.2.129 --locked
 npm ci
+cargo test --workspace --locked
+npm run build:rust
 npm run check
 npm test
 npx wrangler d1 create trainlcd-decision-rag
@@ -55,9 +58,9 @@ npx wrangler secret put GITHUB_TOKEN
 - `API_TOKEN`: フィードバック検索・同期・管理用のBearerトークン。十分長いランダム値を設定する。
 - `WEBHOOK_SECRET`: GitHub Webhookと同じ値。
 - `GITHUB_TOKEN`: org内対象リポジトリのMetadata・Contents・Issues・Pull requestsの読み取り権限が必要。リポジトリ作成・書き込み権限は不要。
-- 判定は既存の `AI` バインディングを使う。グループ・Issue・PR・枝の選択は既定で `@cf/cloudflare/clef-flash`（`SCREENING_MODEL=clef` で全て通常Clefに変更可能）、ドキュメントの個別判定は `@cf/cloudflare/clef`、本文評価・並べ替え・回答検証は `@cf/cloudflare/clef` を呼び出す。TypesafeのAPIキーは不要。既存の `TYPESAFE_API_KEY`・`JEV_MODEL` 設定は参照しない。
+- 判定はRust/WASM内で完結する。`AI` は文章生成にのみ使用する。`SCREENING_MODEL`、`TYPESAFE_API_KEY`、`JEV_MODEL` は本番の判定では参照しない。
 
-既定の文章生成には Cloudflare Workers AI の `AI` バインディングを使う。別の生成サービスを使う場合は、`ANSWER_MODEL`・`ANSWER_BASE_URL` を設定し、`wrangler secret put ANSWER_API_KEY` を実行する。OpenAI互換の `/chat/completions` とJSON object出力に対応するプロバイダーを想定する。サンプルWebアプリではSSEストリーミング（`stream: true`、`stream_options.include_usage: true`）への対応も必要となる。非ストリーミングへのフォールバックはなく、未対応のプロバイダーではWebアプリの要約が失敗する場合がある。Acceptヘッダーを省略したJSON APIは引き続き非ストリーミングで動作する。根拠の本文はClefと設定された生成サービスに送信される。
+既定の文章生成には Cloudflare Workers AI の `AI` バインディングを使う。別の生成サービスを使う場合は、`ANSWER_MODEL`・`ANSWER_BASE_URL` を設定し、`wrangler secret put ANSWER_API_KEY` を実行する。OpenAI互換の `/chat/completions` とJSON object出力に対応するプロバイダーを想定する。サンプルWebアプリではSSEストリーミング（`stream: true`、`stream_options.include_usage: true`）への対応も必要となる。非ストリーミングへのフォールバックはなく、未対応のプロバイダーではWebアプリの要約が失敗する場合がある。Acceptヘッダーを省略したJSON APIは引き続き非ストリーミングで動作する。根拠の本文は設定された文章生成サービスにのみ送信される。検索だけではAIサービスへの通信は発生しない。
 
 `workers_dev` は既定で `false`。利用するホスト名のrouteを設定するか、意図して `true` に変更してから `npm run deploy` を実行する。公開資料の検索・要約は認証なしで使える。フィードバック検索、同期、管理APIはBearer認証が必須。WebhookはHMAC-SHA256署名検証が必須。複数ユーザー向けのACLは実装していないため、このAPIトークンを他者に配布しないこと。
 
@@ -93,7 +96,7 @@ CI は `wrangler versions upload` と `wrangler versions deploy` でコードの
 
 同一リポジトリの PR は CI 成功後、`Preview PR` ジョブで本番 Worker の未公開バージョンをアップロードする。Actions のジョブ Summary にある **Open preview** から確認できる。URL は各アップロードに固定され、`pr-番号` のエイリアスも発行する。本番トラフィックの切り替えは行わない。
 
-本番 D1、Cloudflare 登録済みの変数・Secrets、Clef、生成 AI を共有する。画面は PR のコードと静的ファイルで動作する。プレビュー専用の `src/preview.ts` は検索・回答・ヘルスチェック・認証済み同期状況の参照だけを許可し、同期、削除、Webhook は 403 を返す。Queue バインディングと Cron を除外し、既存 Worker の検証に必要なバックグラウンドハンドラーは処理を実行せず拒否する。リモートマイグレーションは実行しない。未適用のスキーマ変更に依存する PR は、本番スキーマとの互換性が必要になる。
+本番 D1、Cloudflare 登録済みの変数・Secrets、生成 AI を共有する。画面は PR のコードと静的ファイルで動作する。プレビュー専用の `src/preview.ts` は検索・回答・ヘルスチェック・認証済み同期状況の参照だけを許可し、同期、削除、Webhook は 403 を返す。Queue バインディングと Cron を除外し、既存 Worker の検証に必要なバックグラウンドハンドラーは処理を実行せず拒否する。リモートマイグレーションは実行しない。未適用のスキーマ変更に依存する PR は、本番スキーマとの互換性が必要になる。
 
 既存の `production` GitHub Environment の Cloudflare Secrets と D1 ID、および `DECISIONRAG_DEPLOY_ENABLED=true` を再利用するため、キーの複製は不要。Environment のブランチ制限を設定する場合は、プレビュー対象の `refs/pull/*/merge` も許可する必要がある。本番ジョブ自体は引き続きデフォルトブランチだけで実行する。Cloudflare の既存 Worker では Version URLs（旧 Preview URLs）を有効にする。無効な場合、URL が取得できずジョブは失敗する。
 
@@ -125,7 +128,7 @@ Wrangler はファイル名で適用済みのマイグレーションを記録�
 | GET | `/health` | プロセスの生存確認。外部サービス疎通は確認しない |
 | POST | `/sync` | 全リポジトリの同期をキューに登録 |
 | GET | `/sync/status` | 同期ジョブ、失敗、ソース数、最終同期カーソル |
-| POST | `/search` | 階層探索による根拠・出典・Clef判定トレース |
+| POST | `/search` | 階層探索による根拠・出典・Rust判定トレース |
 | POST | `/answer` | 根拠を検索し、生成モデルがあれば出典付きの主張を生成・検証する。モデルがなければ根拠を評価する |
 | POST | `/admin/purge` | `{"repo":"TrainLCD/Example"}` の索引を削除 |
 | POST | `/webhooks/github` | GitHubイベント受信。署名必須 |
@@ -141,9 +144,9 @@ curl "$RAG_URL/search" \
 
 公開範囲は検索ごとに GitHub で再確認し、ETag に対して `304 Not Modified` が返った場合はリポジトリ一覧の応答を再利用する。確認に失敗した場合は検索を中止する。
 
-レスポンスには `evidence`（引用ID、ソースID、本文区間、URL、repo、状態等のmetadata、関連度）、`hit_count`（選択文書の中で関連ありと判定した本文区間の総数）、`trace`（ステージ、候補数、モデル、呼び出し数、使用トークン、時間）、`elapsed_ms` を含む。`timings` には公開範囲の確認、D1取得、Clef判定、要約生成、検索完了までの時間をミリ秒で記録する。公開範囲を確認してからD1の候補を読み込む。検索はソース間の網羅的な調査を保証せず、各階層の上位予算により枝刈りする。
+レスポンスには `evidence`（引用ID、ソースID、本文区間、URL、repo、状態等のmetadata、関連度）、`hit_count`（選択文書の中で関連ありと判定した本文区間の総数）、`trace`（ステージ、候補数、モデル、呼び出し数、使用トークン、時間）、`elapsed_ms` を含む。`timings` には公開範囲の確認、D1取得、Rust判定、要約生成、検索完了までの時間をミリ秒で記録する。公開範囲を確認してからD1の候補を読み込む。検索はルールに基づく選別であり、意味的な網羅性は保証しない。予算超過は422として返す。
 
-既定の生成モデルは1回の呼び出しで、質問への直接の回答（最大3文）、続いて資料ごとの要約を生成する。`answer` に回答、`ticket_summaries` に出典ID・本文・引用IDを持つ検証済みの要約を返す。同じチケットの本文区間はまとめ、生成対象は上位20区間に限る。回答と各要約はいずれも根拠検証を通過したものだけを表示する。`generate_answer` ステージには、生成モデルと所要時間、プロバイダーが返した入出力トークン数を記録する。
+既定の生成モデルは1回の呼び出しで、質問への直接の回答（最大3文）、続いて資料ごとの要約を生成する。`answer` に回答、`ticket_summaries` に出典ID・本文・引用IDを持つ要約または原文の引用を返す。同じチケットの本文区間はまとめ、生成対象は上位20区間に限る。ローカル判定は回答の完全性を認定しないため、成功時も原則 `summarized` を返す。言い換えをローカルで検証できない場合は原文の引用に戻す。`generate_answer` ステージには、生成モデルと所要時間、プロバイダーが返した入出力トークン数を記録する。
 
 サンプルWebアプリの要約はストリーミングで表示する。`POST /answer` に `Accept: text/event-stream` を指定すると、検索完了時の `sources`、生成途中の `draft`、出典検証後の `result` をSSEで返す。`draft` の `answer` / `summaries` は生成途中の文字列配列で、未検証の仮表示にのみ使う。最終 `result` は従来のJSON応答と同じ構造であり、仮表示を必ず置き換える。途中の `error` イベントや `result` のない切断では仮表示を破棄する。ページ分割時は、そのページの検索完了後に生成を開始する。Acceptヘッダーを省略したAPI利用は従来のJSON応答を維持する。
 
@@ -165,7 +168,7 @@ Webアプリの「前へ」は表示済みページをメモリから復元す�
 - `verification_failed`: 生成結果を根拠検査で却下。回答はnull。
 - `generation_unavailable`: 既定の生成モデルから利用できる要約を得られなかった。検索で得た資料は返す。
 
-JSON応答では、Clefや別途設定した生成サービスの一般的な失敗はHTTP 502、検索予算超過はHTTP 422。判定サービスの容量不足・日次利用枠はHTTP 503、レート制限はHTTP 429と固定のエラーコードで返し、プロバイダーの元メッセージは公開しない。429の `decision_rate_limited` には `Retry-After: 60` を付ける。並列処理で失敗した後は、未開始の呼び出しを止める（すでに開始した呼び出しは取り消さない）。SSE応答でも開始前のエラーは同じHTTPステータスを返す。SSE開始後に回答処理が例外を送出した場合は、HTTP 200のストリーム内で `error` イベントを通知する。既定の生成モデルを利用できない場合は、`result` の `generation_unavailable` で通知する。
+検索予算超過・WASM入力上限はHTTP 422、ローカル実行失敗は `503 local_decision_failed`。Decisionプロバイダーの容量不足・クォータ・レート制限は発生しない。公開検索のレート制限と文章生成サービスのエラー処理は維持する。SSE開始後の例外は `error` イベントになる。既定生成モデルが失敗した場合、利用可能な根拠から引用を返す。別途設定した外部生成サービスの接続エラーは従来どおり通知する。
 
 ## GitHub Webhook
 
@@ -179,7 +182,7 @@ Org Webhookまたは各リポジトリのWebhookを、デプロイ先の `/webho
 
 ## 制限と次の評価
 
-- 自動テストのClef・生成・GitHub通信はモック。検索精度と応答時間は質問やデータ量によって変わる。
+- 新規統合テストは実際のRust/WASMを実行する。既存の通信・ページ分割契約テストは `test/legacy-judge.ts` の旧判定モックを注入する。旧モデル専用テストの成功はローカル判定の精度証明ではない。
 - 既定で選択枝内20,000文書、選択文書内4,000本文区間まで。超過は明示的に失敗する。文書候補をバッチ単位で評価するため、選択された文書が多いほどAPI呼び出し数が増える。
 - `MAX_SCREENED_DOCUMENTS`（最大100,000）、`SUPPORT_THRESHOLD`、`CONFLICT_THRESHOLD` を環境変数で変更可能。
 - 1ソース600KB、GitHubコメント等のページネーション100ページが上限。切り捨てず同期エラーにする。Gitツリーがtruncatedの場合も同期エラーにする。非常に大きい文書群・スレッドは追加の分割取り込みが必要。
@@ -191,6 +194,7 @@ Org Webhookまたは各リポジトリのWebhookを、デプロイ先の `/webho
 ## 検証
 
 ```sh
+npm run build:rust
 npm run check
 npm test
 npx wrangler d1 migrations apply trainlcd-decision-rag --local
@@ -202,7 +206,6 @@ npx wrangler deploy --dry-run --outdir dist
 ## 参考
 
 - Wan et al., [Retriever-Free Retrieval: Navigating Documents with Decision Models](https://arxiv.org/abs/2610.35868), 2026.
-- [TypeSafe API](https://docs.typesafe.ai/api/system-one)
 - [Cloudflare Workers](https://developers.cloudflare.com/workers/)
 - [Cloudflare D1](https://developers.cloudflare.com/d1/)
 - [Cloudflare Queues](https://developers.cloudflare.com/queues/)
