@@ -91,3 +91,5 @@ mod bindings {
         result.map_err(|e| JsValue::from_str(&e.code))
     }
 }
+
+pub mod vocabulary;

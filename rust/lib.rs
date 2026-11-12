@@ -242,6 +242,59 @@ fn score(fs: &[Feature], c: &Candidate, allow_partial: bool) -> Score {
         missing,
     }
 }
+#[derive(Deserialize, Clone)]
+struct VocabularyPair {
+    term: String,
+    alias: String,
+}
+fn accepts_alias(f: &Feature, query: &str, from: &str) -> bool {
+    f.aliases.iter().any(|a| a == from)
+        || (from.contains(' ')
+            && contains(query, from)
+            && f.aliases.len() == 1
+            && contains(from, &f.name))
+}
+/// Match exactly the original features used by scoring, before applying budgets.
+pub fn applicable_search_aliases(query: &str, pairs: &[(String, String)]) -> Vec<bool> {
+    let q = normalize(query);
+    let fs = features(query);
+    pairs
+        .iter()
+        .map(|(a, b)| {
+            fs.iter()
+                .any(|f| accepts_alias(f, &q, a) || accepts_alias(f, &q, b))
+        })
+        .collect()
+}
+fn search_features(query: &str, vocabulary: &[VocabularyPair]) -> Vec<Feature> {
+    let q = normalize(query);
+    let mut fs = features(query);
+    for f in &mut fs {
+        let original = f.clone();
+        for pair in vocabulary.iter().take(128) {
+            for (from, to) in [(&pair.term, &pair.alias), (&pair.alias, &pair.term)] {
+                if accepts_alias(&original, &q, from) && !to.is_empty() && !f.aliases.contains(to) {
+                    f.aliases.push(to.clone());
+                }
+            }
+        }
+    }
+    fs
+}
+fn scores_with_vocabulary(
+    query: &str,
+    candidates: &[Candidate],
+    allow_partial: bool,
+    vocabulary: &[VocabularyPair],
+) -> Vec<Score> {
+    let fs = search_features(query, vocabulary);
+    let mut out: Vec<_> = candidates
+        .iter()
+        .map(|c| score(&fs, c, allow_partial))
+        .collect();
+    out.sort_by(|a, b| b.score.total_cmp(&a.score));
+    out
+}
 fn scores(query: &str, candidates: &[Candidate], allow_partial: bool) -> Vec<Score> {
     let fs = features(query);
     let mut out: Vec<_> = candidates
@@ -417,6 +470,8 @@ fn extracts(query: &str, evidence: &[Evidence]) -> Value {
 enum Request {
     Score {
         query: String,
+        #[serde(default)]
+        vocabulary: Vec<VocabularyPair>,
         candidates: Vec<Candidate>,
         #[serde(default)]
         allow_partial: bool,
@@ -451,8 +506,9 @@ pub fn process(input: &[u8]) -> Vec<u8> {
                 query,
                 candidates,
                 allow_partial,
+                vocabulary,
             }) => {
-                json!({"scores":scores(&query,&candidates,allow_partial),"engine":rules::VERSION})
+                json!({"scores":scores_with_vocabulary(&query,&candidates,allow_partial,&vocabulary),"engine":rules::VERSION})
             }
             Ok(Request::Select {
                 query,
@@ -804,6 +860,109 @@ mod tests {
         assert_eq!(
             run(json!({"op":"unsupported"}))["error"],
             "invalid_decision_input"
+        );
+    }
+}
+
+#[cfg(test)]
+mod vocabulary_tests {
+    use super::*;
+    #[test]
+    fn aliases_expand_one_hop_without_changing_unknown_identifiers() {
+        let candidates = vec![Candidate {
+            id: "x".into(),
+            description: "Wayfinder".into(),
+            references: vec![],
+        }];
+        let vocabulary = vec![
+            VocabularyPair {
+                term: "wf".into(),
+                alias: "wayfinder".into(),
+            },
+            VocabularyPair {
+                term: "wayfinder".into(),
+                alias: "navigation".into(),
+            },
+        ];
+        assert!(scores("WF", &candidates, false)[0].score <= 0.5);
+        assert!(scores_with_vocabulary("WF", &candidates, false, &vocabulary)[0].score > 0.5);
+        assert_eq!(
+            scores("useWFProvider9000", &candidates, false)[0].score,
+            scores_with_vocabulary("useWFProvider9000", &candidates, false, &vocabulary)[0].score
+        );
+        assert!(
+            !search_features("WF", &vocabulary)[0]
+                .aliases
+                .contains(&"navigation".to_string())
+        );
+        assert_eq!(features("WF")[0].aliases, vec!["wf"]); // verification remains fixed
+    }
+    #[test]
+    fn empty_dictionary_preserves_scores_and_order() {
+        let corpus: Value =
+            serde_json::from_str(include_str!("../test/fixtures/public-passages.json")).unwrap();
+        let candidates: Vec<Candidate> = corpus
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|p| Candidate {
+                id: p["id"].as_str().unwrap().into(),
+                description: format!(
+                    "{}\n{}",
+                    p["title"].as_str().unwrap(),
+                    p["text"].as_str().unwrap()
+                ),
+                references: vec![],
+            })
+            .collect();
+        for query in [
+            "地下鉄で位置更新が止まる問題",
+            "ウィジェットの駅番号",
+            "GTFS",
+            "useGPSProvider",
+            "zzzxfeature9000",
+            "光が丘",
+        ] {
+            assert_eq!(
+                serde_json::to_value(scores(query, &candidates, false)).unwrap(),
+                serde_json::to_value(scores_with_vocabulary(query, &candidates, false, &[]))
+                    .unwrap()
+            );
+        }
+    }
+}
+
+#[cfg(test)]
+mod vocabulary_review_tests {
+    use super::*;
+    #[test]
+    fn multi_word_aliases_use_original_features_regardless_of_dictionary_order() {
+        let candidates = vec![Candidate {
+            id: "x".into(),
+            description: "zx".into(),
+            references: vec![],
+        }];
+        let mut vocabulary = vec![
+            VocabularyPair {
+                term: "zzzxalpha".into(),
+                alias: "zxa".into(),
+            },
+            VocabularyPair {
+                term: "zzzxalpha zzzxbeta".into(),
+                alias: "zx".into(),
+            },
+        ];
+        for _ in 0..2 {
+            assert!(
+                scores_with_vocabulary("zzzxalpha zzzxbeta", &candidates, false, &vocabulary)[0]
+                    .score
+                    > 0.5
+            );
+            vocabulary.reverse();
+        }
+        assert_eq!(
+            applicable_search_aliases("xWayfinder123", &[("wayfinder".into(), "wf".into())]),
+            vec![false]
         );
     }
 }

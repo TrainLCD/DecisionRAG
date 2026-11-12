@@ -69,6 +69,17 @@ pub async fn handle(h: &impl Host, c: &Config, request: Value) -> Result<Value> 
                     200,
                 )
             }
+            ("GET", "/admin/vocabulary") => {
+                json_response(crate::vocabulary::inspect(h, &json!({})).await?, 200)
+            }
+            ("POST", "/admin/vocabulary/list") => {
+                let b = body(h, &request).await?;
+                json_response(crate::vocabulary::inspect(h, &b).await?, 200)
+            }
+            ("POST", "/admin/vocabulary") => {
+                let b = body(h, &request).await?;
+                json_response(crate::vocabulary::manage(h, &b).await?, 200)
+            }
             ("POST", "/admin/purge") => {
                 let b = body(h, &request).await?;
                 let repo = b["repo"]
@@ -162,13 +173,24 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
     };
     let storage_start = now();
     let mut traces = Vec::new();
+    let vocabulary_start = now();
+    let vocabulary = crate::vocabulary::load(h, query, scope.as_ref()).await?;
+    traces.push(trace(
+        "vocabulary_expansion",
+        vocabulary.len(),
+        vocabulary
+            .iter()
+            .map(|p| json!([p["term"], p["alias"]]))
+            .collect(),
+        vocabulary_start,
+    ));
     let ids = if let Some(previous) = &previous {
         array(&previous["ids"])?
             .iter()
             .map(|v| v.as_str().unwrap().to_string())
             .collect()
     } else {
-        storage::plan(h, query, scope.as_ref(), max, &mut traces).await?
+        storage::plan(h, query, scope.as_ref(), max, &vocabulary, &mut traces).await?
     };
     let mut passages = storage::passages(h, &ids, scope.as_ref()).await?;
     let order: HashMap<_, _> = ids
@@ -182,7 +204,11 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
             order.get(s(p, "source_id")).copied().unwrap_or(0),
         )
     });
-    let revision = digest(serde_json::to_string(&passages).unwrap().as_bytes());
+    let revision = digest(
+        serde_json::to_string(&json!([passages, vocabulary]))
+            .unwrap()
+            .as_bytes(),
+    );
     if previous.as_ref().is_some_and(|p| p["revision"] != revision) {
         return Err(Error::new(409, "search_results_changed"));
     }
@@ -199,7 +225,7 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
     let paginated = b["paginated"] == true;
     let size = if paginated { 20 } else { 4000 };
     let page: Vec<_> = passages.iter().skip(offset).take(size).cloned().collect();
-    let mut evidence = storage::rank(query, &passages, &page, &mut traces)?;
+    let mut evidence = storage::rank(query, &passages, &page, &vocabulary, &mut traces)?;
     let mut pagination = Value::Null;
     if paginated {
         let next = if offset + size < passages.len() {

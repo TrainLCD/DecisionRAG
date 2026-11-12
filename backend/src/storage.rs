@@ -10,8 +10,8 @@ pub struct Scope {
     pub public: Vec<String>,
     pub feedback: Option<String>,
 }
-const SCOPE: &str = "((s.kind<>'feedback' AND lower(s.repo) IN (SELECT value FROM json_each(?))) OR (s.kind='feedback' AND lower(s.repo)=?))";
-fn scope_params(scope: Option<&Scope>) -> Vec<Value> {
+pub(crate) const SCOPE: &str = "((s.kind<>'feedback' AND lower(s.repo) IN (SELECT value FROM json_each(?))) OR (s.kind='feedback' AND lower(s.repo)=?))";
+pub(crate) fn scope_params(scope: Option<&Scope>) -> Vec<Value> {
     scope
         .map(|s| {
             vec![
@@ -143,7 +143,23 @@ pub async fn save_source(
             .concat(),
         ));
     }
+    statements.push(statement(
+        format!("UPDATE sources SET vocabulary_revision=? WHERE id=? AND {clause}"),
+        [
+            vec![
+                json!(digest(
+                    json!([source["title"], source["body"]])
+                        .to_string()
+                        .as_bytes()
+                )),
+                source["id"].clone(),
+            ],
+            guard,
+        ]
+        .concat(),
+    ));
     batch(h, statements).await?;
+    crate::vocabulary::enqueue_source(h, s(&source, "repo"), s(&source, "id")).await?;
     Ok(())
 }
 pub async fn delete_source(h: &impl Host, id: &str) -> Result<()> {
@@ -177,6 +193,7 @@ pub async fn plan(
     query: &str,
     scope: Option<&Scope>,
     max: usize,
+    vocabulary: &[Value],
     traces: &mut Vec<Value>,
 ) -> Result<Vec<String>> {
     let start = now();
@@ -210,7 +227,7 @@ pub async fn plan(
             scored.extend(
                 array(
                     &decision(
-                        json!({"op":"score","query":query,"candidates":chunk,"allow_partial":true}),
+                        json!({"op":"score","query":query,"candidates":chunk,"allow_partial":true,"vocabulary":vocabulary}),
                     )?["scores"],
                 )?
                 .iter()
@@ -305,6 +322,7 @@ pub fn rank(
     query: &str,
     passages: &[Value],
     page: &[Value],
+    vocabulary: &[Value],
     traces: &mut Vec<Value>,
 ) -> Result<Vec<Value>> {
     let start = now();
@@ -342,7 +360,7 @@ pub fn rank(
   }).collect();
         scores.extend(
             array(
-                &decision(json!({"op":"score","query":query,"candidates":candidates}))?["scores"],
+                &decision(json!({"op":"score","query":query,"candidates":candidates,"vocabulary":vocabulary}))?["scores"],
             )?
             .iter()
             .cloned(),

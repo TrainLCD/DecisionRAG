@@ -277,13 +277,15 @@ test('permanent issue limits are isolated without advancing an incomplete scan w
     await sync(env, start);
     assert.equal(sqlite.prepare('SELECT count(*) AS n FROM sources').get()?.n, 99);
     assert.equal(sqlite.prepare("SELECT error FROM sync_jobs WHERE status='failed'").get()?.error, 'github_changed_files_limit_exceeded');
-    assert.equal(jobs.length, 1);
+    assert.equal(jobs.filter(j => j.type === 'issues').length, 1);
+    jobs.splice(0, jobs.length, ...jobs.filter(j => j.type === 'issues'));
     assert.equal((jobs[0] as { page: number }).page, 2);
     await sync(env, jobs.shift()!);
     assert.equal(sqlite.prepare('SELECT count(*) AS n FROM sources').get()?.n, 100);
     assert.equal(sqlite.prepare('SELECT issues_dispatched_at AS t FROM repositories').get()?.t, previous);
     oversized = false;
     await sync(env, start);
+    jobs.splice(0, jobs.length, ...jobs.filter(j => j.type === 'issues'));
     await sync(env, jobs.shift()!);
     assert.equal(sqlite.prepare('SELECT count(*) AS n FROM sources').get()?.n, 101);
     assert.equal(sqlite.prepare("SELECT count(*) AS n FROM sync_jobs WHERE status='failed'").get()?.n, 0);

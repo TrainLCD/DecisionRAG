@@ -52,6 +52,8 @@ pub async fn run(h: &impl Host, c: &Config, job: &Value) -> Result<()> {
     gh::assert_repo(c, repo)?;
     let prefix = format!("/repos/{repo}");
     match kind {
+        "vocabulary" => return crate::vocabulary::extract(h, c, job).await,
+        "vocabulary_scan" => return crate::vocabulary::scan(h, repo, s(job, "after")).await,
         "repo" => {
             let row = gh::get(h, c, &prefix).await?;
             db(h,"INSERT INTO repositories(repo,description,default_branch) VALUES(?,?,?) ON CONFLICT(repo) DO UPDATE SET description=excluded.description,default_branch=excluded.default_branch",vec![json!(repo),json!(s(&row,"description")),row["default_branch"].clone()]).await?;
@@ -75,6 +77,7 @@ pub async fn run(h: &impl Host, c: &Config, job: &Value) -> Result<()> {
             enqueue(h, next).await?;
             enqueue(h, json!({"type":"docs","repo":repo})).await?;
             enqueue(h, json!({"type":"releases","repo":repo})).await?;
+            enqueue(h, json!({"type":"vocabulary_scan","repo":repo})).await?;
         }
         "issues" => {
             let page = job["page"]
@@ -291,6 +294,12 @@ pub async fn run(h: &impl Host, c: &Config, job: &Value) -> Result<()> {
                     && let Ok(metadata) = serde_json::from_str::<Value>(s(old, "metadata"))
                     && metadata["blob_sha"] == job["sha"]
                 {
+                    crate::vocabulary::enqueue_source(
+                        h,
+                        repo,
+                        &format!("{repo}:{}", s(job, "path")),
+                    )
+                    .await?;
                     return Ok(());
                 }
                 let blob = gh::get(h, c, &format!("{prefix}/git/blobs/{}", s(job, "sha"))).await?;

@@ -15,6 +15,8 @@ export interface Env {
   MAX_SCREENED_DOCUMENTS?: string;
 }
 export type SyncJob =
+  | { type: 'vocabulary'; repo: string; source_id: string }
+  | { type: 'vocabulary_scan'; repo: string; after?: string }
   | { type: 'org'; page: number }
   | { type: 'repo'; repo: string }
   | { type: 'issues'; repo: string; page: number; since?: string; started: string }
