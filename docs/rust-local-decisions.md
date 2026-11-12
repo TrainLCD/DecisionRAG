@@ -41,9 +41,11 @@ Rustのテストでは日英の照合、番号境界、未知の駅名、同点�
 
 ```sh
 rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version 0.2.129 --locked
 npm ci
-cargo test --locked
-cargo clippy --all-targets -- -D warnings
+cargo test --workspace --locked
+cargo clippy --workspace --all-targets -- -D warnings
+npm run build:rust
 npm run check
 npm test
 npx wrangler deploy --dry-run --outdir dist

@@ -35,8 +35,10 @@ Node.js 24以降とRust stableが必要。テストは `node:sqlite` を使う�
 
 ```sh
 rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version 0.2.129 --locked
 npm ci
-cargo test --locked
+cargo test --workspace --locked
+npm run build:rust
 npm run check
 npm test
 npx wrangler d1 create trainlcd-decision-rag
@@ -192,6 +194,7 @@ Org Webhookまたは各リポジトリのWebhookを、デプロイ先の `/webho
 ## 検証
 
 ```sh
+npm run build:rust
 npm run check
 npm test
 npx wrangler d1 migrations apply trainlcd-decision-rag --local
