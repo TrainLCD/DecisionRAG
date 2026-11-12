@@ -279,6 +279,25 @@ fn subject_prefix(text: &str) -> &str {
     ""
 }
 
+fn english_auxiliary(word: &str) -> bool {
+    [
+        "is", "are", "was", "were", "be", "been", "being", "may", "might", "can", "could", "will",
+        "would", "has", "have", "had", "does", "do", "did",
+    ]
+    .contains(&word)
+}
+
+fn shared_auxiliaries(text: &str) -> String {
+    text[subject_prefix(text).len()..]
+        .split_whitespace()
+        .take_while(|word| {
+            english_auxiliary(word) || ["not", "never", "also", "then"].contains(word)
+        })
+        .filter(|word| english_auxiliary(word))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 fn english_predicate(text: &str) -> bool {
     has(
         text,
@@ -334,8 +353,13 @@ fn split_conjunction(text: &str, out: &mut Vec<String>) {
                     .all(|w| ["also", "then", "not", "never"].contains(&w));
             out.push(left.to_owned());
             if elided {
-                // Copy only the subject, never the preceding predicate's negation.
-                let expanded = format!("{} {right}", subject_prefix(left));
+                // Share omitted auxiliaries, but never the preceding action or negation.
+                let auxiliaries = if right.split_whitespace().any(english_auxiliary) {
+                    String::new()
+                } else {
+                    shared_auxiliaries(left)
+                };
+                let expanded = format!("{} {auxiliaries} {right}", subject_prefix(left));
                 split_conjunction(&expanded, out);
             } else {
                 split_conjunction(right, out);
@@ -424,6 +448,31 @@ pub(super) fn numeric_conflict(claim: &str, sources: &[&str]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn coordinated_actions_preserve_shared_auxiliaries() {
+        assert!(supports(
+            "Bus guidance may be added",
+            "Bus guidance may be removed and added"
+        ));
+        assert!(supports(
+            "Bus guidance might have been added",
+            "Bus guidance might have been removed and added"
+        ));
+        let mut clauses = Vec::new();
+        split_conjunction("bus guidance may not be removed and added", &mut clauses);
+        assert_eq!(clauses[1], "bus guidance may be added");
+        clauses.clear();
+        split_conjunction("bus guidance was removed and was not added", &mut clauses);
+        assert_eq!(
+            clauses[1].split_whitespace().collect::<Vec<_>>(),
+            ["bus", "guidance", "was", "not", "added"]
+        );
+        assert!(!supports(
+            "Bus guidance may be added",
+            "Bus guidance may be removed and was added"
+        ));
+    }
+
     #[test]
     fn coordinated_actions_keep_their_own_negation() {
         assert!(supports(
