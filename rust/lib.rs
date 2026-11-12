@@ -247,30 +247,34 @@ struct VocabularyPair {
     term: String,
     alias: String,
 }
+fn accepts_alias(f: &Feature, query: &str, from: &str) -> bool {
+    f.aliases.iter().any(|a| a == from)
+        || (from.contains(' ')
+            && contains(query, from)
+            && f.aliases.len() == 1
+            && contains(from, &f.name))
+}
+/// Match exactly the original features used by scoring, before applying budgets.
+pub fn applicable_search_aliases(query: &str, pairs: &[(String, String)]) -> Vec<bool> {
+    let q = normalize(query);
+    let fs = features(query);
+    pairs
+        .iter()
+        .map(|(a, b)| {
+            fs.iter()
+                .any(|f| accepts_alias(f, &q, a) || accepts_alias(f, &q, b))
+        })
+        .collect()
+}
 fn search_features(query: &str, vocabulary: &[VocabularyPair]) -> Vec<Feature> {
     let q = normalize(query);
     let mut fs = features(query);
-    // One-hop only: compare original aliases, never expand a newly added alias.
     for f in &mut fs {
-        let original = f.aliases.clone();
+        let original = f.clone();
         for pair in vocabulary.iter().take(128) {
             for (from, to) in [(&pair.term, &pair.alias), (&pair.alias, &pair.term)] {
-                if original.contains(from) && !to.is_empty() && !f.aliases.contains(to) {
+                if accepts_alias(&original, &q, from) && !to.is_empty() && !f.aliases.contains(to) {
                     f.aliases.push(to.clone());
-                }
-            }
-        }
-    }
-    // Explicit multi-word definitions may span several previously unknown tokens.
-    // Keep existing features and only add an alternative to tokens within that
-    // literal query expression; do not use substring matches inside identifiers.
-    for pair in vocabulary.iter().take(128) {
-        for (from, to) in [(&pair.term, &pair.alias), (&pair.alias, &pair.term)] {
-            if from.contains(' ') && contains(&q, from) {
-                for f in &mut fs {
-                    if f.aliases.len() == 1 && contains(from, &f.name) && !to.is_empty() {
-                        f.aliases.push(to.clone());
-                    }
                 }
             }
         }
@@ -925,5 +929,40 @@ mod vocabulary_tests {
                     .unwrap()
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod vocabulary_review_tests {
+    use super::*;
+    #[test]
+    fn multi_word_aliases_use_original_features_regardless_of_dictionary_order() {
+        let candidates = vec![Candidate {
+            id: "x".into(),
+            description: "zx".into(),
+            references: vec![],
+        }];
+        let mut vocabulary = vec![
+            VocabularyPair {
+                term: "zzzxalpha".into(),
+                alias: "zxa".into(),
+            },
+            VocabularyPair {
+                term: "zzzxalpha zzzxbeta".into(),
+                alias: "zx".into(),
+            },
+        ];
+        for _ in 0..2 {
+            assert!(
+                scores_with_vocabulary("zzzxalpha zzzxbeta", &candidates, false, &vocabulary)[0]
+                    .score
+                    > 0.5
+            );
+            vocabulary.reverse();
+        }
+        assert_eq!(
+            applicable_search_aliases("xWayfinder123", &[("wayfinder".into(), "wf".into())]),
+            vec![false]
+        );
     }
 }

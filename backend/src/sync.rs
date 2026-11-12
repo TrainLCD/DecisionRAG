@@ -294,6 +294,12 @@ pub async fn run(h: &impl Host, c: &Config, job: &Value) -> Result<()> {
                     && let Ok(metadata) = serde_json::from_str::<Value>(s(old, "metadata"))
                     && metadata["blob_sha"] == job["sha"]
                 {
+                    crate::vocabulary::enqueue_source(
+                        h,
+                        repo,
+                        &format!("{repo}:{}", s(job, "path")),
+                    )
+                    .await?;
                     return Ok(());
                 }
                 let blob = gh::get(h, c, &format!("{prefix}/git/blobs/{}", s(job, "sha"))).await?;

@@ -127,3 +127,53 @@ test('a multi-span source activates only after completion and retries resume per
     assert.equal(f.sqlite.prepare('SELECT count(*) AS n FROM vocabulary_entries').get()?.n, 1);
   } finally { f.sqlite.close(); }
 });
+
+test('polite negated definitions are never stored or used in search', async () => {
+  const f = await setup();
+  try {
+    const quote = 'Wayfinder (WF) は正式な略称ではありません';
+    await f.save(quote);
+    await f.save('Wayfinder', 'target');
+    f.generated.choices[0]!.message.content = JSON.stringify({ candidates: [{ term: 'Wayfinder', alias: 'WF', relation: 'abbreviation', quote }] });
+    await f.extract();
+    assert.equal(f.sqlite.prepare('SELECT count(*) AS n FROM vocabulary_entries').get()?.n, 0);
+    const result: any = await (await f.request({ query: 'WF' })).json();
+    assert.ok(!result.evidence.some((e: any) => e.source_id === 'target'));
+  } finally { f.sqlite.close(); }
+});
+
+test('substring collisions do not exhaust the expansion budget for unknown identifiers', async () => {
+  const f = await setup();
+  try {
+    await f.save('Wayfinder (WF)');
+    await f.extract();
+    for (let i = 0; i < 130; i++) f.sqlite.prepare("INSERT INTO vocabulary_entries SELECT source_id,revision,0,?, 'wayfinder','quote','synonym','now' FROM vocabulary_runs").run('alias' + i);
+    await f.save('xWayfinder123', 'identifier');
+    const response = await f.request({ query: 'xWayfinder123' });
+    assert.equal(response.status, 200);
+    const result: any = await response.json();
+    assert.ok(result.evidence.some((e: any) => e.source_id === 'identifier'));
+    assert.equal((await f.request({ query: 'Wayfinder' })).status, 422);
+  } finally { f.sqlite.close(); }
+});
+
+test('document retry recovers a queue failure after saving the blob, without re-extracting completed sources', async () => {
+  const f = await setup();
+  const repo = 'TrainLCD/App';
+  f.sqlite.prepare('UPDATE repositories SET docs_commit=? WHERE repo=?').run('commit', repo);
+  const restore = mockFetch(() => Response.json({ encoding: 'base64', content: Buffer.from('Wayfinder (WF)').toString('base64') }));
+  const send = f.env.SYNC_QUEUE.send.bind(f.env.SYNC_QUEUE);
+  let fail = true;
+  f.env.SYNC_QUEUE.send = async (...args: Parameters<typeof send>) => { if (fail) throw new Error('queue unavailable'); return send(...args); };
+  const job = { type: 'doc' as const, repo, path: 'glossary.md', sha: 'blob', commit: 'commit' };
+  try {
+    await assert.rejects(sync(f.env, job));
+    assert.equal(f.sqlite.prepare('SELECT body FROM sources').get()?.body, 'Wayfinder (WF)');
+    fail = false;
+    await sync(f.env, job);
+    assert.equal(f.jobs.length, 1);
+    await f.extract('TrainLCD/App:glossary.md');
+    await sync(f.env, job);
+    assert.equal(f.jobs.length, 1);
+  } finally { restore(); f.sqlite.close(); }
+});

@@ -54,6 +54,12 @@ pub fn accepted(text: &str, candidate: &Value) -> Option<Value> {
     // Negative/hypothetical definitions must not become aliases.
     if [
         "ではない",
+        "ではありません",
+        "じゃありません",
+        "ではなかった",
+        "ではございません",
+        "isn't",
+        "aren't",
         "ではなく",
         "じゃない",
         "not ",
@@ -72,6 +78,10 @@ pub fn accepted(text: &str, candidate: &Value) -> Option<Value> {
 }
 
 pub async fn enqueue_source(h: &impl Host, repo: &str, id: &str) -> Result<()> {
+    let needed=db(h,"SELECT s.id FROM sources s LEFT JOIN vocabulary_runs r ON r.source_id=s.id AND r.revision=s.vocabulary_revision WHERE s.id=? AND s.repo=? AND (r.status IS NULL OR r.status<>'completed')",vec![json!(id),json!(repo)]).await?;
+    if needed.is_empty() {
+        return Ok(());
+    }
     enqueue(h, json!({"type":"vocabulary","repo":repo,"source_id":id})).await
 }
 
@@ -182,16 +192,43 @@ pub async fn load(
         "1=1"
     };
     let sql = format!(
-        "SELECT DISTINCT v.term,v.alias FROM vocabulary_entries v JOIN sources s ON s.id=v.source_id AND s.vocabulary_revision=v.revision JOIN vocabulary_runs r ON r.source_id=v.source_id AND r.revision=v.revision AND r.status='completed' WHERE {filter} AND (s.kind<>'pr' OR instr(s.body,char(10)||'PENDING'||char(10))=0) AND NOT EXISTS(SELECT 1 FROM vocabulary_blocks b WHERE b.term=v.term AND b.alias=v.alias) AND (instr(?,v.term)>0 OR instr(?,v.alias)>0) ORDER BY v.term,v.alias LIMIT 129"
+        "SELECT DISTINCT v.term,v.alias FROM vocabulary_entries v JOIN sources s ON s.id=v.source_id AND s.vocabulary_revision=v.revision JOIN vocabulary_runs r ON r.source_id=v.source_id AND r.revision=v.revision AND r.status='completed' WHERE {filter} AND (s.kind<>'pr' OR instr(s.body,char(10)||'PENDING'||char(10))=0) AND NOT EXISTS(SELECT 1 FROM vocabulary_blocks b WHERE b.term=v.term AND b.alias=v.alias) AND (instr(?,v.term)>0 OR instr(?,v.alias)>0) AND (v.term,v.alias)>(?,?) ORDER BY v.term,v.alias LIMIT 129"
     );
-    let mut params = storage::scope_params(scope);
-    params.extend([json!(normalize(query)), json!(normalize(query))]);
-    let rows = db(h, &sql, params).await?;
-    if rows.len() > 128 {
-        return Err(Error::new(422, "vocabulary_expansion_budget_exceeded"));
+    let mut after = (String::new(), String::new());
+    let mut result = Vec::new();
+    loop {
+        let mut params = storage::scope_params(scope);
+        params.extend([
+            json!(normalize(query)),
+            json!(normalize(query)),
+            json!(after.0),
+            json!(after.1),
+        ]);
+        let rows = db(h, &sql, params).await?;
+        if rows.is_empty() {
+            break;
+        }
+        let pairs: Vec<_> = rows
+            .iter()
+            .map(|r| (s(r, "term").to_owned(), s(r, "alias").to_owned()))
+            .collect();
+        after = pairs.last().unwrap().clone();
+        let applicable = decision_rag_core::applicable_search_aliases(query, &pairs);
+        result.extend(
+            rows.iter()
+                .zip(applicable)
+                .filter_map(|(row, applies)| applies.then(|| row.clone())),
+        );
+        if result.len() > 128 {
+            return Err(Error::new(422, "vocabulary_expansion_budget_exceeded"));
+        }
+        if rows.len() < 129 {
+            break;
+        }
     }
-    Ok(rows)
+    Ok(result)
 }
+
 pub async fn inspect(h: &impl Host, input: &Value) -> Result<Value> {
     let offset = match input.get("offset") {
         None => 0,
