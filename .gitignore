@@ -10,3 +10,5 @@ dist-test/
 
 /target/
 /generated/
+
+/test-results/

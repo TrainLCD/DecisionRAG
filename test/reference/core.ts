@@ -1,4 +1,4 @@
-import module from '../generated/decision_core.wasm';
+import module from '../../generated/decision_core.wasm';
 import { HttpError } from './types.js';
 interface Exports extends WebAssembly.Exports {
   memory: WebAssembly.Memory;

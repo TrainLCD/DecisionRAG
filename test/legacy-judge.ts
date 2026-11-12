@@ -1,6 +1,6 @@
 // Frozen pre-migration judge used ONLY by transport/contract tests. Never imported by production.
-import { mapConcurrent } from '../src/http.js';
-import { HttpError, type Candidate, type Env, type Scored, type Trace } from '../src/types.js';
+import { mapConcurrent } from './reference/http.js';
+import { HttpError, type Candidate, type Env, type Scored, type Trace } from './reference/types.js';
 interface Noul { type: 'noul'; noul: number }
 interface Choice { type: 'choice'; choice: string; probabilities: Record<string, number>; confidence: number }
 interface Result { model: string; answers: Record<string, Noul | Choice>; usage: { input_tokens: number; output_tokens: number } }

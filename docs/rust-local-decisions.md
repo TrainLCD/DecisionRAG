@@ -3,10 +3,10 @@
 ## 実装した範囲
 
 - `rust/lib.rs` / `rust/rules.rs`: 正規化、日英用語対応、間接的な技術の手掛かり、未知の日本語名、技術識別子と番号の一致、関連度と安定した順位付け、同一検索範囲内の参照文書の1段展開、引用検査、原文抽出。
-- `src/core.ts`: 同期JSON ABIでRust/WASMを呼ぶ。モデルや外部Decision APIへのフォールバックはない。
-- `src/jev.ts`: 旧モジュール名を保った互換アダプター。`LocalDecision` が本番の既定。64候補ずつWASMに送り、グループの枝刈りはしない。大きなコレクションは全ての許可された枝を巡回し、予算超過時は422にする。
+- `backend/src/`: HTTPルーティング、認証、Webhook HMAC、公開範囲、D1 SQLとスナップショット、GitHub同期、リリース祖先判定、Queue再試行、暗号化カーソル、検索、生成レスポンス検査、SSE解析。
+- `src/host.ts` / `src/worker.ts`: CloudflareバインディングとWeb APIのI/Oだけを接続する薄いホスト。ドメイン処理はRust/WASMを呼ぶ。
 - 判定はCPUのみ。モデル重みの取得・推論サーバー・GPU・Decision APIキーは不要。
-- Workersの認証、D1、Queues、GitHub同期、HTTP、SSE、文章生成の接続はTypeScriptのまま。**ヘッドレスサーバー全体のRust移植は未完了**。
+- 文書は540件単位で読み込み、64候補ずつ採点する。全許可範囲を走査し、予算超過は422。
 - Webの10件ずつのページ送り、全件数、総ページ数、ページ送り時に検索・生成を繰り返さない仕様は変更しない。APIの旧カーソルモードは既存の20区間単位を維持する。
 
 ## 判定の意味
@@ -33,7 +33,7 @@
 
 Rustのテストでは日英の照合、番号境界、未知の駅名、同点順序、参照範囲、否定・条件・配信済みの捏造拒否を確認。新しい統合テストは本物のWASMで全41件の保持、Decision通信0回、公開範囲の隔離、SSEと引用への復帰、繰り返しのメモリ確保を確認する。
 
-既存のモデルモックを利用するテストは `test/legacy-judge.ts` へ隔離し、`createWorker` のテスト用注入で認証・同期・ストリーム・既存API契約を検証する。本番コードから旧判定器への参照はない。旧モデル専用のテストはRust精度の証拠には含めない。
+既存のモデルモックを利用するテストは `test/legacy-judge.ts` へ隔離し、`test/reference/` に保存した旧実装のテスト用注入で認証・同期・ストリーム・既存API契約を検証する。本番コードから旧判定器への参照はない。旧モデル専用のテストはRust精度の証拠には含めない。
 
 実ブラウザー検証を試みたが、Chromiumが `socket() failed: Operation not permitted` で起動できなかった。Playwright用ブラウザー取得も破損アーカイブで失敗した。jsdomで実際のHTML/JSを実行する既存のページ送り・ストリーム回帰検証は成功したが、実ブラウザーでのプレビュー確認の代わりとは扱わない。
 
@@ -68,3 +68,11 @@ node --loader ./scripts/wasm-test-loader.mjs scripts/local-fixture-server.mjs
 ## 本番切り替え前に残ること
 
 全索引と未知の質問での比較、正解ラベルを持つ否定例の充実、Workers上のCPUとメモリ計測、実ブラウザーのプレビュー確認。生成文を原文引用へ戻す挙動の確認も必要。自動マージ・本番切り替えは行っていない。
+
+## Rustヘッドレス実装の検証
+
+`test/rust-api.test.ts`、`test/rust-sync.test.ts`、`test/local-decision.test.ts`、`test/preview.test.ts` は本番と同じRust/WASMを実行する。認証・公開範囲・結果全件保持・カーソル改竄と期限・更新検知・Webhook署名・pending review除外・リリース祖先・文書スナップショット・Queue再試行・読み取り専用プレビューを検証する。旧TypeScript実装は `test/reference/` に隔離し、本番にはバンドルしない。
+
+`npm run test:browser` は実Rust/WASMとSQLiteのフィクスチャサーバーを使い、ChromiumでSSE、総件数、10件ずつのページ送り、再検索・再生成なし、0件検索を確認する。CIにスクリーンショットと結果JSONを保存する。
+
+カーソルのAES-GCM暗号形式は旧実装と互換だが、索引リビジョンの正規化が変わるため切り替え前の有効カーソルは409で検索やり直しになる。Webのページ送りはカーソルを使わないため影響しない。

@@ -10,7 +10,7 @@ const passages=JSON.parse(readFileSync('test/fixtures/public-passages.json','utf
 for(const repo of new Set(passages.map(p=>p.repo)))sqlite.prepare("INSERT INTO repositories(repo,description,default_branch) VALUES(?,?,'main')").run(repo,'Public fixture');
 // Preserve captured passage boundaries and IDs, rather than re-splitting excerpts.
 for(const p of passages){
- sqlite.prepare('INSERT OR IGNORE INTO sources(id,repo,kind,title,url,body,metadata,updated_at) VALUES(?,?,?,?,?,?,?,?)').run(p.source_id,p.repo,p.kind,p.title,p.url,p.text,JSON.stringify(p.metadata),p.updated_at);
+ sqlite.prepare('INSERT OR IGNORE INTO sources(id,repo,kind,title,url,body,metadata,updated_at) VALUES(?,?,?,?,?,?,?,?)').run(p.source_id,p.repo,p.kind,p.title,p.url,passages.filter(x=>x.source_id===p.source_id).map(x=>x.text).join("\n"),JSON.stringify(p.metadata),p.updated_at);
  sqlite.prepare('INSERT INTO passages(id,source_id,ordinal,text) VALUES(?,?,?,?)').run(p.id,p.source_id,p.ordinal,p.text);
 }
 mockFetch(url=>{if(url.includes('api.github.com/orgs/TrainLCD/repos'))return Response.json([...new Set(passages.map(p=>p.repo))].map(full_name=>({full_name,private:false,visibility:'public'})));throw new Error('Unexpected network: '+url);});

@@ -16,13 +16,15 @@
     "build:pwa": "node scripts/build-pwa.mjs",
     "predeploy": "npm run build:pwa",
     "build:rust": "node scripts/build-rust.mjs",
-    "test:rust": "cargo test --locked",
-    "pretest": "npm run build:rust"
+    "test:rust": "cargo test --workspace --locked",
+    "pretest": "npm run build:rust",
+    "test:browser": "node scripts/browser-test.mjs"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261106.1",
     "@types/node": "22.20.5",
     "jsdom": "^31.0.0",
+    "playwright": "1.62.1",
     "typescript": "5.9.3",
     "wrangler": "4.158.0"
   },

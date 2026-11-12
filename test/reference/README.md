@@ -1,0 +1,1 @@
+Baseline TypeScript implementation retained only for legacy contract tests. Production entry points import neither this directory nor the legacy Decision client. New backend behavior is tested using the real Rust/WASM worker in rust-api, rust-sync, local-decision and preview tests.

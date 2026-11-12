@@ -1,10 +1,10 @@
-import { createWorker } from '../src/index.js';
+import { createWorker } from './reference/index.js';
 import { Jev } from './legacy-judge.js';
 export const contractWorker = createWorker(env => new Jev(env));
 import { DatabaseSync } from 'node:sqlite';
 import { readdirSync, readFileSync } from 'node:fs';
-import type { Env, SyncJob } from '../src/types.js';
-import { HttpError } from '../src/types.js';
+import type { Env, SyncJob } from './reference/types.js';
+import { HttpError } from './reference/types.js';
 let mockUpstream: ((url: string, init?: RequestInit) => Response | Promise<Response>) | undefined;
 export function fixture() {
   const sqlite = new DatabaseSync(':memory:');

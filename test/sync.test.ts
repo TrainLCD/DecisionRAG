@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sync } from '../src/sync.js';
-import { passagesFor, saveSource } from '../src/store.js';
-import { verifySignature, webhook } from '../src/webhook.js';
+import { sync } from './reference/sync.js';
+import { passagesFor, saveSource } from './reference/store.js';
+import { verifySignature, webhook } from './reference/webhook.js';
 import { contractWorker as worker } from './helpers.js';
 import { fixture, mockFetch } from './helpers.js';
 

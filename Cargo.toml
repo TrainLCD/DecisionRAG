@@ -23,3 +23,7 @@ lto = true
 codegen-units = 1
 panic = "abort"
 strip = true
+
+[workspace]
+members = ["backend"]
+resolver = "3"

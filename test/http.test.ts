@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { jsonRequest, mapConcurrent } from '../src/http.js';
+import { jsonRequest, mapConcurrent } from './reference/http.js';
 
 test('upstream redirects are rejected without following them', async (t) => {
   const redirectingFetch: typeof globalThis.fetch = async (_url, init) => {

@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../src/index.js';
-import { LocalDecision } from '../src/jev.js';
-import { decision } from '../src/core.js';
-import { saveSource } from '../src/store.js';
+import { LocalDecision } from './reference/jev.js';
+import { decision } from './reference/core.js';
+import { saveSource } from './reference/store.js';
 import { fixture, mockFetch } from './helpers.js';
 
 const context = {} as ExecutionContext;

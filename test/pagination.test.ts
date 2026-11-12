@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { encodeCursor, decodeCursor } from '../src/search-cursor.js';
+import { encodeCursor, decodeCursor } from './reference/search-cursor.js';
 import { fixture, mockFetch } from './helpers.js';
-import { saveSource, documentsFor, documentPages, localReferences } from '../src/store.js';
+import { saveSource, documentsFor, documentPages, localReferences } from './reference/store.js';
 import { contractWorker as worker } from './helpers.js';
-import { planRetrieval, retrievePlannedPage } from '../src/retrieval.js';
+import { planRetrieval, retrievePlannedPage } from './reference/retrieval.js';
 import { Jev } from './legacy-judge.js';
 
 test('full-result API counts relevant passages, retains tail matches and agrees across JSON and SSE', async () => {
