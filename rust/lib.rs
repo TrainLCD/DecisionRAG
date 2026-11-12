@@ -124,6 +124,72 @@ fn matching(f: &Feature, text: &str) -> f64 {
     }
     0.0
 }
+
+/// Literal evidence for the same query features used by the local scorer.
+/// Return normalized terms, never markup; consumers highlight visible text only.
+pub fn highlight_terms(query: &str, text: &str) -> Vec<String> {
+    // Match the rendered text; inline formatting must not split a query term.
+    // The browser maps these terms back to sanitized DOM text nodes.
+    use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
+    let mut visible = String::new();
+    for event in Parser::new_ext(
+        text,
+        Options::ENABLE_TABLES | Options::ENABLE_STRIKETHROUGH | Options::ENABLE_TASKLISTS,
+    ) {
+        match event {
+            Event::Text(value) | Event::Code(value) => visible.push_str(&value),
+            Event::Start(
+                Tag::Emphasis
+                | Tag::Strong
+                | Tag::Strikethrough
+                | Tag::Link { .. }
+                | Tag::Image { .. },
+            ) => {}
+            Event::Start(_) => visible.push('\n'),
+            Event::SoftBreak => visible.push(' '),
+            Event::HardBreak | Event::Rule => visible.push('\n'),
+            Event::End(
+                TagEnd::Emphasis
+                | TagEnd::Strong
+                | TagEnd::Strikethrough
+                | TagEnd::Link
+                | TagEnd::Image,
+            ) => {}
+            Event::End(_) => visible.push('\n'),
+            _ => {}
+        }
+    }
+    let text = normalize(&visible);
+    let mut terms = BTreeSet::new();
+    for feature in features(query) {
+        if matching(&feature, &text) == 0.0 {
+            continue;
+        }
+        let explicit: Vec<_> = feature
+            .aliases
+            .iter()
+            .filter(|a| contains(&text, a))
+            .cloned()
+            .collect();
+        if !explicit.is_empty() {
+            terms.extend(explicit);
+        } else if feature.name == "location" {
+            terms.extend(
+                ["到着判定", "接近到着"]
+                    .into_iter()
+                    .filter(|t| text.contains(t))
+                    .map(str::to_owned),
+            );
+        } else {
+            terms.extend(
+                grams(&feature.name)
+                    .into_iter()
+                    .filter(|g| text.contains(g)),
+            );
+        }
+    }
+    terms.into_iter().collect()
+}
 #[derive(Deserialize, Clone)]
 struct Candidate {
     id: String,
@@ -535,6 +601,41 @@ mod tests {
             ])
         );
         assert_eq!(result["semantic_status"], "unknown");
+    }
+    #[test]
+    fn highlights_match_rendered_markdown_without_crossing_blocks() {
+        for text in [
+            "**G**PS",
+            "位置**更新**",
+            "[GPS](https://example.test)",
+            "`GPS`",
+        ] {
+            assert!(!highlight_terms("GPS", text).is_empty(), "{text}");
+        }
+        assert!(highlight_terms("GPS", "G\n\nPS").is_empty());
+        assert!(highlight_terms("GPS", "[unrelated](https://example.test/GPS)").is_empty());
+        assert_eq!(highlight_terms("GPS", "**Ｇ**ＰＳ"), vec!["gps"]);
+    }
+    #[test]
+    fn highlights_handle_soft_breaks_and_nested_lists() {
+        assert_eq!(
+            highlight_terms("GPS", "location\nupdates"),
+            vec!["location updates"]
+        );
+        assert_eq!(highlight_terms("GPS", "- context\n  - GPS"), vec!["gps"]);
+        assert!(highlight_terms("GPS", "- location\n  - updates").is_empty());
+    }
+    #[test]
+    fn highlights_share_scoring_aliases_and_boundaries() {
+        assert_eq!(
+            highlight_terms("GPS", "ＧＰＳと位置更新、gps_tracker、svgps"),
+            vec!["gps", "位置更新"]
+        );
+        assert_eq!(highlight_terms("GPS", "到着判定"), vec!["到着判定"]);
+        assert!(highlight_terms("GPS", "レイアウト位置、location.href").is_empty());
+        assert!(highlight_terms("#7403", "#74030").is_empty());
+        assert_eq!(highlight_terms("#7403", "#7403"), vec!["#7403"]);
+        assert!(highlight_terms("教えてください", "GPS").is_empty());
     }
     #[test]
     fn bilingual_topics_beat_incidental_words() {

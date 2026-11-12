@@ -162,6 +162,18 @@ test('Rust exact ticket lookup uses source identity and preserves numeric bounda
  }finally{f.sqlite.close();}
 });
 
+test('Rust search exposes body match terms alongside Markdown for the UI', async () => {
+    const f = await setup(1);
+    try {
+        const r = await f.request({ query: 'GPS' });
+        const d: any = await r.json();
+        assert.equal(r.status, 200);
+        assert.equal(d.evidence.length, 1);
+        assert.deepEqual(d.evidence[0].highlight_terms, ['gps', '位置情報']);
+        assert.match(d.evidence[0].text_html, /GPS位置情報/);
+    } finally { f.sqlite.close(); }
+});
+
 test('Rust counts selected passages before reading bodies and never truncates a broad search', async () => {
     const f = await setup(2);
     try {
