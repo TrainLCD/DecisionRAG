@@ -159,3 +159,89 @@ test('feedback and administrative APIs require a configured token', async () => 
   sqlite.close();
 });
 
+
+
+test('issue watermark waits for saving and retries resume the same page', async () => {
+  const { env, sqlite } = fixture();
+  const repo = 'TrainLCD/Issues';
+  sqlite.prepare('INSERT INTO repositories(repo,default_branch,issues_dispatched_at) VALUES(?,?,?)').run(repo, 'main', '2026-01-01T00:00:00.000Z');
+  let fail = true;
+  const fetched: number[] = [];
+  const restore = mockFetch(url => {
+    if (url.includes('/issues?')) return Response.json([{ number: 1 }, { number: 2 }]);
+    if (url.endsWith('/comments?per_page=100&page=1')) return Response.json([]);
+    const n = Number(url.match(/\/issues\/(\d+)/)?.[1]);
+    fetched.push(n);
+    if (n === 2 && fail) return Response.json({}, { status: 500 });
+    return Response.json({ ...issue, number: n });
+  });
+  let ack = 0, retry = 0;
+  const body = { type: 'issues', repo, page: 1, started: '2026-11-12T00:00:00.000Z' };
+  const messages = [{ id: 'resume-issues', body, attempts: 1, ack() { ack++; }, retry() { retry++; } }];
+  try {
+    await worker.queue!({ messages } as unknown as MessageBatch<any>, env, {} as ExecutionContext);
+    assert.equal(retry, 1); assert.equal(ack, 0);
+    assert.equal(sqlite.prepare('SELECT issues_dispatched_at AS t FROM repositories').get()?.t, '2026-01-01T00:00:00.000Z');
+    assert.equal(JSON.parse(String(sqlite.prepare('SELECT job FROM sync_jobs').get()?.job)).offset, 1);
+    fail = false;
+    await worker.queue!({ messages } as unknown as MessageBatch<any>, env, {} as ExecutionContext);
+    assert.equal(ack, 1);
+    assert.equal(fetched.filter(n => n === 1).length, 1);
+    assert.equal(sqlite.prepare('SELECT issues_dispatched_at AS t FROM repositories').get()?.t, body.started);
+  } finally { restore(); sqlite.close(); }
+});
+
+test('an older docs fetch cannot reactivate a replaced snapshot', async () => {
+  const { env, sqlite } = fixture();
+  const repo = 'TrainLCD/MobileApp';
+  sqlite.prepare('INSERT INTO repositories(repo,default_branch,docs_commit) VALUES(?,?,?)').run(repo, 'main', 'original');
+  const restore = mockFetch(url => {
+    if (url.includes('/commits/')) return Response.json({ sha: 'old', commit: { tree: { sha: 'old-tree' } } });
+    sqlite.prepare('UPDATE repositories SET docs_commit=? WHERE repo=?').run('new', repo);
+    return Response.json({ tree: [], truncated: false });
+  });
+  try {
+    await assert.rejects(sync(env, { type: 'docs', repo }), /docs_snapshot_changed/);
+    assert.equal(sqlite.prepare('SELECT docs_commit FROM repositories').get()?.docs_commit, 'new');
+  } finally { restore(); sqlite.close(); }
+});
+
+test('resyncing an unchanged document preserves its complete searchable record', async () => {
+  const { env, sqlite } = fixture();
+  const repo = 'TrainLCD/MobileApp';
+  sqlite.prepare('INSERT INTO repositories(repo,default_branch,docs_commit) VALUES(?,?,?)').run(repo, 'main', 'first');
+  const restore = mockFetch(() => Response.json({ encoding: 'base64', content: Buffer.from('GPSの更新処理についての説明').toString('base64') }));
+  try {
+    const doc = { type: 'doc' as const, repo, path: 'README.md', sha: 'same-blob', commit: 'first' };
+    await sync(env, doc);
+    const before = sqlite.prepare('SELECT * FROM sources').get();
+    sqlite.prepare('UPDATE repositories SET docs_commit=? WHERE repo=?').run('second', repo);
+    await sync(env, { ...doc, commit: 'second' });
+    assert.deepEqual(sqlite.prepare('SELECT * FROM sources').get(), before);
+  } finally { restore(); sqlite.close(); }
+});
+
+test('release history retries resume from the last persisted cursor', async () => {
+  const { env, sqlite } = fixture();
+  const repo = 'TrainLCD/MobileApp', tip = 'a'.repeat(40), ancestor = 'b'.repeat(40);
+  sqlite.prepare('INSERT INTO repositories(repo,default_branch) VALUES(?,?)').run(repo, 'main');
+  let fail = true, firstPages = 0, ack = 0, retry = 0;
+  const restore = mockFetch((_url, init) => {
+    const { query, variables } = JSON.parse(String(init?.body));
+    if (query.includes('latestRelease')) return Response.json({ data: { repository: { latestRelease: { tagName: 'v1', url: 'https://example.test/v1', publishedAt: '2026-11-01', isDraft: false, isPrerelease: false, tagCommit: { oid: tip } } } } });
+    const first = variables.after === null;
+    if (first) firstPages++;
+    if (!first && fail) return Response.json({}, { status: 500 });
+    return Response.json({ data: { repository: { object: { history: { totalCount: 2, nodes: [{ oid: first ? tip : ancestor }], pageInfo: { hasNextPage: first, endCursor: first ? 'next' : null } } } } } });
+  });
+  const messages = [{ id: 'release-resume', body: { type: 'releases', repo }, attempts: 1, ack() { ack++; }, retry() { retry++; } }];
+  try {
+    await worker.queue!({ messages } as unknown as MessageBatch<any>, env, {} as ExecutionContext);
+    assert.equal(retry, 1);
+    assert.equal(sqlite.prepare('SELECT count(*) AS n FROM github_releases').get()?.n, 0);
+    fail = false;
+    await worker.queue!({ messages } as unknown as MessageBatch<any>, env, {} as ExecutionContext);
+    assert.equal(firstPages, 1); assert.equal(ack, 1);
+    assert.equal(sqlite.prepare('SELECT count(*) AS n FROM github_release_commits').get()?.n, 2);
+  } finally { restore(); sqlite.close(); }
+});

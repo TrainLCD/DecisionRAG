@@ -153,7 +153,56 @@ pub(super) fn overlap(claim: &str, source: &str) -> f64 {
 }
 
 pub(super) fn supports(claim: &str, source: &str) -> bool {
-    overlap(claim, source) >= 0.75 && compatible(claim, source)
+    let claim = normalize(claim);
+    let source = normalize(source);
+    let sources = assertion_clauses(&source);
+    assertion_clauses(&claim).iter().all(|claim| {
+        sources.iter().any(|source| {
+            // A shared action in a different subject's clause is not evidence.
+            let topics = |text: &str| -> BTreeSet<_> {
+                units(text)
+                    .into_iter()
+                    .filter(|u| u.starts_with("topic:"))
+                    .collect()
+            };
+            topics(claim).is_subset(&topics(source))
+                && overlap(claim, source) >= 0.75
+                && compatible(claim, source)
+        })
+    })
+}
+
+fn assertion_clauses(text: &str) -> Vec<String> {
+    let mut text = text.to_owned();
+    for separator in [
+        " and ",
+        " but ",
+        " whereas ",
+        " while ",
+        "しかし",
+        "一方",
+        "したが",
+        "するが",
+        "しないが",
+        "せず",
+    ] {
+        // Preserve the predicate/negation on the left of a clause boundary.
+        let replacement = if separator.ends_with('し') {
+            format!("{separator}、")
+        } else if separator == "せず" {
+            "せず、".into()
+        } else if separator.ends_with('が') {
+            format!("{}、", separator.trim_end_matches('が'))
+        } else {
+            "、".into()
+        };
+        text = text.replace(separator, &replacement);
+    }
+    text.split(['、', ',', ';', '。', '\n'])
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(str::to_owned)
+        .collect()
 }
 
 pub(super) fn contradicts(claim: &str, source: &str) -> bool {
@@ -234,6 +283,33 @@ pub(super) fn numeric_conflict(claim: &str, sources: &[&str]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn binds_negation_and_actions_to_their_subjects() {
+        for (claim, source) in [
+            (
+                "GPSは更新するが、バスは表示しない。",
+                "GPSは更新しないが、バスは表示する。",
+            ),
+            (
+                "バスの乗換案内を追加した。",
+                "バスの乗換案内を削除し、GPSの更新機能を追加した。",
+            ),
+            (
+                "GPS is updated but bus guidance is not displayed",
+                "GPS is not updated but bus guidance is displayed",
+            ),
+            (
+                "Bus guidance was added",
+                "Bus guidance was removed and GPS updates were added",
+            ),
+        ] {
+            assert!(!supports(claim, source), "{claim} / {source}");
+        }
+        assert!(supports(
+            "バスの乗換案内を追加した。",
+            "GPSの更新機能を削除し、バスの乗換案内を追加した。"
+        ));
+    }
     #[test]
     fn accepts_supported_rewording_without_exact_copy() {
         for (claim, source) in [

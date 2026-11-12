@@ -364,8 +364,26 @@ pub async fn event(h: &impl Host, c: &Config, input: Value) -> Result<()> {
     }
     for (index, message) in array(&input["messages"])?.iter().enumerate() {
         let id = message["id"].clone();
+        let previous = db(
+            h,
+            "SELECT job,status FROM sync_jobs WHERE id=?",
+            vec![id.clone()],
+        )
+        .await?;
+        if previous
+            .first()
+            .is_some_and(|row| row["status"] == "completed")
+        {
+            h.call("ack", json!(index)).await?;
+            continue;
+        }
+        let job = previous
+            .first()
+            .and_then(|row| serde_json::from_str::<Value>(s(row, "job")).ok())
+            .unwrap_or_else(|| message["body"].clone());
+        h.call("job_start", json!(index)).await?;
         db(h,"INSERT INTO sync_jobs(id,job,status,updated_at) VALUES(?,?,'running',?) ON CONFLICT(id) DO UPDATE SET status='running',updated_at=excluded.updated_at,error=NULL",vec![id.clone(),json!(message["body"].to_string()),json!(iso(now()))]).await?;
-        match sync::run(h, c, &message["body"]).await {
+        match sync::run(h, c, &job).await {
             Ok(()) => {
                 db(
                     h,
