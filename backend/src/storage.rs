@@ -209,7 +209,9 @@ pub async fn plan(
         for chunk in descriptions.chunks(64) {
             scored.extend(
                 array(
-                    &decision(json!({"op":"score","query":query,"candidates":chunk}))?["scores"],
+                    &decision(
+                        json!({"op":"score","query":query,"candidates":chunk,"allow_partial":true}),
+                    )?["scores"],
                 )?
                 .iter()
                 .cloned(),
@@ -323,7 +325,7 @@ pub fn rank(
         let candidates:Vec<_>=chunk.iter().map(|p|{
    let mut links=local_references(s(p,"source_id"),s(p,"text"));links.extend(reverse.get(s(p,"source_id")).cloned().unwrap_or_default());let mut seen=HashSet::new();
    let linked=links.iter().filter(|id|seen.insert(id.as_str())).filter_map(|id|contexts.get(id.as_str()).map(|c|format!("{id}: {c}"))).take(3).collect::<Vec<_>>().join("; ");
-   json!({"id":p["id"],"description":format!("{}\nRepository: {}\nMetadata: {}\n{}\nExplicitly linked sources: {linked}",s(p,"title"),s(p,"repo"),p["metadata"],s(p,"text"))})
+   json!({"id":p["id"],"description":format!("{}\nSource: {}\nRepository: {}\nMetadata: {}\n{}\nExplicitly linked sources: {linked}",s(p,"title"),s(p,"source_id"),s(p,"repo"),p["metadata"],s(p,"text"))})
   }).collect();
         scores.extend(
             array(

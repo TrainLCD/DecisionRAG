@@ -138,7 +138,7 @@ struct Score {
     matched: Vec<String>,
     missing: Vec<String>,
 }
-fn score(fs: &[Feature], c: &Candidate) -> Score {
+fn score(fs: &[Feature], c: &Candidate, allow_partial: bool) -> Score {
     let text = normalize(&c.description);
     let title = text.lines().next().unwrap_or("");
     let total: f64 = fs.iter().map(|f| f.weight).sum();
@@ -165,7 +165,7 @@ fn score(fs: &[Feature], c: &Candidate) -> Score {
     };
     // A multi-topic question needs evidence for more than one feature. A lone
     // GPS mention in an unrelated review must not pass on weight alone.
-    if missing_exact || (fs.len() > 1 && matched.len() < 2) {
+    if missing_exact || (!allow_partial && fs.len() > 1 && matched.len() < 2) {
         value = value.min(0.49);
     }
     Score {
@@ -175,9 +175,12 @@ fn score(fs: &[Feature], c: &Candidate) -> Score {
         missing,
     }
 }
-fn scores(query: &str, candidates: &[Candidate]) -> Vec<Score> {
+fn scores(query: &str, candidates: &[Candidate], allow_partial: bool) -> Vec<Score> {
     let fs = features(query);
-    let mut out: Vec<_> = candidates.iter().map(|c| score(&fs, c)).collect();
+    let mut out: Vec<_> = candidates
+        .iter()
+        .map(|c| score(&fs, c, allow_partial))
+        .collect();
     // Stable order is part of the pagination contract.
     out.sort_by(|a, b| b.score.total_cmp(&a.score));
     out
@@ -287,6 +290,7 @@ fn extracts(query: &str, evidence: &[Evidence]) -> Value {
                         description: s.into(),
                         references: vec![],
                     },
+                    true,
                 )
                 .score
             };
@@ -307,6 +311,8 @@ enum Request {
     Score {
         query: String,
         candidates: Vec<Candidate>,
+        #[serde(default)]
+        allow_partial: bool,
     },
     Select {
         query: String,
@@ -334,14 +340,18 @@ pub fn process(input: &[u8]) -> Vec<u8> {
     } else {
         match serde_json::from_slice::<Request>(input) {
             Err(_) => json!({"error":"invalid_decision_input"}),
-            Ok(Request::Score { query, candidates }) => {
-                json!({"scores":scores(&query,&candidates),"engine":rules::VERSION})
+            Ok(Request::Score {
+                query,
+                candidates,
+                allow_partial,
+            }) => {
+                json!({"scores":scores(&query,&candidates,allow_partial),"engine":rules::VERSION})
             }
             Ok(Request::Select {
                 query,
                 candidates,
                 limit,
-            }) => select(&candidates, scores(&query, &candidates), limit),
+            }) => select(&candidates, scores(&query, &candidates, false), limit),
             Ok(Request::SelectScored {
                 candidates,
                 scores,
@@ -430,6 +440,19 @@ mod tests {
         assert_eq!(out["scores"][0]["id"], "location");
         assert!(out["scores"][0]["score"].as_f64().unwrap() > 0.5);
         assert!(out["scores"][1]["score"].as_f64().unwrap() <= 0.5);
+    }
+    #[test]
+    fn document_prefilter_can_keep_partial_matches_without_relaxing_passages() {
+        for partial in [false, true] {
+            let out = run(
+                json!({"op":"score","query":"地下鉄で位置更新が止まる問題","allow_partial":partial,"candidates":[candidate("doc","GPS location updates")] }),
+            );
+            assert_eq!(out["scores"][0]["score"].as_f64().unwrap() > 0.5, partial);
+            let exact = run(
+                json!({"op":"score","query":"GPS #7403","allow_partial":partial,"candidates":[candidate("wrong","GPS #74030")] }),
+            );
+            assert!(exact["scores"][0]["score"].as_f64().unwrap() <= 0.5);
+        }
     }
     #[test]
     fn aliases_preserve_identifiers_and_english_sentences() {

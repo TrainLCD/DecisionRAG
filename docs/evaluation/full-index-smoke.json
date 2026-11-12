@@ -54,5 +54,53 @@
         "title": "docs/changelog.md"
       }
     ]
+  },
+  "revised_rules_actual_preview": {
+    "commit": "d7d0b9a879a92bfe1f1121429731d61618fb4f3f",
+    "url": "https://44c0c3a1-trainlcd-decision-rag.catwalk8205.workers.dev",
+    "hits": 40,
+    "elapsed_ms": 5454,
+    "timings": {
+      "generation_ms": 0,
+      "model_ms": 4209,
+      "retrieval_ms": 5454,
+      "scope_ms": 994,
+      "storage_ms": 251
+    },
+    "old_result_excluded": [
+      "TrainLCD/MobileApp#1652:0",
+      "TrainLCD/MobileApp#447:0",
+      "TrainLCD/MobileApp#448:0",
+      "TrainLCD/MobileApp#785:0",
+      "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+      "TrainLCD/MobileApp:docs/changelog.md:1",
+      "TrainLCD/MobileApp:docs/changelog.md:12",
+      "TrainLCD/MobileApp:docs/changelog.md:13",
+      "TrainLCD/MobileApp:docs/location-simulation.md:2",
+      "TrainLCD/MobileApp:docs/location-simulation.md:3",
+      "TrainLCD/MobileApp:docs/location-simulation.md:4",
+      "TrainLCD/MobileApp:docs/location-simulation.md:5",
+      "TrainLCD/MobileApp:docs/location-simulation.md:6"
+    ],
+    "added_ids": [
+      "TrainLCD/MobileApp#1155:0",
+      "TrainLCD/MobileApp#1415:0",
+      "TrainLCD/MobileApp#161:0",
+      "TrainLCD/MobileApp#415:0",
+      "TrainLCD/MobileApp#416:0",
+      "TrainLCD/MobileApp#440:0",
+      "TrainLCD/MobileApp#62:0",
+      "TrainLCD/MobileApp#63:0",
+      "TrainLCD/MobileApp#678:0",
+      "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:0",
+      "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:1",
+      "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md:2",
+      "TrainLCD/MobileApp:docs/cloudflare-migration-phase3-checklist.md:1",
+      "TrainLCD/MobileApp:docs/spec/tts/remote-tts.md:0",
+      "TrainLCD/THQ:README.md:0",
+      "TrainLCD/THQ:README.md:1",
+      "TrainLCD/THQMe#10:0",
+      "TrainLCD/THQMe:design.md:0"
+    ]
   }
 }

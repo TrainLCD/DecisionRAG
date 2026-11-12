@@ -155,3 +155,9 @@ test('Rust external SSE rejects truncated generation without publishing a final 
         f.sqlite.close();
     }
 });
+test('Rust exact ticket lookup uses source identity and preserves numeric boundaries',async()=>{
+ const f=await setup(0);try{
+ for(const number of [7403,74030])await saveSource(f.env,{id:`TrainLCD/App#${number}`,repo:'TrainLCD/App',kind:'pr',title:'表示の修正',body:'画面に表示する乗換候補を修正した。',url:'https://example.test',metadata:{number},updated_at:'2026-11-12'});
+ const response=await f.request({query:'#7403'});assert.equal(response.status,200);const result:any=await response.json();assert.deepEqual(result.evidence.map((p:any)=>p.source_id),['TrainLCD/App#7403']);
+ }finally{f.sqlite.close();}
+});
