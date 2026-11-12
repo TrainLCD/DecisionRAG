@@ -155,6 +155,9 @@ pub(super) fn overlap(claim: &str, source: &str) -> f64 {
 pub(super) fn supports(claim: &str, source: &str) -> bool {
     let claim = normalize(claim);
     let source = normalize(source);
+    if !qualifiers_compatible(&claim, &source) {
+        return false;
+    }
     let sources = assertion_clauses(&source);
     assertion_clauses(&claim).iter().all(|claim| {
         sources.iter().any(|source| {
@@ -187,9 +190,7 @@ fn assertion_clauses(text: &str) -> Vec<String> {
         "せず",
     ] {
         // Preserve the predicate/negation on the left of a clause boundary.
-        let replacement = if separator.ends_with('し') {
-            format!("{separator}、")
-        } else if separator == "せず" {
+        let replacement = if separator == "せず" {
             "せず、".into()
         } else if separator.ends_with('が') {
             format!("{}、", separator.trim_end_matches('が'))
