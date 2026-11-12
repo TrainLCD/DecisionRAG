@@ -236,6 +236,19 @@ pub async fn plan(
         .iter()
         .filter_map(|v| v.as_str().map(String::from))
         .collect();
+    // Reject the whole search before loading passage bodies. Never silently
+    // trim selected documents, which would make hit totals incomplete.
+    if !ids.is_empty() {
+        let filter = scope.map(|_| format!(" AND {SCOPE} AND (s.kind<>'pr' OR instr(s.body,char(10)||'PENDING'||char(10))=0)")).unwrap_or_default();
+        let counts = db(h, &format!("SELECT count(*) AS count FROM (SELECT p.id FROM passages p JOIN sources s ON s.id=p.source_id WHERE s.id IN (SELECT value FROM json_each(?)){filter} LIMIT 4001)"), [vec![json!(serde_json::to_string(&ids).unwrap())], scope_params(scope)].concat()).await?;
+        if counts
+            .first()
+            .and_then(|row| row["count"].as_u64())
+            .is_some_and(|n| n > 4000)
+        {
+            return Err(Error::new(422, "passage_screening_budget_exceeded"));
+        }
+    }
     traces.push(trace(
         "document_screening",
         scored.len(),
