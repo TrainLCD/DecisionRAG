@@ -1,0 +1,222 @@
+{
+  "clef": {
+    "valid_requests": 36,
+    "errors": 4,
+    "answerable_requests": 30,
+    "complete10_requests": 24,
+    "complete_all_requests": 24,
+    "stable10_questions": 9,
+    "answerable_questions": 10,
+    "question_mean_fact_coverage": 0.8,
+    "question_mean_unrelated": 0.34190476190476193,
+    "question_mean_duplicate_slots": 1.4,
+    "median_question_client_ms": 17365.0,
+    "median_question_server_ms": 10792.0,
+    "median_stage_ms": {
+      "page_screening": 1692.0,
+      "document_screening": 3764.5,
+      "passage_scoring": 2637.0,
+      "choice_rerank": 721
+    },
+    "usage_successful_requests_only": {
+      "clef-flash": {
+        "calls": 2766,
+        "input_tokens": 15187683,
+        "output_tokens": 0
+      },
+      "clef": {
+        "calls": 598,
+        "input_tokens": 6305732,
+        "output_tokens": 0
+      }
+    },
+    "passage_calls_successful_requests_only": 188,
+    "passage_flash_calls_successful_requests_only": 0,
+    "passage_flash_fallbacks_successful_requests_only": 0
+  },
+  "clef-flash": {
+    "valid_requests": 36,
+    "errors": 7,
+    "answerable_requests": 30,
+    "complete10_requests": 21,
+    "complete_all_requests": 21,
+    "stable10_questions": 8,
+    "answerable_questions": 10,
+    "question_mean_fact_coverage": 0.7,
+    "question_mean_unrelated": 0.34190476190476193,
+    "question_mean_duplicate_slots": 1.4,
+    "median_question_client_ms": 17533.5,
+    "median_question_server_ms": 11018.75,
+    "median_stage_ms": {
+      "page_screening": 1728,
+      "document_screening": 3746,
+      "passage_scoring": 2572,
+      "choice_rerank": 764.5
+    },
+    "usage_successful_requests_only": {
+      "clef-flash": {
+        "calls": 2604,
+        "input_tokens": 14291247,
+        "output_tokens": 0
+      },
+      "clef": {
+        "calls": 556,
+        "input_tokens": 5733688,
+        "output_tokens": 0
+      }
+    },
+    "passage_calls_successful_requests_only": 174,
+    "passage_flash_calls_successful_requests_only": 11,
+    "passage_flash_fallbacks_successful_requests_only": 163
+  },
+  "median_question_client_ratio": 0.9936723121752382,
+  "median_saved_ms": 118.0,
+  "median_question_server_ratio": 1.0199019579741586,
+  "critical_losses": [
+    {
+      "id": "Q01",
+      "repetition": 2,
+      "facts": [
+        "F1"
+      ]
+    },
+    {
+      "id": "Q05",
+      "repetition": 2,
+      "facts": [
+        "F1"
+      ]
+    }
+  ],
+  "invalid_pairs": [],
+  "noncritical_stable_losses": [
+    "Q16"
+  ],
+  "over_20_percent_slower": [],
+  "distinct_revisions": [
+    "ced3fc5959bd763c7bf498f39ac0e71af0b9e478274877b2dd7c34f04cd35bf0"
+  ],
+  "errors": [
+    {
+      "id": "Q01",
+      "repetition": 2,
+      "model": "clef-flash",
+      "started_at": "2026-11-12T05:40:30.933583+00:00",
+      "http_status": 503,
+      "client_ms": 9335,
+      "response": {
+        "error": "decision_capacity_exceeded"
+      }
+    },
+    {
+      "id": "Q05",
+      "repetition": 2,
+      "model": "clef-flash",
+      "started_at": "2026-11-12T05:42:39.588135+00:00",
+      "http_status": 503,
+      "client_ms": 9278,
+      "response": {
+        "error": "decision_capacity_exceeded"
+      }
+    },
+    {
+      "id": "Q08",
+      "repetition": 2,
+      "model": "clef-flash",
+      "started_at": "2026-11-12T05:49:40.760796+00:00",
+      "http_status": 503,
+      "client_ms": 8589,
+      "response": {
+        "error": "decision_capacity_exceeded"
+      }
+    },
+    {
+      "id": "Q16",
+      "repetition": 2,
+      "model": "clef-flash",
+      "started_at": "2026-11-12T05:53:17.704522+00:00",
+      "http_status": 503,
+      "client_ms": 9490,
+      "response": {
+        "error": "decision_capacity_exceeded"
+      }
+    },
+    {
+      "id": "Q18",
+      "repetition": 2,
+      "model": "clef",
+      "started_at": "2026-11-12T05:55:07.777752+00:00",
+      "http_status": 503,
+      "client_ms": 8449,
+      "response": {
+        "error": "decision_capacity_exceeded"
+      }
+    },
+    {
+      "id": "Q03",
+      "repetition": 3,
+      "model": "clef",
+      "started_at": "2026-11-12T05:58:03.008621+00:00",
+      "http_status": 503,
+      "client_ms": 9575,
+      "response": {
+        "error": "decision_capacity_exceeded"
+      }
+    },
+    {
+      "id": "Q06",
+      "repetition": 3,
+      "model": "clef",
+      "started_at": "2026-11-12T05:59:40.300445+00:00",
+      "http_status": 503,
+      "client_ms": 9514,
+      "response": {
+        "error": "decision_capacity_exceeded"
+      }
+    },
+    {
+      "id": "Q14",
+      "repetition": 3,
+      "model": "clef",
+      "started_at": "2026-11-12T06:03:15.017189+00:00",
+      "http_status": 503,
+      "client_ms": 11111,
+      "response": {
+        "error": "decision_capacity_exceeded"
+      }
+    },
+    {
+      "id": "Q14",
+      "repetition": 3,
+      "model": "clef-flash",
+      "started_at": "2026-11-12T06:03:26.128887+00:00",
+      "http_status": 503,
+      "client_ms": 9109,
+      "response": {
+        "error": "decision_capacity_exceeded"
+      }
+    },
+    {
+      "id": "Q16",
+      "repetition": 3,
+      "model": "clef-flash",
+      "started_at": "2026-11-12T06:03:53.949127+00:00",
+      "http_status": 503,
+      "client_ms": 8845,
+      "response": {
+        "error": "decision_capacity_exceeded"
+      }
+    },
+    {
+      "id": "Q18",
+      "repetition": 3,
+      "model": "clef-flash",
+      "started_at": "2026-11-12T06:05:29.808424+00:00",
+      "http_status": 503,
+      "client_ms": 9624,
+      "response": {
+        "error": "decision_capacity_exceeded"
+      }
+    }
+  ]
+}

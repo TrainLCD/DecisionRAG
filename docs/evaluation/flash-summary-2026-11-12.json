@@ -1,0 +1,2323 @@
+{
+  "questions": [
+    {
+      "id": "Q01",
+      "critical": true,
+      "answerability": "answerable",
+      "clef": {
+        "requests": 3,
+        "errors": 0,
+        "complete10": 3,
+        "complete_all": 3,
+        "client_median_ms": 16571,
+        "server_median_ms": 10201,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 0
+      },
+      "clef-flash": {
+        "requests": 3,
+        "errors": 1,
+        "complete10": 2,
+        "complete_all": 2,
+        "client_median_ms": 17681.0,
+        "server_median_ms": 11107.0,
+        "fact_coverage": 0.6666666666666666,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 0
+      },
+      "client_ratio": 1.066984490978215,
+      "saved_ms": -1110.0
+    },
+    {
+      "id": "Q02",
+      "critical": true,
+      "answerability": "answerable",
+      "clef": {
+        "requests": 3,
+        "errors": 0,
+        "complete10": 3,
+        "complete_all": 3,
+        "client_median_ms": 16494,
+        "server_median_ms": 10407,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.0,
+        "duplicate_slots": 0
+      },
+      "clef-flash": {
+        "requests": 3,
+        "errors": 0,
+        "complete10": 3,
+        "complete_all": 3,
+        "client_median_ms": 15702,
+        "server_median_ms": 9967,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.0,
+        "duplicate_slots": 0
+      },
+      "client_ratio": 0.9519825391051291,
+      "saved_ms": 792
+    },
+    {
+      "id": "Q03",
+      "critical": false,
+      "answerability": "answerable",
+      "clef": {
+        "requests": 3,
+        "errors": 1,
+        "complete10": 2,
+        "complete_all": 2,
+        "client_median_ms": 16411.0,
+        "server_median_ms": 10451.5,
+        "fact_coverage": 0.6666666666666666,
+        "unrelated_fraction": 0.5,
+        "duplicate_slots": 2
+      },
+      "clef-flash": {
+        "requests": 3,
+        "errors": 0,
+        "complete10": 3,
+        "complete_all": 3,
+        "client_median_ms": 16548,
+        "server_median_ms": 9678,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5,
+        "duplicate_slots": 2
+      },
+      "client_ratio": 1.0083480592285663,
+      "saved_ms": -137.0
+    },
+    {
+      "id": "Q05",
+      "critical": true,
+      "answerability": "answerable",
+      "clef": {
+        "requests": 3,
+        "errors": 0,
+        "complete10": 3,
+        "complete_all": 3,
+        "client_median_ms": 17759,
+        "server_median_ms": 10703,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 2
+      },
+      "clef-flash": {
+        "requests": 3,
+        "errors": 1,
+        "complete10": 2,
+        "complete_all": 2,
+        "client_median_ms": 17386.0,
+        "server_median_ms": 10930.5,
+        "fact_coverage": 0.6666666666666666,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 2
+      },
+      "client_ratio": 0.97899656512191,
+      "saved_ms": 373.0
+    },
+    {
+      "id": "Q06",
+      "critical": false,
+      "answerability": "answerable",
+      "clef": {
+        "requests": 3,
+        "errors": 1,
+        "complete10": 2,
+        "complete_all": 2,
+        "client_median_ms": 19669.5,
+        "server_median_ms": 13022.0,
+        "fact_coverage": 0.6666666666666666,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 1
+      },
+      "clef-flash": {
+        "requests": 3,
+        "errors": 0,
+        "complete10": 3,
+        "complete_all": 3,
+        "client_median_ms": 19017,
+        "server_median_ms": 12897,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 1
+      },
+      "client_ratio": 0.9668268130862503,
+      "saved_ms": 652.5
+    },
+    {
+      "id": "Q08",
+      "critical": false,
+      "answerability": "answerable",
+      "clef": {
+        "requests": 3,
+        "errors": 0,
+        "complete10": 3,
+        "complete_all": 3,
+        "client_median_ms": 17799,
+        "server_median_ms": 10918,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5555555555555556,
+        "duplicate_slots": 1
+      },
+      "clef-flash": {
+        "requests": 3,
+        "errors": 1,
+        "complete10": 2,
+        "complete_all": 2,
+        "client_median_ms": 16914.5,
+        "server_median_ms": 10733.5,
+        "fact_coverage": 0.6666666666666666,
+        "unrelated_fraction": 0.5555555555555556,
+        "duplicate_slots": 1
+      },
+      "client_ratio": 0.9503061969773583,
+      "saved_ms": 884.5
+    },
+    {
+      "id": "Q09",
+      "critical": false,
+      "answerability": "answerable",
+      "clef": {
+        "requests": 3,
+        "errors": 0,
+        "complete10": 3,
+        "complete_all": 3,
+        "client_median_ms": 18288,
+        "server_median_ms": 11876,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.7777777777777778,
+        "duplicate_slots": 0
+      },
+      "clef-flash": {
+        "requests": 3,
+        "errors": 0,
+        "complete10": 3,
+        "complete_all": 3,
+        "client_median_ms": 19071,
+        "server_median_ms": 12490,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.7777777777777778,
+        "duplicate_slots": 0
+      },
+      "client_ratio": 1.0428149606299213,
+      "saved_ms": -783
+    },
+    {
+      "id": "Q11",
+      "critical": false,
+      "answerability": "answerable",
+      "clef": {
+        "requests": 3,
+        "errors": 0,
+        "complete10": 0,
+        "complete_all": 0,
+        "client_median_ms": 17377,
+        "server_median_ms": 11245,
+        "fact_coverage": 0,
+        "unrelated_fraction": 1.0,
+        "duplicate_slots": 0
+      },
+      "clef-flash": {
+        "requests": 3,
+        "errors": 0,
+        "complete10": 0,
+        "complete_all": 0,
+        "client_median_ms": 18035,
+        "server_median_ms": 11498,
+        "fact_coverage": 0,
+        "unrelated_fraction": 1.0,
+        "duplicate_slots": 0
+      },
+      "client_ratio": 1.0378661449041837,
+      "saved_ms": -658
+    },
+    {
+      "id": "Q14",
+      "critical": false,
+      "answerability": "answerable",
+      "clef": {
+        "requests": 3,
+        "errors": 1,
+        "complete10": 2,
+        "complete_all": 2,
+        "client_median_ms": 19377.5,
+        "server_median_ms": 12481.0,
+        "fact_coverage": 0.6666666666666666,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 5
+      },
+      "clef-flash": {
+        "requests": 3,
+        "errors": 1,
+        "complete10": 2,
+        "complete_all": 2,
+        "client_median_ms": 18967.5,
+        "server_median_ms": 12712.5,
+        "fact_coverage": 0.6666666666666666,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 5
+      },
+      "client_ratio": 0.9788414398142176,
+      "saved_ms": 410.0
+    },
+    {
+      "id": "Q16",
+      "critical": false,
+      "answerability": "answerable",
+      "clef": {
+        "requests": 3,
+        "errors": 0,
+        "complete10": 3,
+        "complete_all": 3,
+        "client_median_ms": 17353,
+        "server_median_ms": 10881,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 3
+      },
+      "clef-flash": {
+        "requests": 3,
+        "errors": 2,
+        "complete10": 1,
+        "complete_all": 1,
+        "client_median_ms": 20107,
+        "server_median_ms": 13987,
+        "fact_coverage": 0.3333333333333333,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 3
+      },
+      "client_ratio": 1.1587045467642483,
+      "saved_ms": -2754
+    },
+    {
+      "id": "Q17",
+      "critical": true,
+      "answerability": "insufficient",
+      "clef": {
+        "requests": 3,
+        "errors": 0,
+        "complete10": 0,
+        "complete_all": 0,
+        "client_median_ms": 14539,
+        "server_median_ms": 8138,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "clef-flash": {
+        "requests": 3,
+        "errors": 0,
+        "complete10": 0,
+        "complete_all": 0,
+        "client_median_ms": 15620,
+        "server_median_ms": 8633,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "client_ratio": 1.0743517435862164,
+      "saved_ms": -1081
+    },
+    {
+      "id": "Q18",
+      "critical": false,
+      "answerability": "insufficient",
+      "clef": {
+        "requests": 3,
+        "errors": 1,
+        "complete10": 0,
+        "complete_all": 0,
+        "client_median_ms": 17060.5,
+        "server_median_ms": 10182.0,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "clef-flash": {
+        "requests": 3,
+        "errors": 1,
+        "complete10": 0,
+        "complete_all": 0,
+        "client_median_ms": 15464.5,
+        "server_median_ms": 9387.5,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "client_ratio": 0.9064505729609331,
+      "saved_ms": 1596.0
+    }
+  ],
+  "critical_fact_losses": [
+    {
+      "id": "Q01",
+      "repetition": 2,
+      "facts": [
+        "F1"
+      ]
+    },
+    {
+      "id": "Q05",
+      "repetition": 2,
+      "facts": [
+        "F1"
+      ]
+    }
+  ],
+  "scored_requests": [
+    {
+      "id": "Q01",
+      "repetition": 1,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 17323,
+      "server_ms": 11243,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q01",
+      "repetition": 1,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 18090,
+      "server_ms": 11310,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q02",
+      "repetition": 1,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 17105,
+      "server_ms": 10029,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.0,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.0,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q02",
+      "repetition": 1,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 16762,
+      "server_ms": 10929,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.0,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.0,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q03",
+      "repetition": 1,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 17267,
+      "server_ms": 11162,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5,
+        "duplicate_slots": 2
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5,
+        "duplicate_slots": 2
+      }
+    },
+    {
+      "id": "Q03",
+      "repetition": 1,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 16548,
+      "server_ms": 10577,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5,
+        "duplicate_slots": 2
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5,
+        "duplicate_slots": 2
+      }
+    },
+    {
+      "id": "Q05",
+      "repetition": 1,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 18219,
+      "server_ms": 11740,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 2
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 2
+      }
+    },
+    {
+      "id": "Q05",
+      "repetition": 1,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 18642,
+      "server_ms": 11068,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 2
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 2
+      }
+    },
+    {
+      "id": "Q06",
+      "repetition": 1,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 18311,
+      "server_ms": 12624,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 1
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.020833333333333332,
+        "duplicate_slots": 1
+      }
+    },
+    {
+      "id": "Q06",
+      "repetition": 1,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 18901,
+      "server_ms": 13114,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 1
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.020833333333333332,
+        "duplicate_slots": 1
+      }
+    },
+    {
+      "id": "Q08",
+      "repetition": 1,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 15874,
+      "server_ms": 10049,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5555555555555556,
+        "duplicate_slots": 1
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5555555555555556,
+        "duplicate_slots": 1
+      }
+    },
+    {
+      "id": "Q08",
+      "repetition": 1,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 18486,
+      "server_ms": 10588,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5555555555555556,
+        "duplicate_slots": 1
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5555555555555556,
+        "duplicate_slots": 1
+      }
+    },
+    {
+      "id": "Q09",
+      "repetition": 1,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 16851,
+      "server_ms": 11096,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.7777777777777778,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.7777777777777778,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q09",
+      "repetition": 1,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 17617,
+      "server_ms": 11876,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.7777777777777778,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.7777777777777778,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q11",
+      "repetition": 1,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 16731,
+      "server_ms": 10835,
+      "error": null,
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": 1.0,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": 1.0,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q11",
+      "repetition": 1,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 16885,
+      "server_ms": 11245,
+      "error": null,
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": 1.0,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": 1.0,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q14",
+      "repetition": 1,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 19043,
+      "server_ms": 12683,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 5
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 5
+      }
+    },
+    {
+      "id": "Q14",
+      "repetition": 1,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 19029,
+      "server_ms": 13237,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 5
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 5
+      }
+    },
+    {
+      "id": "Q16",
+      "repetition": 1,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 20107,
+      "server_ms": 13987,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 3
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 3
+      }
+    },
+    {
+      "id": "Q16",
+      "repetition": 1,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 16587,
+      "server_ms": 10815,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 3
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 3
+      }
+    },
+    {
+      "id": "Q17",
+      "repetition": 1,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 14068,
+      "server_ms": 7971,
+      "error": null,
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q17",
+      "repetition": 1,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 15620,
+      "server_ms": 9784,
+      "error": null,
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q18",
+      "repetition": 1,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 15056,
+      "server_ms": 9248,
+      "error": null,
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q18",
+      "repetition": 1,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 16985,
+      "server_ms": 10951,
+      "error": null,
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q01",
+      "repetition": 2,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 16147,
+      "server_ms": 10054,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q01",
+      "repetition": 2,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": false,
+      "client_ms": 9335,
+      "server_ms": null,
+      "error": "decision_capacity_exceeded",
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q02",
+      "repetition": 2,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 15346,
+      "server_ms": 9708,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.0,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.0,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q02",
+      "repetition": 2,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 16184,
+      "server_ms": 10407,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.0,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.0,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q03",
+      "repetition": 2,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 15555,
+      "server_ms": 9741,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5,
+        "duplicate_slots": 2
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5,
+        "duplicate_slots": 2
+      }
+    },
+    {
+      "id": "Q03",
+      "repetition": 2,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 18000,
+      "server_ms": 9678,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5,
+        "duplicate_slots": 2
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5,
+        "duplicate_slots": 2
+      }
+    },
+    {
+      "id": "Q05",
+      "repetition": 2,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": false,
+      "client_ms": 9278,
+      "server_ms": null,
+      "error": "decision_capacity_exceeded",
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q05",
+      "repetition": 2,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 17759,
+      "server_ms": 10703,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 2
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 2
+      }
+    },
+    {
+      "id": "Q06",
+      "repetition": 2,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 21028,
+      "server_ms": 13420,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 1
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.020833333333333332,
+        "duplicate_slots": 1
+      }
+    },
+    {
+      "id": "Q06",
+      "repetition": 2,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 19017,
+      "server_ms": 12325,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 1
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.020833333333333332,
+        "duplicate_slots": 1
+      }
+    },
+    {
+      "id": "Q08",
+      "repetition": 2,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": false,
+      "client_ms": 8589,
+      "server_ms": null,
+      "error": "decision_capacity_exceeded",
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q08",
+      "repetition": 2,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 17334,
+      "server_ms": 10918,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5555555555555556,
+        "duplicate_slots": 1
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5555555555555556,
+        "duplicate_slots": 1
+      }
+    },
+    {
+      "id": "Q09",
+      "repetition": 2,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 20183,
+      "server_ms": 13185,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.7777777777777778,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.7777777777777778,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q09",
+      "repetition": 2,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 19071,
+      "server_ms": 12619,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.7777777777777778,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.7777777777777778,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q11",
+      "repetition": 2,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 18347,
+      "server_ms": 11889,
+      "error": null,
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": 1.0,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": 1.0,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q11",
+      "repetition": 2,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 17377,
+      "server_ms": 11368,
+      "error": null,
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": 1.0,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": 1.0,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q14",
+      "repetition": 2,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 19712,
+      "server_ms": 12279,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 5
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 5
+      }
+    },
+    {
+      "id": "Q14",
+      "repetition": 2,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 18906,
+      "server_ms": 12188,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 5
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 5
+      }
+    },
+    {
+      "id": "Q16",
+      "repetition": 2,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": false,
+      "client_ms": 9490,
+      "server_ms": null,
+      "error": "decision_capacity_exceeded",
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q16",
+      "repetition": 2,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 17353,
+      "server_ms": 11425,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 3
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 3
+      }
+    },
+    {
+      "id": "Q17",
+      "repetition": 2,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 14539,
+      "server_ms": 8138,
+      "error": null,
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q17",
+      "repetition": 2,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 15019,
+      "server_ms": 8633,
+      "error": null,
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q18",
+      "repetition": 2,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 15873,
+      "server_ms": 9527,
+      "error": null,
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q18",
+      "repetition": 2,
+      "model": "clef",
+      "valid_pair": true,
+      "success": false,
+      "client_ms": 8449,
+      "server_ms": null,
+      "error": "decision_capacity_exceeded",
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q01",
+      "repetition": 3,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 16571,
+      "server_ms": 10201,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q01",
+      "repetition": 3,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 17272,
+      "server_ms": 10904,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q02",
+      "repetition": 3,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 15702,
+      "server_ms": 9967,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.0,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.0,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q02",
+      "repetition": 3,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 16494,
+      "server_ms": 9982,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.0,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.0,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q03",
+      "repetition": 3,
+      "model": "clef",
+      "valid_pair": true,
+      "success": false,
+      "client_ms": 9575,
+      "server_ms": null,
+      "error": "decision_capacity_exceeded",
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q03",
+      "repetition": 3,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 16199,
+      "server_ms": 9647,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5,
+        "duplicate_slots": 2
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5,
+        "duplicate_slots": 2
+      }
+    },
+    {
+      "id": "Q05",
+      "repetition": 3,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 16553,
+      "server_ms": 10121,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 2
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 2
+      }
+    },
+    {
+      "id": "Q05",
+      "repetition": 3,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 17559,
+      "server_ms": 10085,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 2
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.14285714285714285,
+        "duplicate_slots": 2
+      }
+    },
+    {
+      "id": "Q06",
+      "repetition": 3,
+      "model": "clef",
+      "valid_pair": true,
+      "success": false,
+      "client_ms": 9514,
+      "server_ms": null,
+      "error": "decision_capacity_exceeded",
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q06",
+      "repetition": 3,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 19471,
+      "server_ms": 12897,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 1
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.020833333333333332,
+        "duplicate_slots": 1
+      }
+    },
+    {
+      "id": "Q08",
+      "repetition": 3,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 17955,
+      "server_ms": 11418,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5555555555555556,
+        "duplicate_slots": 1
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5555555555555556,
+        "duplicate_slots": 1
+      }
+    },
+    {
+      "id": "Q08",
+      "repetition": 3,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 17799,
+      "server_ms": 11356,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5555555555555556,
+        "duplicate_slots": 1
+      },
+      "all": {
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.5555555555555556,
+        "duplicate_slots": 1
+      }
+    },
+    {
+      "id": "Q09",
+      "repetition": 3,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 18288,
+      "server_ms": 11876,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.7777777777777778,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.7777777777777778,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q09",
+      "repetition": 3,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 20136,
+      "server_ms": 12490,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.7777777777777778,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.7777777777777778,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q11",
+      "repetition": 3,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 18035,
+      "server_ms": 11498,
+      "error": null,
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": 1.0,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": 1.0,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q11",
+      "repetition": 3,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 17496,
+      "server_ms": 11100,
+      "error": null,
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": 1.0,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": 1.0,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q14",
+      "repetition": 3,
+      "model": "clef",
+      "valid_pair": true,
+      "success": false,
+      "client_ms": 11111,
+      "server_ms": null,
+      "error": "decision_capacity_exceeded",
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q14",
+      "repetition": 3,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": false,
+      "client_ms": 9109,
+      "server_ms": null,
+      "error": "decision_capacity_exceeded",
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q16",
+      "repetition": 3,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": false,
+      "client_ms": 8845,
+      "server_ms": null,
+      "error": "decision_capacity_exceeded",
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": 0.0,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q16",
+      "repetition": 3,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 17366,
+      "server_ms": 10881,
+      "error": null,
+      "at10": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 3
+      },
+      "all": {
+        "facts": [
+          "F1"
+        ],
+        "complete": true,
+        "fact_coverage": 1.0,
+        "unrelated_fraction": 0.1,
+        "duplicate_slots": 3
+      }
+    },
+    {
+      "id": "Q17",
+      "repetition": 3,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 16445,
+      "server_ms": 9290,
+      "error": null,
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q17",
+      "repetition": 3,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 15658,
+      "server_ms": 8200,
+      "error": null,
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q18",
+      "repetition": 3,
+      "model": "clef-flash",
+      "valid_pair": true,
+      "success": false,
+      "client_ms": 9624,
+      "server_ms": null,
+      "error": "decision_capacity_exceeded",
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    },
+    {
+      "id": "Q18",
+      "repetition": 3,
+      "model": "clef",
+      "valid_pair": true,
+      "success": true,
+      "client_ms": 17136,
+      "server_ms": 9413,
+      "error": null,
+      "at10": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      },
+      "all": {
+        "facts": [],
+        "complete": false,
+        "fact_coverage": null,
+        "unrelated_fraction": null,
+        "duplicate_slots": 0
+      }
+    }
+  ],
+  "invalid_pairs": [],
+  "all_requests": 72,
+  "errors": 11,
+  "median_client_ratio": 0.9936723121752382,
+  "median_saved_ms": 118.0
+}

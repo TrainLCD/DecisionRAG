@@ -1,5 +1,5 @@
 {
-  "method": "AI annotation of pooled passages without model identity or rank. Same labels applied to A/B. Provisional; not independent human review. Relevance includes concrete diagnostic context and remedies, but excludes merely matching terminology.",
+  "method": "One AI reviewer annotated pooled passages and applied identical labels to A/B. Alternative evidence was added without changing required facts. This is provisional, not independent human or strictly blinded review.",
   "annotations": {
     "Q01": {
       "TrainLCD/MobileApp#423:0": {
@@ -706,5 +706,7 @@
         "note": "鉄道GTFSの較正であり、都営バスと西武・京王バスの認証条件ではない。"
       }
     }
-  }
+  },
+  "label_version": 2,
+  "question_version": 1
 }
