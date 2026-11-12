@@ -130,7 +130,7 @@ fn matching(f: &Feature, text: &str) -> f64 {
 pub fn highlight_terms(query: &str, text: &str) -> Vec<String> {
     // Match the rendered text; inline formatting must not split a query term.
     // The browser maps these terms back to sanitized DOM text nodes.
-    use pulldown_cmark::{Event, Options, Parser, TagEnd};
+    use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
     let mut visible = String::new();
     for event in Parser::new_ext(
         text,
@@ -138,6 +138,14 @@ pub fn highlight_terms(query: &str, text: &str) -> Vec<String> {
     ) {
         match event {
             Event::Text(value) | Event::Code(value) => visible.push_str(&value),
+            Event::Start(
+                Tag::Emphasis
+                | Tag::Strong
+                | Tag::Strikethrough
+                | Tag::Link { .. }
+                | Tag::Image { .. },
+            ) => {}
+            Event::Start(_) => visible.push('\n'),
             Event::SoftBreak => visible.push(' '),
             Event::HardBreak | Event::Rule => visible.push('\n'),
             Event::End(
@@ -607,6 +615,15 @@ mod tests {
         assert!(highlight_terms("GPS", "G\n\nPS").is_empty());
         assert!(highlight_terms("GPS", "[unrelated](https://example.test/GPS)").is_empty());
         assert_eq!(highlight_terms("GPS", "**Ｇ**ＰＳ"), vec!["gps"]);
+    }
+    #[test]
+    fn highlights_handle_soft_breaks_and_nested_lists() {
+        assert_eq!(
+            highlight_terms("GPS", "location\nupdates"),
+            vec!["location updates"]
+        );
+        assert_eq!(highlight_terms("GPS", "- context\n  - GPS"), vec!["gps"]);
+        assert!(highlight_terms("GPS", "- location\n  - updates").is_empty());
     }
     #[test]
     fn highlights_share_scoring_aliases_and_boundaries() {

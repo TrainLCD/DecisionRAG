@@ -262,3 +262,21 @@ test('streaming and final summaries use sanitized Markdown with safe citation li
     assert.doesNotMatch(c.$('answer-panel').textContent, /生成中/);
   } finally { c.close(); }
 });
+
+test('soft breaks match aliases without joining blocks or nested list items', async () => {
+  const payload = result(1);
+  Object.assign(payload.evidence[0], {
+    text: 'location\nupdates',
+    text_html: '<p>location\nupdates</p><ul><li>context<ul><li>GPS</li></ul></li></ul><p>location</p><p>updates</p>',
+    highlight_terms: ['location updates', 'gps'],
+  });
+  const c = client(() => Response.json(payload));
+  try {
+    c.submit();
+    await until(() => !c.$('search-button').disabled);
+    const body = c.window.document.querySelector('.evidence-excerpt');
+    assert.deepEqual([...body.querySelectorAll('mark')].map(n => n.textContent), ['location\nupdates', 'GPS']);
+    assert.equal(body.querySelector('li li mark').textContent, 'GPS');
+    assert.equal(body.querySelectorAll('p mark').length, 1);
+  } finally { c.close(); }
+});

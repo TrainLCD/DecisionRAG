@@ -138,9 +138,9 @@ function highlightMatches(root, terms) {
       text += node.data;
       return;
     }
-    if (blocks.has(node.nodeName)) text += "\n";
+    if (blocks.has(node.nodeName)) text += "\0";
     for (const child of node.childNodes) collect(child);
-    if (blocks.has(node.nodeName)) text += "\n";
+    if (blocks.has(node.nodeName)) text += "\0";
   }
   collect(root);
   // Map NFKC/case-normalized graphemes back to original UTF-16 offsets. This
@@ -148,7 +148,7 @@ function highlightMatches(root, terms) {
   let normalized = "";
   const offsets = [];
   for (const { segment, index } of new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text)) {
-    const value = segment.normalize("NFKC").toLowerCase();
+    const value = segment.normalize("NFKC").toLowerCase().replace(/\r\n|[\r\n]/g, " ");
     normalized += value;
     for (let i = 0; i < value.length; i++) offsets.push([index, index + segment.length]);
   }
