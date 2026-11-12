@@ -134,7 +134,7 @@ function highlightMatches(root, terms) {
   const blocks = new Set(["P", "DIV", "LI", "PRE", "BLOCKQUOTE", "H1", "H2", "H3", "H4", "H5", "H6", "TD", "TH", "BR", "HR"]);
   function collect(node) {
     if (node.nodeType === 3) {
-      nodes.push({ node, start: text.length, end: text.length + node.data.length });
+      nodes.push({ node, start: text.length, end: text.length + node.data.length, pre: !!node.parentElement?.closest("pre") });
       text += node.data;
       return;
     }
@@ -147,8 +147,13 @@ function highlightMatches(root, terms) {
   // keeps full-width characters, combining marks and emoji intact.
   let normalized = "";
   const offsets = [];
+  let nodeIndex = 0;
   for (const { segment, index } of new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text)) {
-    const value = segment.normalize("NFKC").toLowerCase().replace(/\r\n|[\r\n]/g, " ");
+    while (nodeIndex < nodes.length && nodes[nodeIndex].end <= index) nodeIndex++;
+    const current = nodes[nodeIndex];
+    const pre = current?.pre && index >= current.start;
+    const normalizedSegment = segment.normalize("NFKC").toLowerCase();
+    const value = pre ? normalizedSegment : normalizedSegment.replace(/\r\n|[\r\n]/g, " ");
     normalized += value;
     for (let i = 0; i < value.length; i++) offsets.push([index, index + segment.length]);
   }

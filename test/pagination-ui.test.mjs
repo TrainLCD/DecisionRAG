@@ -280,3 +280,21 @@ test('soft breaks match aliases without joining blocks or nested list items', as
     assert.equal(body.querySelectorAll('p mark').length, 1);
   } finally { c.close(); }
 });
+
+test('code block line breaks are preserved while paragraph soft breaks match', async () => {
+  const payload = result(1);
+  Object.assign(payload.evidence[0], {
+    text: 'location updates\n\n```\nlocation\nupdates\n```',
+    text_html: '<p>location updates</p><p>location\nupdates</p><pre><code>location\nupdates\n</code></pre>',
+    highlight_terms: ['location updates'],
+  });
+  const c = client(() => Response.json(payload));
+  try {
+    c.submit();
+    await until(() => !c.$('search-button').disabled);
+    const body = c.window.document.querySelector('.evidence-excerpt');
+    assert.equal(body.querySelectorAll('mark').length, 2);
+    assert.equal(body.querySelector('pre mark'), null);
+    assert.equal(body.querySelector('pre').textContent, 'location\nupdates\n');
+  } finally { c.close(); }
+});
