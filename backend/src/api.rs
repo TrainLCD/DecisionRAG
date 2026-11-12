@@ -87,7 +87,7 @@ pub async fn handle(h: &impl Host, c: &Config, request: Value) -> Result<Value> 
     }
     Ok(result)
 }
-fn html(text: &str) -> String {
+pub(crate) fn html(text: &str) -> String {
     let parser = pulldown_cmark::Parser::new_ext(
         text,
         pulldown_cmark::Options::ENABLE_TABLES
@@ -243,6 +243,16 @@ fn finish(mut state: Value, result: Value) -> Value {
     state["timings"]["model_ms"] = json!(model_ms);
     state["timings"]["generation_ms"] = json!(generation_ms);
     let mut out = result;
+    if let Some(text) = out["answer"].as_str() {
+        out["answer_html"] = json!(html(text));
+    }
+    if let Some(summaries) = out["ticket_summaries"].as_array_mut() {
+        for summary in summaries {
+            if let Some(text) = summary["text"].as_str() {
+                summary["text_html"] = json!(html(text));
+            }
+        }
+    }
     for key in ["evidence", "hit_count", "trace", "timings"] {
         out[key] = state[key].clone();
     }

@@ -91,7 +91,11 @@ pub fn preview(input: &str) -> Value {
             i += 1;
         }
     }
-    json!({"answer":parts[0],"summaries":parts[1]})
+    let markup: Vec<Vec<_>> = parts
+        .iter()
+        .map(|items| items.iter().map(|text| crate::api::html(text)).collect())
+        .collect();
+    json!({"answer":parts[0],"summaries":parts[1],"answer_html":markup[0],"summaries_html":markup[1]})
 }
 async fn collect(h: &impl Host) -> Result<Value> {
     let mut pending = String::new();
@@ -280,7 +284,6 @@ pub async fn answer(
         .filter_map(|v| read_claim(v, &valid))
         .collect();
     let mut summaries = Vec::new();
-    let mut seen = HashSet::new();
     for value in draft["summaries"].as_array().into_iter().flatten() {
         let Some(mut claim) = read_claim(value, &valid) else {
             continue;
@@ -288,13 +291,11 @@ pub async fn answer(
         let Some(source) = value["source_id"].as_str() else {
             continue;
         };
-        if !seen.insert(source)
-            || !array(&claim["citations"])?.iter().all(|id| {
-                context
-                    .iter()
-                    .any(|p| p["citation"] == *id && p["source_id"] == source)
-            })
-        {
+        if !array(&claim["citations"])?.iter().all(|id| {
+            context
+                .iter()
+                .any(|p| p["citation"] == *id && p["source_id"] == source)
+        }) {
             continue;
         }
         claim["source_id"] = json!(source);
@@ -326,12 +327,32 @@ pub async fn answer(
         .filter(|(i, _)| supported(*i))
         .map(|(_, v)| v.clone())
         .collect();
-    let summaries: Vec<_> = summaries
-        .iter()
-        .enumerate()
-        .filter(|(i, _)| supported(claims.len() + *i))
-        .map(|(_, v)| v.clone())
-        .collect();
+    // Validate every candidate before grouping by source. An invalid first
+    // summary must not suppress later valid summaries of the same document.
+    let mut grouped: Vec<Value> = Vec::new();
+    for (index, summary) in summaries.iter().enumerate() {
+        if !supported(claims.len() + index) {
+            continue;
+        }
+        if let Some(existing) = grouped
+            .iter_mut()
+            .find(|v| v["source_id"] == summary["source_id"])
+        {
+            if s(existing, "text") != s(summary, "text") {
+                existing["text"] =
+                    json!(format!("{}\n\n{}", s(existing, "text"), s(summary, "text")));
+            }
+            for id in summary["citations"].as_array().unwrap() {
+                let ids = existing["citations"].as_array_mut().unwrap();
+                if !ids.contains(id) {
+                    ids.push(id.clone());
+                }
+            }
+        } else {
+            grouped.push(summary.clone());
+        }
+    }
+    let summaries = grouped;
     if verified.is_empty() && summaries.is_empty() {
         return fallback(query, &context);
     }

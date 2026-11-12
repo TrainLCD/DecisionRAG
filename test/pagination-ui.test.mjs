@@ -182,3 +182,33 @@ for (const transport of ['json', 'sse']) {
     } finally { c.close(); }
   });
 }
+
+test('streaming and final summaries use sanitized Markdown with safe citation links', async () => {
+  let controller;
+  const c = client(() => new Response(new ReadableStream({ start(value) { controller = value; } }), { headers: { 'Content-Type': 'text/event-stream' } }));
+  const markup = '<h2>変更点</h2><ul><li><strong>GPS</strong>と<code>更新</code> [p1]</li></ul><a href="javascript:alert(1)">危険</a><script>alert(1)</script>';
+  const text = '## 変更点\n- **GPS**と`更新` [p1]';
+  const emit = (event, data) => controller.enqueue(new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+  const check = () => {
+    const panel = c.$('answer-panel');
+    assert.equal(panel.querySelector('h2').textContent, '変更点');
+    assert.equal(panel.querySelector('li strong').textContent, 'GPS');
+    assert.equal(panel.querySelector('li code').textContent, '更新');
+    assert.equal(panel.querySelector('li a').getAttribute('href'), '#evidence-p1');
+    assert.equal(panel.querySelector('script, [href^="javascript:"]'), null);
+    assert.doesNotMatch(panel.textContent, /\*\*GPS\*\*/);
+  };
+  try {
+    c.submit(true);
+    await until(() => !!controller);
+    emit('sources', result(1));
+    emit('draft', { answer: ['回答'], summaries: [text], summaries_html: [markup] });
+    await until(() => !!c.$('answer-panel').querySelector('h2'));
+    check();
+    emit('result', { ...result(1), status: 'summarized', answer: '回答 [p1]', answer_html: '<p>回答 [p1]</p>', ticket_summaries: [{ source_id: 'source-0', text, text_html: markup }] });
+    controller.close();
+    await until(() => !c.$('search-button').disabled);
+    check();
+    assert.doesNotMatch(c.$('answer-panel').textContent, /生成中/);
+  } finally { c.close(); }
+});

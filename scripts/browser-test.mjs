@@ -1,5 +1,6 @@
 import {chromium} from 'playwright';
-import {spawn} from 'node:child_process';
+import {spawn,execFileSync} from 'node:child_process';
+import {existsSync,readFileSync} from 'node:fs';
 import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const server=spawn(process.execPath,['--loader','./scripts/wasm-test-loader.mjs','scripts/local-fixture-server.mjs'],{stdio:['ignore','pipe','inherit']});
@@ -23,5 +24,16 @@ try{
  await page.locator('#pagination-top [data-page-step="-1"]').click();assert.equal(await page.locator('.evidence-card').first().textContent(),first);assert.equal(searches,1,'Page navigation must never search or regenerate');
  await mkdir('test-results',{recursive:true});await page.screenshot({path:'test-results/rust-browser.png',fullPage:true});
  await page.locator('#query').fill('zzqnonexistentzzq');await page.locator('#search-button').click();await page.waitForFunction(()=>document.querySelector('#results').getAttribute('aria-busy')==='false');assert.equal(await page.locator('.evidence-card').count(),0);
+ // Replay the actual Rust response produced by the GTFS integration regression.
+ if(!existsSync('test-results/gtfs-answer-stream.sse')) execFileSync(process.execPath,['--loader','./scripts/wasm-test-loader.mjs','--test','dist-test/test/gtfs-answer-regression.test.js'],{stdio:'inherit'});
+ await page.route('**/answer',route=>route.fulfill({status:200,contentType:'text/event-stream',body:readFileSync('test-results/gtfs-answer-stream.sse','utf8')}));
+ await page.locator('#query').fill('gtfs導入の際の課題と議論');await page.locator('#search-button').click();
+ await page.waitForFunction(()=>document.querySelector('#results').getAttribute('aria-busy')==='false');
+ const answerPanel=page.locator('#answer-panel');
+ assert.match(await answerPanel.textContent(),/バスデータの特性/);
+ assert.doesNotMatch(await answerPanel.textContent(),/回答を確認できませんでした|資料の記載：|FNC-1a|生成中/);
+ assert.ok(await answerPanel.locator('code').count()>0,'Final Markdown code must be rendered');
+ assert.ok(await answerPanel.locator('a[href^="#evidence-"]').count()>0,'Citations must remain links');
+ await page.screenshot({path:'test-results/gtfs-summary-markdown.png',fullPage:true});
  assert.deepEqual(errors,[]);await writeFile('test-results/browser.json',JSON.stringify({backend:'Rust/WASM',hits:result.hit_count,per_page:10,pagination_requests:0,errors},null,2));console.log('Browser passed: real Rust/WASM, SSE, totals, 10 per page, no regeneration, empty result.');
 }catch(error){await mkdir('test-results',{recursive:true});await page?.screenshot({path:'test-results/failure.png',fullPage:true}).catch(()=>{});throw error;}finally{await browser?.close();server.kill();}

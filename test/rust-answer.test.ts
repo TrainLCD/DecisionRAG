@@ -6,6 +6,7 @@ import { saveSource } from './reference/store.js';
 
 for (const stream of [false, true]) {
   for (const scenario of [
+    { name: 'Markdown paraphrase', source: 'GPS位置情報を更新する処理を修正した。', text: '**GPS位置情報**の更新を修正しています。', accepted: true },
     { name: 'supported paraphrase', source: 'GPS位置情報を更新する処理を修正した。', text: 'GPS位置情報の更新を修正しています。', accepted: true },
     { name: 'related paraphrase with unknown entailment', source: '背景で新しい測位が10秒以上届かない場合だけ、別の背景対応CLLocationManagerで補完します。', text: 'iOSでは、背景での通常測位が10秒以上途絶した場合にのみ、別のCLLocationManagerを使用して補完測位を開始する仕組みになっています。', accepted: true },
     { name: 'negation reversal', source: 'バックグラウンドではGPS位置情報を更新しない。', text: 'バックグラウンドではGPS位置情報を更新する。', accepted: false },
@@ -37,6 +38,12 @@ for (const stream of [false, true]) {
         if (scenario.accepted) {
           assert.ok(result.answer?.includes(scenario.text), JSON.stringify(result));
           assert.equal(result.ticket_summaries[0].text, scenario.text);
+          assert.equal(typeof result.answer_html, 'string');
+          assert.equal(typeof result.ticket_summaries[0].text_html, 'string');
+          if (scenario.name === 'Markdown paraphrase') {
+            assert.match(result.answer_html, /<strong>GPS位置情報<\/strong>/);
+            assert.match(result.ticket_summaries[0].text_html, /<strong>GPS位置情報<\/strong>/);
+          }
           assert.equal(result.verification.semantic_status, 'unknown');
           assert.ok(result.trace.filter((t: any) => t.stage !== 'generate_answer').every((t: any) => t.calls === 0));
         } else assert.equal(result.answer, null);
