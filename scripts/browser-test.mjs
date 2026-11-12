@@ -1,6 +1,6 @@
 import {chromium} from 'playwright';
 import {spawn,execFileSync} from 'node:child_process';
-import {existsSync,readFileSync} from 'node:fs';
+import {readFileSync} from 'node:fs';
 import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const server=spawn(process.execPath,['--loader','./scripts/wasm-test-loader.mjs','scripts/local-fixture-server.mjs'],{stdio:['ignore','pipe','inherit']});
@@ -25,7 +25,7 @@ try{
  await mkdir('test-results',{recursive:true});await page.screenshot({path:'test-results/rust-browser.png',fullPage:true});
  await page.locator('#query').fill('zzqnonexistentzzq');await page.locator('#search-button').click();await page.waitForFunction(()=>document.querySelector('#results').getAttribute('aria-busy')==='false');assert.equal(await page.locator('.evidence-card').count(),0);
  // Replay the actual Rust response produced by the GTFS integration regression.
- if(!existsSync('test-results/gtfs-answer-stream.sse')) execFileSync(process.execPath,['--loader','./scripts/wasm-test-loader.mjs','--test','dist-test/test/gtfs-answer-regression.test.js'],{stdio:'inherit'});
+ execFileSync(process.execPath,['--loader','./scripts/wasm-test-loader.mjs','--test','dist-test/test/gtfs-answer-regression.test.js'],{stdio:'inherit'});
  await page.route('**/answer',route=>route.fulfill({status:200,contentType:'text/event-stream',body:readFileSync('test-results/gtfs-answer-stream.sse','utf8')}));
  await page.locator('#query').fill('gtfs導入の際の課題と議論');await page.locator('#search-button').click();
  await page.waitForFunction(()=>document.querySelector('#results').getAttribute('aria-busy')==='false');

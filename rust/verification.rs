@@ -170,16 +170,19 @@ fn numeric_tokens(text: &str) -> Vec<&str> {
         .collect()
 }
 
+fn numeric_clauses(text: &str) -> impl Iterator<Item = &str> {
+    text.split(['、', ',', ';', '。', '\n'])
+        .flat_map(|s| s.split(" and "))
+}
+
 /// Bind each numeric assertion to the closest subject-bearing source, instead
 /// of borrowing a matching number from an unrelated citation. Separate clauses
 /// can still summarize different sources and different numbers.
 pub(super) fn numeric_conflict(claim: &str, sources: &[&str]) -> bool {
     let claim = normalize(claim);
     let sources: Vec<_> = sources.iter().map(|s| normalize(s)).collect();
-    for clause in claim
-        .split(['、', ',', ';', '。', '\n'])
-        .flat_map(|s| s.split(" and "))
-    {
+    let sources: Vec<_> = sources.iter().flat_map(|s| numeric_clauses(s)).collect();
+    for clause in numeric_clauses(&claim) {
         let numbers = numeric_tokens(clause);
         if numbers.is_empty() {
             continue;
