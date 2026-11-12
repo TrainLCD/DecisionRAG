@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Jev, probability } from '../src/jev.js';
+import { Jev, probability } from './legacy-judge.js';
 import { retrieve, d1Store, DEFAULT_BUDGETS, gate } from '../src/retrieval.js';
 import { DOCUMENT_PAGE_SIZE, saveSource, splitPassages } from '../src/store.js';
 import { answer } from '../src/answer.js';

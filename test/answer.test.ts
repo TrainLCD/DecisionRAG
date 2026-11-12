@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { answer } from '../src/answer.js';
-import type { CitedClaim, Judge } from '../src/jev.js';
+import type { CitedClaim, Judge } from './legacy-judge.js';
 import type { Evidence } from '../src/retrieval.js';
 import type { Env } from '../src/types.js';
 

@@ -14,8 +14,12 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
       - run: npm ci
       - run: npm run build:pwa
+      - run: cargo test --locked
       - run: npm run check
       - run: npm test
       - run: npx wrangler d1 migrations apply trainlcd-decision-rag --local
@@ -41,6 +45,9 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
       - run: npm ci
       - run: npm run build:pwa
       - name: Prepare production Wrangler config
@@ -127,6 +134,9 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
       - run: npm ci
       - run: npm run build:pwa
       - name: Prepare read-only preview

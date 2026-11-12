@@ -1,0 +1,25 @@
+[package]
+name = "decision-rag-core"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+path = "rust/lib.rs"
+
+[[bin]]
+name = "decision-rag"
+path = "rust/main.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+unicode-normalization = "0.1"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

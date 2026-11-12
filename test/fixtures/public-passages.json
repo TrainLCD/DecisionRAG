@@ -1,0 +1,885 @@
+[
+  {
+    "id": "TrainLCD/MobileApp#420:0",
+    "source_id": "TrainLCD/MobileApp#420",
+    "text": "(No body)",
+    "title": "iOS版 トンネル通過時間が長いと移動していないとカウントされて位置情報追跡が切れる",
+    "url": "https://github.com/TrainLCD/MobileApp/issues/420",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "issue",
+    "metadata": {
+      "number": 420,
+      "state": "closed",
+      "state_reason": "completed",
+      "labels": [
+        "bug"
+      ],
+      "author": "TinyKitten",
+      "release_status": "unknown"
+    },
+    "ordinal": 0,
+    "updated_at": "2020-12-30T17:19:27Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#423:0",
+    "source_id": "TrainLCD/MobileApp#423",
+    "text": "closes #420 \r\n卍して動作確認\n\n## Changed files\nmodified: src/screens/Main/index.tsx",
+    "title": "位置情報更新をiosで止めないようにした",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/423",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "metadata": {
+      "number": 423,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2020-12-30T17:19:27Z",
+      "merge_commit_sha": "1671b59efa8ef335cbe234be0e6f6c462982bff7",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "fix/ios-tunnel-fix",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2020-12-30T17:19:28Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/changelog.md:0",
+    "source_id": "TrainLCD/MobileApp:docs/changelog.md",
+    "text": "# 変更履歴\n\n依存パッケージの更新や Expo SDK の移行など、アプリ全体に影響する変更の記録。\nCLAUDE.md「Security & Configuration Guardrails」に従い、依存更新後に実施した\n`expo-doctor` / `npm run lint` / `npm test` / `npm run typecheck` の結果をここに残す。\n\n新しいエントリを上に追加する。\n\n## 2026-11-05 — iOS背景補完測位の開始待ちを短縮\n\n- #7355で10秒に揃えていた背景補完測位の開始待ちを5秒へ分離しました。測位の取得上限30秒、失敗後の再試行待ち10秒、測位の鮮度上限10秒は維持します。前景の補完開始と通常の10m制限も維持します。\n- 通常測位と補完測位のどちらも、JS側の最大許容精度を超える測位では補完を延期・終了しません。リモート設定の取得後は、許容精度の変更を背景タスクにも反映します。\n- 許容精度の更新時に古い開始処理が新しい測位タスクを停止する競合を修正しました。開始と停止を直列化し、古い開始と停止の完了後に新しい設定で開始します。開始後に取り消しを検出して個別に停止する処理は、この順序保証へ置き換えました。\n- `npm run lint`、`npm run typecheck`、測位関連7スイート・130テストに成功しました。未変更のexpo-location 58.0.16へパッチを適用し、検証対象のネイティブ4ファイルとの一致を確認しました。Objective-CのiOSビルドと実機走行は未実施です。\n- 背景補完の回数が増えるため、電池消費と到着判定までの時間を実機で比較します。サスペンド中は開始タイマーを実行できません。適用にはiOSアプリの再ビルドが必要です。\n\n## 2026-11-03 — iOS補完測位のビルドエラー修正\n\n- カナリアのArchiveで、補完測位のエラー判定に使用する`kCLErrorLocationUnknown`の宣言を参照できず、コンパイルが失敗しました。`CoreLocation/CLError.h`を明示的にimportします。\n- Cの判定関数テストではObjective-Cのimport不足を検出できませんでした。修正後の確認にはiOSのArchiveも必要です。\n\n## 2026-11-03 — iOS背景測位の途絶時に限定した補完測位\n\n- 通常測位の10m制限は維持します。背景で新しい測位が10秒以上届かない場合だけ、別の背景対応CLLocationManagerで補完します。要求精度と活動種別は通常測位から引き継ぎます。\n- 新しく有効な時刻の測位を受信したら補完を停止し、既存の位置情報タスクへ即時配信します。通常測位から新しい測位が届いた場合も補完を終了します。JavaScript側の精度フィルターと重複排除を経由します。\n- 補完の待機上限は30秒です。タイムアウト、取得失敗、UIKitの背景実行期限切れでは購読を閉じ、再試行まで10秒待ちます。古い測位や重複測位では待機期限を延長しません。\n- 前景復帰、設定変更、タスク解除では補完用のタイマー、測位要求、背景タスクを破棄します。端末の省電力モードへの移行はネイティブ側でも監視します。常時位置情報の許可がない場合と省電力測位中には開始しません。\n- #7353の継続測位の10m制限を残し、途絶時の補完要求に限って距離制限を設けません。#7257の通常の保留データ配信処理とAndroidの測位処理は維持します。\n- 待機用タイマーでアプリのサスペンドを解除することはできません。補完中だけ有限のUIKit背景タスクを使用します。OSから測位が届かない場合や、座標の誤差自体は解消しません。電池消費と発熱は実機で比較する必要があります。\n- `npm run lint`、`npm run typecheck`、測位関連7スイート・125テストに成功しました。ネイティブ側の判定関数はCとしてコンパイルし、途絶判定、再試行待機、古い測位と重複測位、省電力条件を検証しました。未変更のexpo-location 58.0.16へのパッチ適用と適用後のファイル一致を確認しました。\n- Objective-CのiOSビルドと実機検証は未実施です。適用にはiOSアプリの再ビルドが必要です。実機では地上走行、停車、地下駅で画面ロック前後の測位時刻とaccuracyを比較します。前景復帰、省電力切り替え、案内終了時の補完停止も確認します。\n\n## 2026-11-03 — iOS背景測位の10m間引きを復活\n\n- #7304で追加した「背景測位の10m制限を解除」を試験的機能画面から削除しました。\n- 旧設定の保存値に関係なく、通常のiOS背景測位でも10mの距離制限を適用します。\n- Androidと省電力測位のオプション、保留データの配信処理は維持します。\n\n## 2026-11-03 — 初回案内の保存失敗を処理\n\n- 初回案内のOK操作で完了フラグの保存に失敗した場合、例外をSentryへ報告してダイアログの終了処理を完了します。\n- 保存失敗時に代替の完了フラグを設けず、次回マウント時の案内から保存を再試行できます。MMKVへの同期保存と既存の文字列形式は維持します。\n- 回帰テストではダイアログの終了処理を経由し、通常の保存、保存例外、再表示後の保存を検証します。\n\n## 2026-11-03 — iOSの位置情報利用目的をInfo.plistに追加",
+    "title": "docs/changelog.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/changelog.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "349901303234337b66f37b31a67b3e07220ebf68"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T06:18:30.932Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/changelog.md:3",
+    "source_id": "TrainLCD/MobileApp:docs/changelog.md",
+    "text": "- expo-location 58.0.16の背景測位用CLLocationManagerにパッチを適用します。通常測位では背景へ移ると距離フィルターを解除し、前景へ戻ると設定値の10mへ戻します。\n- #6470の10m制限を、背景かつ通常測位の場合に限って解除します。前景と省電力測位では設定値を維持します。\n- ネイティブのアプリ状態通知を使うため、JavaScriptのタイマーや前景用watchには依存しません。状態切り替え時に測位タスクを停止・再作成しません。\n- Expoの既存の10秒のバッチ配信と、index.jsで最新1件を処理する方式を維持します。10秒ごとの新しい測位の取得を保証するものではありません。\n- ネイティブの測位頻度が上がるため、電池消費が増える可能性があります。省電力設定中は距離フィルターと測位自動休止を維持します。\n\n### 確認手順\n\n1. ネイティブパッチを含むiOSビルドを作成します。JavaScriptのみの更新では反映されません。\n2. 通常測位で地下鉄に乗車し、画面ロック中と別アプリ使用中に次駅へ移動します。復帰後に測位時刻と現在駅の更新を確認します。\n3. 前景復帰と省電力設定の切り替え後に、距離フィルターが10mへ戻ることを確認します。\n4. 同じ区間で電池消費と発熱を比較します。iOSのビルドと実車確認は未実施です。\n\n### 参照\n\n- [Apple: distanceFilter](https://developer.apple.com/documentation/corelocation/cllocationmanager/distancefilter)\n- expo-location 58.0.16: ios/TaskConsumers/EXLocationTaskConsumer.m\n\n## 2026-10-20 — iOS の補完測位で古い初回配信を待ち直す\n\n### 内容\n\n- 補完測位では、10秒を超えて古い測位や処理済み時刻以下の測位を受け取っても購読を閉じず、新しい測位を待ちます。10秒は既存の途絶判定と同じ値です。\n- #6996 の「最初の1件で終了する」条件を、新しさを確認できた1件に限定しました。待機中に継続測位が更新された場合も、最新の処理済み時刻を参照します。\n- 補完測位の30秒の待機上限と背景・省電力時の停止は維持します。背景の継続測位は上記のネイティブパッチで別途対応します。\n- 古い初回配信だけで終了すると、その後の測位を受け取れません。補完測位の成功件数だけでは位置が更新されたことを確認できないため、時刻と重複判定も確認します。\n\n### 実車確認手順\n\n1. iPhoneで地下鉄の走行画面を開き、出発駅から次駅へ移動します。\n2. 診断の測位時刻と現在駅が更新されることを確認します。\n3. 新しい測位が届かない場合は、30秒の待機上限で再試行することを確認します。実車確認は未実施です。\n\n## 2026-10-18 — Android の起動時に必要なコンストラクターを保持\n\n### 内容\n\n- Canary のビルド `100000871` の配布用 AAB を解析しました。WorkManager 2.9.1 と Room 2.5.0 が含まれており、マニフェストに `WorkManagerInitializer` が登録されています。\n- DEX では `WorkDatabase_Impl`、`OverwritingInputMerger`、`ArrayCreatingInputMerger` の引数なしコンストラクターが欠落していました。Expo #51337 で報告された、R8 による起動時初期化の破損と同じ欠落です。\n- アプリの ProGuard ルールに RoomDatabase と InputMerger の派生クラスの引数なしコンストラクターを保持するルールを追加しました。Expo #51349 と同じルールです。\n- #5121 の Expo モジュール保持ルールは維持し、その対象外だった AndroidX のコンストラクターを補います。R8 の最適化とリソース縮小は継続します。\n\n### 確認\n\n- `npm run lint`、`npm run typecheck`、`npm test -- --runInBand` が成功しました。333テストファイル・3722件が通過しました。\n- 修正前の配布 AAB の解析と、修正ルールの Expo #51349 との照合を実施しました。修正後の Android Release ビルドと実機起動は実施していません。\n\n### Release の回帰確認手順\n\n1. `:app:bundleDevRelease` で AAB をビルドします。\n2. AAB 内の DEX で、上記3クラスに引数なしの `<init>()V` が残っていることを確認します。\n3. Release ビルドを Galaxy Z Flip5 にインストールし、強制停止後の起動で画面が表示されることを確認します。Debug ビルドや JavaScript の単体テストでは R8 による削除を検証できません。\n\n### 参照",
+    "title": "docs/changelog.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/changelog.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "349901303234337b66f37b31a67b3e07220ebf68"
+    },
+    "ordinal": 3,
+    "updated_at": "2026-11-12T06:18:30.932Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#545:0",
+    "source_id": "TrainLCD/MobileApp#545",
+    "text": "`Location.Accuracy.BestForNavigation`を使っている地下鉄は動かないのに、`Location.Accuracy.High`を使っている田園都市線の地下区間は割と快適に動いた。\r\nどうせトンネル内では位置が取れないので、位置情報の精度が低くても駅についた瞬間位置を取れるようにしたほうが良いのでは？",
+    "title": "Location.Accuracy.BestForNavigationは使わないべきなのでは？",
+    "url": "https://github.com/TrainLCD/MobileApp/issues/545",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "issue",
+    "metadata": {
+      "number": 545,
+      "state": "closed",
+      "state_reason": "completed",
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "unknown"
+    },
+    "ordinal": 0,
+    "updated_at": "2021-03-04T08:15:55Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#263:0",
+    "source_id": "TrainLCD/MobileApp#263",
+    "text": "## Comment: TinyKitten\nhttps://github.com/TrainLCD/MobileApp/issues/263#issuecomment-790421124\n\n\nおそらくバックグラウンド時はHigh Accuracyを使用していたが、フォアグラウンド時はBestForNavigationを使用していたため",
+    "title": "バックグラウンドに移しているとき地下鉄でも正常に動作する理由を調べる",
+    "url": "https://github.com/TrainLCD/MobileApp/issues/263",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "issue",
+    "metadata": {
+      "number": 263,
+      "state": "closed",
+      "state_reason": "completed",
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "unknown"
+    },
+    "ordinal": 0,
+    "updated_at": "2021-03-04T08:21:09Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/location-simulation.md:6",
+    "source_id": "TrainLCD/MobileApp:docs/location-simulation.md",
+    "text": "サーバー配信のフラグ 1 つで全ユーザーへ有効化されるため、有効化の前提は\n「正常な走行では何も変えない」ことになる。`location.gpxEtaAssist.test.ts` は各 GPX を\nフラグ ON / OFF で 2 回流し、平滑後の軌跡・位置を据え置いた回数・到着検知位置が\n一致することを確かめる。ETA の停車時刻は GPX 自身の時刻表から作るので、ETA どおりに\n走る列車のモデルになる。棄却が実際に働く側の挙動は合成データで\n`src/store/atoms/location.etaBound.test.ts` が受け持つ。\n\nGPX の解析・停車駅の検出・真の位置の補間は `src/utils/test/gpxTrack.ts` にまとめてある。\n`parseGpx` は 1 点ぶんのノードを切り出してからその内側だけを読む。XML 全体へ\n「`lat`/`lon` のあと最初に現れる `<time>`」のようなパターンを当てると、時刻を持たない点が\nあったときに次の点の `<time>` まで食い、座標と時刻が食い違った組を黙って作るため。\n点ごとに有無が変わる `trainlcd:accuracy` を足すと必ず踏む形になる。\n停車駅は速度がほぼ 0 の区間から検出するが、生成した GPX は始発駅の停車時間を書き出さず\n(1 点目から発車する)、終着駅では減速しきった時点でトラックが終わるため、停車時間の\n下限では始発駅・終着駅を拾えない。先頭・末尾で静止しているトラックはその点が\n始発駅・終着駅なので、停車時間に関わらず停車として扱う。\n`location.gpxLag.test.ts` は始発駅・終着駅を含めない検出を自前に持っており、区間長の\n中央値がこの扱いで変わるため共通化していない。\n\n## 検証できること・できないこと\n\n| 条件 | GPX (iOS シミュレータ) | GPX (Android) | 実乗車 |\n| ---- | ---- | ---- | ---- |\n| 320km/h・精度良好 (精度 50m 未満) | ✅ | ✅ | ✅ |\n| 精度 100m / 300m | ❌ 常に良好な精度を返す | ✅ `--accuracy` か GPX の精度 | ✅ |\n| 配信間隔ごとの追従遅れ | ❌ 間隔は OS 任せ | ❌ 同上 | ✅ |\n| トンネルでの測位途絶からの復帰 | ❓ Xcode が `<time>` の穴をどう扱うか未検証 | ✅ 実機 1 機種で確認済み (下記) | ✅ |\n| 車体による GPS 減衰 | ❌ | ❌ | ✅ |\n| `coords.speed` を使う表示 | ✅ | ❌ 常に 0 | ✅ |\n\n測位途絶は `--signal-profile subway` で GPX に書ける。「テストプロバイダへ打つのを\n止めるだけなので、Play 開発者サービスの Fused が最後の測位を保持して配り続けるのでは\nないか」という懸念を実機で確かめたが、**そうはならなかった**。\n\n線路の長さを反映する前の `FLinerSeibu.gpx` の 195 秒の欠測を Galaxy SCG13 (Android 16) へ流し、`dumpsys location`\nを 3 秒間隔で採った結果、欠測のあいだ fused の `last location` は座標・`hAcc` だけでなく\n**測位自体の時刻 (`et=`) も 1ms も進まなかった** (26 サンプル)。Fused は測位を合成も\n再配信もせず、新しい測位が 1 つも生まれない。つまり GPX の穴はそのまま測位の途絶になる。\n\n**確かめたのはこの 1 機種だけ**なので、他機種・他バージョンの Play 開発者サービスでも\n同じとは限らない。初めて使う端末では「Android 実機・エミュレータで再生する」の手順で\n`et=` が止まることを 1 度確認する。\n\n```text\n09:21:34  35.692672,139.705452 hAcc=618.0 et=+5d1h23m15s728ms   ← 欠測へ突入\n  (26 サンプル、値が 1 つも変わらない)\n09:22:54  35.729662,139.709335 hAcc=378.0 et=+5d1h26m31s710ms   ← 195 秒後、池袋の手前で復帰\n09:23:09  35.731464,139.708291 hAcc= 45.0                       ← 池袋に到着、ホーム帯へ\n09:24:14  35.731466,139.708280 hAcc=496.0                       ← 発車、坑口帯へ\n```\n\n`trainlcd:accuracy` が端末へそのまま届くこともこれで確認できている (618m → 45m → 496m\nが GPX の坑口帯・ホーム帯・坑口帯に一致)。アプリ側は欠測のあいだ表示が凍り、復帰時に\n次の停車駅 (池袋) へ飛ぶ。`etaProgressBound.ts` が想定する「発車を観測できないまま次の\n停車駅で測位が復活する」経路そのものになる。\n\nJest からの再生 (`location.subwayGpx.test.ts`) は `setLocation` を直接呼ぶので、こちらも\n完全な穴になる。",
+    "title": "docs/location-simulation.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/location-simulation.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "c42ac010e78c00a935619f3de5d9a03e79aa1449"
+    },
+    "ordinal": 6,
+    "updated_at": "2026-11-12T06:18:31.681Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#1:0",
+    "source_id": "TrainLCD/MobileApp#1",
+    "text": "- 位置情報精度の警告の文言変更\r\n- 位置情報精度の警告の出るタイミングを改善\r\n- 新幹線・地下鉄専用の閾値を追加\r\n- enableHighAccuracy有効化\r\n- 到着判定を150mから300mに拡大\n\n## Changed files\nmodified: src/components/Layout/index.tsx\nmodified: src/constants.ts\nmodified: src/models/StationAPI.ts\nmodified: src/store/actions/locationAsync.ts\nmodified: src/store/actions/stationAsync.ts",
+    "title": "電波の悪い状況での対応強化",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/1",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "metadata": {
+      "number": 1,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2019-12-23T00:27:40Z",
+      "merge_commit_sha": "058997ac5f07bcbb8d0d0e4f53f294b404041ea2",
+      "draft": false,
+      "base_branch": "master",
+      "head_branch": "subway",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2019-12-23T00:27:46Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/location-simulation.md:4",
+    "source_id": "TrainLCD/MobileApp:docs/location-simulation.md",
+    "text": "停車駅は StationAPI の `stopCondition` に従う。列車によって停まる駅は一部停車 (`PartialStop`)・\n一部通過 (`Partial`) になっており、生成時はどちらも停車として扱う (柏・土浦など 9 駅)。\nそのため、実在するどの 1 本の停車パターンとも一致しない。\n\n`FLinerSeibu.gpx` は地下鉄の電波環境を持つ唯一のサンプル。いわゆる F ライナーだが、\nStationAPI に「F ライナー」という種別は無く、みなとみらい線・東急東横線が特急、\n副都心線が急行、西武有楽町線・西武池袋線が快速急行という組み合わせ (`lineGroupId`\n152) がそれにあたる。\n\n地下 (みなとみらい線) → 地上 (東急東横線) → 地下 (副都心線 → 西武有楽町線) → 地上\n(西武池袋線) と 5 路線 4 社を跨ぎ、地下 ↔ 地上が 3 回切り替わる (うち地下から地上への\n復帰が 2 回)。副都心線から西武有楽町線は地下から地下なので切り替わりに数えない。\n欠測は 7 件・最長 327 秒で、ETA 棄却の保険 (`ETA_BOUND_MAX_HOLD_MS` = 90 秒) を超える\n区間を 5 箇所含む。\n\n地下鉄分岐と、地上へ復帰したときの基準の張り直しを 1 本で繰り返し踏める\n(ただし実機では上記のとおり副都心線の区間だけ。Jest 側は全区間)。約 92 分・4487 点と\n他のサンプルより大きいが、この経路は他に代えがない。\n\n区間の時間は、路線ごとの到着時間推定に合わせている。トンネル内の欠測の長さは走行時間で\n決まるので、地下区間の所要時間が推定どおりであることが、このサンプルの前提になる。\n\n`KatamachiRapid.gpx` と `SobuRapid.gpx` は、EMA の追従遅れが到着判定へ効く条件を\n狙ったサンプル。到着圏は駅間 800m 以上でどれも 200m にクランプされるので、\n遅れ (速度に比例) が到着圏を食い潰しやすい**全駅停車**の区間を選んでいる。\n到着圏に入るときの速度は減速度で決まり、減速度 0.9m/s² では約 68km/h になる。\n`SobuRapid.gpx` は東京から乗るだけで実機確認できる区間でもある (地上区間は錦糸町以東)。\n\n## iOS シミュレータで再生する\n\n1. Xcode でワークスペースを開く。\n1. メニューの Debug > Simulate Location > Add GPX File to Workspace… で GPX を選ぶ。\n1. アプリを起動した状態で Debug > Simulate Location から追加した GPX を選ぶ。\n\nXcode は `<time>` の間隔どおりに測位を配信するので、GPX 側で速度を制御できる。\n\n## Android 実機・エミュレータで再生する\n\n`scripts/replay-location-gpx.mjs` が GPX を Android のテストプロバイダへ流し込む。\n`adb shell cmd location providers` を使うので、実機でも仮の現在地アプリを別途\n入れる必要はない。手順の全体は `.claude/skills/replay-gpx/SKILL.md` にある。\n\n```bash\nnpm run gpx:replay -- --gpx assets/gpx/SampleTohokuShinkansen.gpx --serial <serial>\n```\n\n主なオプションは次のとおり。`--help` で全件を表示できる。\n\n| オプション | 説明 |\n| ---- | ---- |\n| `--gpx` | 再生する GPX (必須) |\n| `--serial` | adb シリアル。接続が 1 台だけなら省略可 |\n| `--speed` | 再生倍率。既定 `1` |\n| `--accuracy` | 水平精度 (m)。カンマ区切りで点ごとに巡回。既定の扱いは下記 |\n| `--start` | GPX 先頭からのスキップ秒数 |\n| `--provider` | テストプロバイダ名。既定 `gps,network,fused` |\n\n再生を始める前に、GPX の終点の座標でステージングの StationAPI\n(`https://gql-stg.trainlcd.app/`) に 1 回だけ問い合わせ、いちばん近い駅を行先として\n表示する。行先は進捗行にも `京王八王子行` のように出る。環境変数 `GQL_API_URL` が\nあればそちらへ問い合わせる。行先を引けなかったときは、テストプロバイダを有効にする前に\n異常終了する。\n\nXcode と違い精度を指定できるので、`--accuracy 100,300` のように渡せば\n`getSmoothingAlpha` の低精度分岐も実機で観測できる。一方で `coords.speed` を\n渡す手段が無いため、DEV OVERLAY の `CURRENT SPEED` は常に 0km/h を表示する。\n\n精度の優先順位は次のとおり。\n\n1. `--accuracy` を明示したときはその値。GPX に記録された精度より優先する。\n1. 指定が無ければ GPX の `trainlcd:accuracy`。\n1. どちらも無い点は `8`。",
+    "title": "docs/location-simulation.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/location-simulation.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "c42ac010e78c00a935619f3de5d9a03e79aa1449"
+    },
+    "ordinal": 4,
+    "updated_at": "2026-11-12T06:18:31.681Z"
+  },
+  {
+    "id": "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+    "source_id": "TrainLCD/THQ:docs/location-freeze-regression.md",
+    "text": "```graphql\nquery {\n  locationFreezes(\n    filter: {\n      from: \"2026-07-01T00:00:00Z\"\n      to: \"2026-07-08T00:00:00Z\"\n      appVersion: \"10.4.1(100)\"\n    }\n  ) {\n    sessionId\n    segmentId\n    gapStart\n    gapEnd\n    gapMs\n    speedBeforeGap\n    coordsBeforeGap { latitude longitude accuracy speed }\n    coordsAfterGap { latitude longitude accuracy speed }\n    jumpDistanceMeters\n    aliveEventCount\n  }\n}\n```\n\n`jumpDistanceMeters` は `coordsBeforeGap` と `coordsAfterGap` の大円距離(m)で、\n凍結中に表示位置が実位置からどれだけ離れたかの目安です。`aliveEventCount` は欠落期間中に\n届いた `log_events` + `interaction_events` の件数で、条件 3 の根拠にあたります。\n\n## しきい値の考え方\n\n- **`gapThresholdMs`**: 既定の 60000 ms は、送信間隔(最大 1 回/秒)の 60 倍にあたります。\n  地下鉄やトンネル区間では測位が正常に途切れるため、そのままでは正常な欠落を拾います。\n  対象を路線で絞る(`lineId` / `segmentId`)か、しきい値を大きめに取ってください。\n  THQ は路線種別(地上/地下)を持っていないため、この判断は自動化できません。\n- **`speedThresholdKmh`**: 既定の 30 km/h は、駅停車・徐行と走行中を分けるための値です。\n  在来線の低速区間を見るときは下げ、新幹線の高速域だけを見るときは上げます。\n  なお `speed` は OS 由来の値で、欠落直前の 1 行しか見ていません。\n- **`requireAppAlive`**: `false` にすると条件 3 を外し、アプリが落ちた可能性のある欠落も\n  含めて返します。「凍結ではなくクラッシュではないか」を確かめるとき、true と false の\n  件数差を見るのが手軽です。\n- **`limit`**: 既定 100、上限 2000 に丸められます。\n\n## 検索窓と、検出できない欠落\n\n`[from, to)` は **欠落の開始行** を絞ります。つまり `from <= gapStart < to` の欠落が対象で、\n欠落を閉じる行(`gapEnd`)は `to` 以降であっても構いません。窓の末尾で始まった欠落も、\nその後に位置ログが再開していれば `gapMs` まで含めて正しく返ります。\n\n仕組み上検出できないのは、**閉じない欠落** だけです。電源断・アプリ終了・乗車終了などで\n位置ログが二度と来なかった場合、欠落の長さを測る相手が存在しないため、セッション最後の行に\n続く空白は返りません。これは条件 3 で除外したいケースとも重なります。\n\n一方、`locationFreezeSessions` / `locationFreezeSummary` が返す件数\n(`locationCount` / `startedAt` / `endedAt`)は **窓の中の行だけ** を数えます。\n`to` をまたいだ欠落を閉じる行は、欠落の測定には使われますが、これらの集計には入りません。\n\nまた、`session_id` が NULL の行(旧クライアント)は対象外です。\n\n## 過去データの `appVersion` 補完\n\n`location_logs` の `app_version` / `platform` / `channel` は THQ#30 で追加した列です。\nそれ以前の行と、まだ送っていないクライアントの行では NULL になります。\n\nこのため 3 つの Query は、位置ログの列が NULL のときに **同一 `session_id` の\n`log_events` / `interaction_events` からビルド情報を補完** します。補完値は、そのセッションの\n**最初のイベント行(`app_version` を持つ行を優先)から 3 列をまとめて取ります**。\n列ごとに `MIN` を取ると、別々の行の `appVersion` と `platform` が混ざった実在しない組み合わせに\nなり得るためです。\n`appVersion` / `platform` / `channel` フィルタも、この補完後の値に対して適用されます。\nどちらにも情報が無ければ `null` のままです。\n\n補完はセッション単位なので、1 セッションの途中でアプリを更新するようなケースは表現できません。\n実運用では乗車中にビルドが変わることはないため、この単純化を採用しています。\n\n## 実装メモ",
+    "title": "docs/location-freeze-regression.md",
+    "url": "https://github.com/TrainLCD/THQ/blob/37208ef7dbac9af640a41cf85c205474377dc277/docs/location-freeze-regression.md",
+    "repo": "TrainLCD/THQ",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/location-freeze-regression.md",
+      "branch": "main",
+      "commit": "37208ef7dbac9af640a41cf85c205474377dc277",
+      "blob_sha": "58846a8465ef3a92858713814f6f6f0a941b45fd"
+    },
+    "ordinal": 1,
+    "updated_at": "2026-11-12T06:18:35.644Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/location-simulation.md:2",
+    "source_id": "TrainLCD/MobileApp:docs/location-simulation.md",
+    "text": "| 成分 | GPX 上の表現 |\n| ---- | ---- |\n| 測位が届かない (トンネル内) | 点を書かない。`<time>` に穴が開く |\n| 精度の劣化 (基地局測位のみ) | 各点の `trainlcd:accuracy` |\n| 位置そのもののずれ | 座標 (現状のプロファイルでは動かしていない) |\n\n### trainlcd:accuracy 拡張\n\nGPX 1.1 にはメートル単位の水平精度を書く標準要素が無い (`<hdop>` は無次元の DOP 値で\nあって精度ではない)。そのため独自要素を `<extensions>` に置く。\n\n```xml\n<gpx version=\"1.1\" creator=\"TrainLCD scripts/generate-location-gpx.mjs\"\n     xmlns=\"http://www.topografix.com/GPX/1/1\"\n     xmlns:trainlcd=\"https://trainlcd.app/xmlns/gpx/v1\">\n<wpt lat=\"35.6908530\" lon=\"139.7048280\">\n<time>2026-01-01T00:05:12.000Z</time>\n<extensions><trainlcd:accuracy>412</trainlcd:accuracy></extensions>\n</wpt>\n</gpx>\n```\n\n- 値は**水平精度のメートル**で、正の数に限る。`coords.accuracy` にそのまま入る。\n  0 以下は精度として扱わない (再生側はエラー、Jest 側は記録なしとして無視する)。\n- `<extensions>` は GPX 1.1 が用意している拡張口で、中身は\n  `<xsd:any namespace=\"##other\" processContents=\"lax\">` と定義されている。\n  「GPX 以外の名前空間なら何でも置いてよく、スキーマを知らないバリデータは素通しする」\n  という意味なので、**この書き方をしたファイルは妥当な GPX 1.1 のままである**。\n  Garmin の `gpxtpx`(心拍・ケイデンス) なども同じ仕組みで相乗りしている。\n- `##other` なので**名前空間の宣言が必須**。接頭辞を付けずに `<accuracy>` と書いたり、\n  `<extensions>` の外へ置いたりすると不正な GPX になる。\n- 名前空間 URI は識別子であって取得先ではないため、実在しなくてよい。\n- 精度を 1 点も書かないときはこの宣言も出さない。従来の生成物に無意味な差分を\n  出さないためで、既存の GPX は同じコマンドで再生成するとバイト単位で一致する。\n\n### --signal-profile\n\n| 値 | 内容 |\n| ---- | ---- |\n| `open` | 既定。従来どおり。精度も穴も書かない |\n| `subway` | 経路のうち地下鉄 (`lineType` が `Subway`) の区間だけを劣化させる |\n\n`subway` の数値はアプリ側の判定境界から逆算している。\n\n| 区間 | 精度 (m) | 狙い |\n| ---- | ---- | ---- |\n| 地上 | 8〜20 | 通常の GPS。`isAccuracyStable` が true になりスムージングが働く |\n| 地下駅のホーム | 25〜60 | Wi-Fi / 基地局。`BAD_ACCURACY_THRESHOLD` (200m) 以内 |\n| 坑口付近 (駅から 20 秒以内) | 260〜620 | 基地局のみ。200m を必ず超える |\n| トンネル内 | (点を落とす) | 測位が届かない時間になる |\n\n坑口帯が 200m を超えることが要点。`isAccuracyStable` は「直近 12 点の平均が\n`BAD_ACCURACY_THRESHOLD` (200m) 未満」かつ「`stddev/mean` が 0.5 未満」で true を返すので、\n平均が 200m を上回った時点で false になり、`setLocation` の地下鉄分岐 (`skipSmoothing`)\nに入る。`MAX_PERMIT_ACCURACY` (1500m) は超えないので、精度フィルタでの棄却は起きない。\n\n逆に言うと、**200m 未満の精度で一定のトラック**を地下鉄の路線で流しても `stddev/mean` が\n0 で「安定」と判定されるため、地下鉄のコードパスには (履歴が 4 点そろった後は) 入らない。\n再生側で `--accuracy 300` のように 200m 以上を一律に与えた場合は逆に全点が分岐へ入るので、\n「精度を固定すれば地上と同じ経路を通る」わけではない。\n\n### 直通運転\n\n劣化させるのは地下を走る区間だけなので、`--line-group` で直通の経路を生成すると\n地上 → 地下 → 地上が 1 本のトラックに入る。地下から地上へ戻ったところで精度が回復し、\n長い欠測のあとなので基準が古い (`STALE_REFERENCE_MS`) と判断されて基準の張り直しが走る。\nこの経路は合成データでは作りにくい。",
+    "title": "docs/location-simulation.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/location-simulation.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "c42ac010e78c00a935619f3de5d9a03e79aa1449"
+    },
+    "ordinal": 2,
+    "updated_at": "2026-11-12T06:18:31.681Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#1510:0",
+    "source_id": "TrainLCD/MobileApp#1510",
+    "text": "- 位置情報取得タイムアウトの撤廃\r\n- `geolib.getDistance()` の精度を1000m変更\r\n- 位置情報更新時にrafを使用\r\n- 位置情報精度をbalancedに変更\r\n- 不要なActionSheet関係の処理を削除\n\n## Changed files\nmodified: src/components/Permitted.tsx\nmodified: src/constants/index.ts\nadded: src/constants/location.ts\nmodified: src/hooks/useMirroringShare.ts\nmodified: src/hooks/useRefreshStation.ts\nmodified: src/hooks/useResetMainState.ts\nmodified: src/screens/Main.tsx\nmodified: src/screens/SelectBound.tsx\nmodified: src/utils/stationDistance.ts",
+    "title": "位置情報取得調整",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/1510",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "metadata": {
+      "number": 1510,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "enhancement",
+        "react"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2022-06-04T13:02:25Z",
+      "merge_commit_sha": "a47f27c83a9c703536ba8b9545fab55aa461b262",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "fix/subway-hang",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2022-06-04T13:02:26Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#546:0",
+    "source_id": "TrainLCD/MobileApp#546",
+    "text": "closes #545 \r\n\r\nPRの趣旨はIssue参照\n\n## Review: Sw-Saturn\nhttps://github.com/TrainLCD/MobileApp/pull/546#pullrequestreview-603715260\n\nAPPROVED\nLGTM\n\n## Changed files\nmodified: src/screens/Main/index.tsx",
+    "title": "Location.Accuracy.BestForNavigationを使わないようにした",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/546",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "metadata": {
+      "number": 546,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2021-03-04T08:15:55Z",
+      "merge_commit_sha": "b704ef2ffb211103f8c9255c31c80abeb597a168",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "fix/accuracy",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2021-03-04T08:15:56Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/changelog.md:2",
+    "source_id": "TrainLCD/MobileApp:docs/changelog.md",
+    "text": "- 路線種別による限定を外し、精度履歴に1500m以上の測位がある場合に地下向け処理へ入ります。復帰には既存の精度安定判定を使います。\n- iOSの1500m超に対する平滑化・速度フィルタは維持します。\n\n## 2026-10-24 — iOS通常測位の要求精度をHighestへ戻す\n\n### 内容\n\n- #6395で通常測位へ昇格したHigh精度のうち、iOSだけをHighestへ戻します。expo-location 58.0.16では、背景タスクの`EXLocation.m`と前景購読の`LocationAccuracy.swift`の両方で、Highを`kCLLocationAccuracyNearestTenMeters`、Highestを`kCLLocationAccuracyBest`へ変換します。\n- 前景購読・背景タスク・補完測位は共通プロファイルを使います。AndroidのHigh精度、省電力時のBalanced精度、配信間隔は維持します。\n- 平滑化と到着半径は変更しません。ETAで到着や発車を確定する処理も追加しません。\n\n### 検証と制約\n\n- `npm run lint`、測位関連8スイート・145テスト、`npm run typecheck`が成功しました。\n- iOS実機での走行確認は実施していません。この変更は要求精度の復元であり、一駅遅れの解消を確認したものではありません。\n- Appleの[desiredAccuracy仕様](https://developer.apple.com/documentation/corelocation/cllocationmanager/desiredaccuracy)では、高精度を要求しても精度の低い位置情報が届く場合があります。実測精度と電池消費は実車で比較する必要があります。\n\n## 2026-10-21 — iOS の背景測位で保留データの配信期限を設ける\n\n### 内容\n\n- expo-locationの背景配信では、測位コールバック内で10秒の蓄積条件を確認します。条件を満たす前に測位が途切れると、受信済みのデータを次のコールバックまで保留します。\n- 通常測位の背景配信に、一度だけ動くネイティブタイマーを追加します。保留データがあるときだけ、設定間隔の残り時間を待って配信します。後続の測位を受け取ってもタイマーを延長しません。\n- 待機中はUIKitの有限の背景タスクを使います。時間を確保できない場合や期限切れの場合は保留分を配信し、背景タスクを終了します。\n- 通常の配信、前景復帰、設定変更、測位終了ではタイマーと背景タスクを解除します。空のバッファではタイマーを開始しません。\n- #7255の背景用距離フィルター解除を維持し、配信側の保留を修正します。省電力測位には追加の背景タスクを開始しません。\n- 前景用ハートビートの変更は本修正から外します。ETAによる到着・発車判定は追加しません。Androidの処理も変更しません。\n\n### 検証と適用\n\n- 関連8スイート・118テスト、`npm run lint`、`npm run typecheck`が成功しました。\n- ネイティブで使うC関数をコンパイルして実行し、配信から9秒後に1件だけ測位が届くケース、初回配信、時計の逆転、設定間隔の変更を確認しました。\n- 未変更のexpo-location 58.0.16へパッチを適用し、検証に使ったネイティブファイルと一致することを確認しました。\n- Objective-CのiOSビルドと実機走行の検証は実施していません。ネイティブパッチのため、適用にはiOSアプリの再ビルドが必要です。\n- 保留中の背景実行時間を確保するため、電池消費が変わる可能性があります。OSから新しい測位自体が届かない場合や、測位座標の誤差は本修正では解消しません。\n\n## 2026-10-21 — iOS の補完測位を測位時刻で判定する\n\n### 内容\n\n- 継続測位を遅れて受信した場合、受信時刻から10秒を数え直して補完測位を先送りします。これを測位自体の古さで判定するよう修正します。\n- #6969の配信経過時間の記録を残し、受信時点の測位の古さを別に記録します。受信後は単調時計で経過時間を加算します。\n- 精度外れ値の新しい測位は更新として扱います。精度だけを理由に補完を続けることはありません。\n- 補完測位は従来どおりiOSの前景・通常測位でのみ動作します。到着・発車判定、ETAによる棄却、Androidの配信処理、背景測位のネイティブパッチは変更しません。\n- 遅延受信で先送りされる経路を対象とした修正です。測位座標の誤差を補正する処理は追加しません。\n\n### 検証\n\n- `npm run lint`、`npm run typecheck`が成功しました。\n- 補完測位、共通測位入口、到着判定、ETAアンカー、背景測位、ETA棄却の関連7スイート・126テストが成功しました。\n- 34秒古い測位を受信してから前景の補完処理を開始するケースと、5秒古い測位を受信するケースを追加しました。旧判定では両方の回帰テストが失敗し、修正後は成功しました。\n- iPhone実機での走行検証は実施していません。\n\n## 2026-10-20 — iOS の背景測位の変位ゲートを切り替える\n\n### 内容",
+    "title": "docs/changelog.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/changelog.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "349901303234337b66f37b31a67b3e07220ebf68"
+    },
+    "ordinal": 2,
+    "updated_at": "2026-11-12T06:18:30.932Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/changelog.md:1",
+    "source_id": "TrainLCD/MobileApp:docs/changelog.md",
+    "text": "- 位置情報の説明文は日英の `InfoPlist.strings` にだけ存在し、本体とApp Clipの `Info.plist` にはありませんでした。\n- Canary・Prodの本体とApp Clipに `NSLocationWhenInUseUsageDescription` を追加しました。本体には常時利用の説明キーも追加しました。使用中の説明には既存の日本語訳を使用しています。常時利用の説明にはバックグラウンドで最寄り駅を取得する目的を明記し、日英の翻訳とExpoの設定にも反映しました。\n- Expoの位置情報プラグインにも同じ説明文を設定しました。ネイティブの4つのマニフェストで説明文の欠落を検出するテストを追加しました。XMLコメント内の記述は検証対象から除外します。\n\n\n\n\n## 2026-11-03 — iOS 16対応を維持して振り返りの地図をexpo-mapsへ移行\n\n- iOS 17以降とAndroidでは `expo-maps` 58.0.11を使います。iOS 16では従来の `react-native-maps` の実装を使います。最低対応版のiOS 16.4は変更していません。\n- #7145の経路線・駅の点・駅名表示と、#7253のズーム時の円の更新単位を引き継ぎます。iOS 16の実装は別コンポーネントに保存しました。\n- expo-mapsでは地図の外側に見出しと凡例の高さを確保します。Androidの駅名は画像化してマーカーに渡します。iOSの全画面地図はApple Maps標準の操作を使います。Androidのカードは操作を禁止し、旧実装のliteModeは使いません。\n- iOS 16.4・16.7・16.7.12の分岐、期間変更、Androidのカメラ、余白、空データをテストしています。\n- WSL（Ubuntu、Node.js 24.22.1）で `npm run lint`、`npm run typecheck`、`npm test -- --runInBand` が成功しました。345スイート・4,161テストが通りました。\n- `npx expo export --platform ios --platform android --max-workers 2` で両OSのHermesバンドルを生成しました。実機での描画とネイティブビルドは未実施です。\n- `npx expo-doctor` は19項目中17項目が成功しました。既存の `react-native-edge-to-edge` と `audio-focus` のメタデータ、および既存依存のパッチ版不一致が指摘されました。地図以外の依存バージョンは変更していません。\n\n## 2026-10-30 — 近くの駅一覧に TanStack DB を試験導入\n\n- `@tanstack/react-db` 0.5.12 と `@tanstack/query-db-collection` 1.4.8 を追加しました。両者が使用する `@tanstack/db` は 0.15.2 です。\n- 駅検索モーダルの近くの駅一覧を Query Collection とライブクエリに接続しました。通信には既存の TanStack Query と GraphQL を使います。\n- 距離順、重複行、座標変更、再表示、通信失敗からの復旧、キャッシュ更新、Web Crypto がない環境を回帰テストで確認しました。\n- `npm run lint` と `npm run typecheck` は成功しました。`npm test -- --runInBand` は342スイート・4,117テストが成功しました。\n- `npx expo export --platform ios --platform android --max-workers 2` で両プラットフォームの Hermes バンドルを生成しました。実機での動作確認は行っていません。\n- `npx expo-doctor` は19項目中17項目が成功しました。既存の `react-native-edge-to-edge` と `audio-focus` のメタデータ、およびExpo関連22パッケージのパッチ版不一致が指摘されました。これらの依存バージョンは変更していません。\n\n## 2026-10-30 — iOSアーカイブの循環依存を修正\n\n- CanaryとProdのSentryデバッグシンボル送信を、App ClipとPodsの組み込み処理より後へ移動しました。\n- dSYMの入力依存は維持しました。App Clipの組み込みがシンボル送信を待つ順序を解消しました。\n- ビルドフェーズの順序を検証する回帰テストを追加しました。\n\n## 2026-10-24 — iOSの背景測位の距離制限を設定で切り替える\n\n- 試験的機能に「背景測位の10m制限を解除」を追加しました。初期値はONです。\n- #7255の距離制限解除を端末ごとに切り替えます。OFFでは背景でも設定済みの10m制限を維持します。\n- 設定は端末に保存します。測位中の変更は測位プロファイルへ反映し、既存の処理でタスクを再登録します。\n- 前景と省電力測位の距離制限、#7257の保留データ配信処理は変更しません。Androidには項目を表示しません。\n- ネイティブパッチを含むiOSビルドが必要です。JavaScriptのみの更新では切り替わりません。\n\n## 2026-10-24 位置情報フィルタの路線種別依存を解消",
+    "title": "docs/changelog.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/changelog.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "349901303234337b66f37b31a67b3e07220ebf68"
+    },
+    "ordinal": 1,
+    "updated_at": "2026-11-12T06:18:30.932Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+    "source_id": "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+    "text": "# iOS背景補完測位の診断\n\nDevOverlayのコピーボタンで生成するJSONには、前景JSの`heartbeat`と別に、iOSネイティブの`backgroundHeartbeat`を含めます。#7355で追加した背景補完測位の経過を確認できます。診断機能を使うにはiOSアプリの再ビルドが必要です。\n\n## 利用できるかの確認\n\n`availability`が`available`なら、`native`に診断結果を格納します。`unavailable`の場合は`reason`で区別します。\n\n| reason | 意味 |\n| --- | --- |\n| `unsupported-platform` | iOS以外です。ネイティブの診断APIを呼びません。 |\n| `native-method-missing` | 実行中のビルドに診断APIがありません。要求0件とは区別します。 |\n| `read-failed` | ネイティブ診断の取得に失敗しました。他の診断項目はコピーできます。 |\n\n## 記録の範囲\n\n`native.scope`は`process`です。イベント回数の`counts`はプロセス起動からの累積で、記録のないキーは0回です。前景復帰やタスクの再登録では消去しません。アプリのプロセスが終了すると消えます。\n\n`recentEvents`には古い順で最大40件を残します。`lastEvents`にはイベント種別ごとの最新1件を残します。通常測位が続いて直近40件から終了イベントが消えても、種別ごとの記録を確認できます。複数の位置情報タスクがある場合、回数は合算します。各イベントの`taskName`でタスクを識別できます。\n\n各イベントには壁時計の`atMs`と単調時計の`uptimeMs`を記録します。権限、前景・背景、省電力状態などもイベント発生時の値です。現在の状態を表す値ではありません。ネイティブ側での取得時刻は`native.capturedAtMs`です。\n\n| イベント | 記録するタイミング |\n| --- | --- |\n| `entered-background` / `entered-foreground` | 背景移行・前景復帰の通知を受けたときです。 |\n| `scheduled` | 補完開始用タイマーを予約したときです。`delayMs`に待機時間を記録します。 |\n| `timer-fired` | 補完開始用タイマーのコールバックを実行したときです。 |\n| `ineligible` / `start-skipped` | 予約時・開始時に条件を満たさなかったときです。権限や省電力状態などを併記します。 |\n| `requested` | 補完用マネージャーを作成する直前です。 |\n| `started` | 背景実行権を取得し、`startUpdatingLocation`を呼ぶ直前です。 |\n| `recovery-received` / `regular-received` | 補完・通常マネージャーから測位コールバックを受けたときです。通常側は背景中だけ記録します。 |\n| `no-fresh-sample` | 補完側のコールバックに、新しく有効な時刻の測位がなかったときです。 |\n| `succeeded` | 新しい測位によって補完を終了するときです。`source`で補完側と通常側を区別します。 |\n| `timed-out` | 補完待機上限のタイマーを実行したときです。 |\n| `expired` | UIKitの背景実行期限切れコールバックを実行したときです。 |\n| `background-task-denied` | UIKitの背景タスク識別子が無効だったときです。 |\n| `recovery-error` | 補完側のエラーを受信したときです。ドメインとコードを記録します。 |\n| `failed` | 継続待機する`locationUnknown`以外のエラーで終了するときです。 |\n| `cancelled` | 前景復帰、設定変更、省電力状態の変化、タスク解除で取得中の補完を閉じるときです。`reason`を併記します。 |\n| `power-state-changed` / `task-reset` | 端末の省電力状態の通知・タスクのリセット処理に入ったときです。 |\n\n## 読み方と制限\n\n- `scheduled`と`timer-fired`を比較すると、予約後にタイマーのコールバックを実行できたかを確認できます。前景復帰や設定変更でもタイマーを取り消すため、差だけでサスペンドを断定しません。\n- `requested`と`started`を比較すると、要求後に背景実行権を取得できたかを確認できます。\n- `recovery-received`などの回数はコールバック単位です。各コールバックの測位件数は`sampleCount`に記録します。\n- `succeeded`はネイティブ側での新しい測位の受信を表します。JavaScript側の精度フィルター通過や駅到着の確定は表しません。`filter.counts`と併せて確認します。\n- 受信イベントには最新測位の時刻と精度を残します。緯度経度はこの追加診断に記録しません。ファイル保存やネットワーク送信は行いません。\n- コピー時だけネイティブの履歴を読み取ります。診断用のタイマーや測位要求は追加しません。通常測位の10m制限、補完の開始条件、待機上限は#7355の実装を維持します。\n\n## 測位ごとの配信追跡（schemaVersion 2）",
+    "title": "docs/background-location-diagnostics.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/background-location-diagnostics.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/background-location-diagnostics.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "8a0a44e55e2f0008347bbe094a9cfd7ce66b1e1c"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T06:18:30.855Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#447:0",
+    "source_id": "TrainLCD/MobileApp#447",
+    "text": "Androidで位置情報が取れなくなった",
+    "title": "Expo SDK 39に戻す",
+    "url": "https://github.com/TrainLCD/MobileApp/issues/447",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "issue",
+    "metadata": {
+      "number": 447,
+      "state": "closed",
+      "state_reason": "completed",
+      "labels": [
+        "bug"
+      ],
+      "author": "TinyKitten",
+      "release_status": "unknown"
+    },
+    "ordinal": 0,
+    "updated_at": "2021-01-22T10:46:53Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#448:0",
+    "source_id": "TrainLCD/MobileApp#448",
+    "text": "closes #447 \n\n## Changed files\nmodified: android/app/src/main/java/me/tinykitten/trainlcd/generated/BasePackageList.java\nmodified: ios/Podfile.lock\nmodified: package-lock.json\nmodified: package.json",
+    "title": "rollback expo 39",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/448",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "metadata": {
+      "number": 448,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "bug"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2021-01-22T10:46:53Z",
+      "merge_commit_sha": "d8c5f22cd30c1dad7c14d20c21ffa7026166ea04",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "fix/rollback-expo-39",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2021-01-22T10:46:53Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#1138:0",
+    "source_id": "TrainLCD/MobileApp#1138",
+    "text": "大江戸線と副都心線で確認\n多分到着判定の閾値を300mにしたあたりからデグレったので地下鉄だけ閾値を狭くするとかそういう感じになりそう",
+    "title": "地下鉄で戻ったり進んだりするようになった",
+    "url": "https://github.com/TrainLCD/MobileApp/issues/1138",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "issue",
+    "metadata": {
+      "number": 1138,
+      "state": "closed",
+      "state_reason": "completed",
+      "labels": [
+        "bug"
+      ],
+      "author": "TinyKitten",
+      "release_status": "unknown"
+    },
+    "ordinal": 0,
+    "updated_at": "2021-12-04T13:56:31Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#267:0",
+    "source_id": "TrainLCD/MobileApp#267",
+    "text": "related: #263\n\n## Changed files\nmodified: src/components/DevOverlay/index.tsx\nmodified: src/components/Layout/Permitted.tsx\nremoved: src/devMode.ts\nmodified: src/screens/Main/index.tsx",
+    "title": "位置情報精度設定と開発者モード有効化",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/267",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "metadata": {
+      "number": 267,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2020-10-12T13:52:35Z",
+      "merge_commit_sha": "40b10452c5e7a62ffb0eb28cc2a5aa3376f177eb",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "feature/subway",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2020-10-12T13:52:36Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/changelog.md:12",
+    "source_id": "TrainLCD/MobileApp:docs/changelog.md",
+    "text": "- `npx expo install --fix` により Expo SDK 57 系 16 パッケージを推奨バージョンへ更新\n  （`expo` 57.0.12 → 57.0.16、`expo-location` 57.0.9 → 57.0.13、\n  `expo-notifications` 57.0.10 → 57.0.14 ほか）。\n- `expo-task-manager` が 57.0.9 → 57.0.13 に上がり `patch-package` のパッチが競合したため、\n  57.0.13 上でパッチを再生成（`patches/expo-task-manager+57.0.13.patch`）。\n  あわせてパッチの適用範囲を **API 31+ の 1 分岐のみ** に縮小した。\n- **API 28–30 分岐は上流 57.0.13 の実装に戻した**（`setImportantWhileForeground(true)` +\n  `setOverrideDeadline(DEFAULT_OVERRIDE_DEADLINE)`）。旧パッチがこの分岐を置き換えていたのは、\n  57.0.9 では `setImportantWhileForeground(true)` が単独で置かれており、一部 OEM の\n  `JobInfo.Builder` バリデータが制約なしと判定して `IllegalArgumentException` を投げたため。\n  57.0.13 は上流が late constraint である `setOverrideDeadline` を追加したことでこの原因が\n  解消しており、パッチを維持する理由がなくなった。上流に戻したことで、前面実行時の\n  優先度ヒントと Doze 緩和の効果が復活する。\n- **API 31+ 分岐のパッチは維持**（`setExpedited(true)` → `setMinimumLatency(0)` +\n  `setOverrideDeadline(DEFAULT_OVERRIDE_DEADLINE)`）。上流は未修正で、Android 14+/16 での\n  `JobInfo.Builder.build()` クラッシュ要因が残っているため。この分岐の挙動は従来の\n  出荷状態と同一で、この更新による変更はない。\n- API 31+ 分岐のトレードオフ（従来からの継続であり、この更新で新たに生じたものではない）:\n  expedited job を使わないため実行優先度が上流素の状態より低い。JS 側の\n  `watchPositionAsync` バイパスは `NEEDS_JOBSCHEDULER_BYPASS`（`src/constants/native.ts`）で\n  API 36+ に限定されているため、**API 31–35 ではこのバイパスによる補償が効かない**。\n  当該レンジではフォアグラウンド位置情報サービスによるプロセス維持のみが緩和策で、\n  Doze 下で JS 配信が遅延する可能性がある。パッチ内コメントにも同旨を明記した。\n\n### 検証結果\n\n```text\nnpx expo-doctor    → 20/20 checks passed. No issues detected!\nnpx expo install --check → Dependencies are up to date\nnpm ci             → patches/ 配下 5 件すべて適用\nnpm run lint       → Checked 668 files, 指摘なし\nnpm run typecheck  → エラーなし\nnpm test           → Test Suites: 236 passed / Tests: 2540 passed\n```\n\n### 未検証・申し送り",
+    "title": "docs/changelog.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/changelog.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "349901303234337b66f37b31a67b3e07220ebf68"
+    },
+    "ordinal": 12,
+    "updated_at": "2026-11-12T06:18:30.932Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#1652:0",
+    "source_id": "TrainLCD/MobileApp#1652",
+    "text": "## Changed files\nmodified: android/app/src/main/AndroidManifest.xml\nmodified: ios/TrainLCD/Info.plist\nmodified: src/hooks/useMirroringShare.ts\nmodified: src/utils/threshold.ts",
+    "title": "位置情報関連の修正",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/1652",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "metadata": {
+      "number": 1652,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "bug",
+        "ios",
+        "android",
+        "react"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2022-09-03T10:35:03Z",
+      "merge_commit_sha": "2fbddd0feaf210161b58087e9a9b10b2b6f2f7c4",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "fix/loc-updates",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2022-09-03T10:35:03Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#1145:0",
+    "source_id": "TrainLCD/MobileApp#1145",
+    "text": "closes #1138 \r\n\r\n地下鉄で暴れだすのでしきい値を低くした（これで解決するかどうかは裏付けなし）\n\n## Review: 0x307e\nhttps://github.com/TrainLCD/MobileApp/pull/1145#pullrequestreview-823256622\n\nAPPROVED\n\n\n\n\n## Changed files\nmodified: src/constants/index.ts",
+    "title": "地下鉄の接近到着しきい値の変更(x1.5)",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/1145",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "metadata": {
+      "number": 1145,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2021-12-04T13:56:31Z",
+      "merge_commit_sha": "68d931694676da05c60f8b782099017708051485",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "fix/adjust-subway-threshold",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2021-12-04T13:56:32Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#402:0",
+    "source_id": "TrainLCD/MobileApp#402",
+    "text": "closes #401 \r\n\r\nそもそもメイン画面以外で位置を取り続けてたのはバグだった\n\n## Changed files\nmodified: src/screens/Main/index.tsx",
+    "title": "地下鉄ではBestForNavigation&メイン画面行かない限り位置を取り続けない",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/402",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "metadata": {
+      "number": 402,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "bug",
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2020-12-26T17:06:48Z",
+      "merge_commit_sha": "44e23c92d74003f9d30b31d92e6810e588ae6d6c",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "feature/subway-accuracy",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2020-12-26T17:06:50Z"
+  },
+  {
+    "id": "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+    "source_id": "TrainLCD/THQ:docs/location-freeze-regression.md",
+    "text": "# 現在地凍結(location freeze)の検出\n\nテスト乗車のテレメトリから「アプリは動いているのに現在地が進まなくなった」区間を抽出し、\n路線・区間・機種・ビルド別に集計するための GraphQL Query 3 本(`locationFreezes` /\n`locationFreezeSessions` / `locationFreezeSummary`)について説明します。\n\n関連 Issue: [TrainLCD/THQ#30](https://github.com/TrainLCD/THQ/issues/30)\n\n## シグネチャ(何を「凍結」とみなすか)\n\nMobileApp は乗車中、最大 1 回/秒の頻度で `sendLocation` を送ります。したがって位置ログが\n数分単位で途切れていれば、その間クライアントは位置を更新できていません。ただし途切れ自体は\n異常とは限らないため、次の 3 条件を **すべて** 満たしたものだけを凍結候補として扱います。\n\n1. **位置ログの欠落**: 同一 `session_id` の連続する 2 行の間隔が `gapThresholdMs`(既定 60000 ms)を超える。\n2. **欠落直前の速度が高い**: 欠落直前の行の OS 由来 `speed` が `speedThresholdKmh`(既定 30 km/h)を超える。\n3. **その間もアプリは生きていた**: 欠落期間中に同一 `session_id` の `log_events` /\n   `interaction_events` が 1 件以上ある(`requireAppAlive: true`、既定)。\n\n各条件が切り分けているものは次のとおりです。\n\n- 条件 2 は **駅停車** を除外します。停車中に位置更新が止まっても、それは正常です。\n- 条件 3 は **アプリ・端末の死亡** を除外します。強制終了・電源断・バックグラウンド停止で\n  ログ全体が止まったのであれば、位置ログだけの問題ではありません。\n- 残るのは「アプリのイベントは流れ続けているのに位置ログだけが止まった」ケース、つまり\n  画面上の現在地が高速移動中に凍結した状態です。\n\n## 3 つの Query の使い分け\n\nいずれも観測用トークン(`THQ_OBSERVER_AUTH_TOKEN`)と DB 接続が必要で、同じ\n`LocationFreezeFilter` を取ります。`from` / `to` は必須で、差は最大 90 日です。\n\n| Query | 粒度 | 並び順 | 主な用途 |\n|---|---|---|---|\n| `locationFreezes` | 欠落 1 件ごと | `gapStart` 降順 | 個別事象の再現条件を調べる |\n| `locationFreezeSessions` | セッションごと | `startedAt` 降順 | 1 回の乗車が何回凍結したかを見る |\n| `locationFreezeSummary` | 路線・区間・機種・ビルドごと | `freezeCount` 降順、`sessionCount` 降順 | ビルド間・区間別の比較 |\n\n`locationFreezeSessions` と `locationFreezeSummary` は **凍結が 0 件のセッション / グループも返します**。\n「結果に出てこない」と「凍結が無かった」を区別できないと、ビルド間比較になりません。\n\n### 例: 同一区間を 2 つのビルドで走った結果を並べる\n\n```graphql\nquery {\n  locationFreezeSummary(\n    filter: {\n      from: \"2026-07-01T00:00:00Z\"\n      to: \"2026-07-08T00:00:00Z\"\n      segmentId: \"11302:1130201:1130202\"\n    }\n  ) {\n    appVersion\n    platform\n    device\n    sessionCount\n    locationCount\n    freezeSessionCount\n    freezeCount\n    maxGapMs\n    totalGapMs\n  }\n}\n```\n\n返る行は例えば次のようになります。\n\n```text\nappVersion     device      sessionCount  freezeSessionCount  freezeCount  maxGapMs\n10.4.1(100)    Pixel 8     1             1                   1            300000\n10.4.2(101)    Pixel 8     1             0                   0            null\n```\n\n同じ区間・同じ端末で `freezeSessionCount` が 1 → 0 になっているので、その区間については\n10.4.2(101) で解消したと読めます。逆に `freezeCount` が増えていれば退行です。\n\n個別事象の詳細を見るときは `locationFreezes` を使います。",
+    "title": "docs/location-freeze-regression.md",
+    "url": "https://github.com/TrainLCD/THQ/blob/37208ef7dbac9af640a41cf85c205474377dc277/docs/location-freeze-regression.md",
+    "repo": "TrainLCD/THQ",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/location-freeze-regression.md",
+      "branch": "main",
+      "commit": "37208ef7dbac9af640a41cf85c205474377dc277",
+      "blob_sha": "58846a8465ef3a92858713814f6f6f0a941b45fd"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T06:18:35.644Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/location-simulation.md:5",
+    "source_id": "TrainLCD/MobileApp:docs/location-simulation.md",
+    "text": "欠測 (`<time>` の穴) はそのまま待ち時間になる。GPX に 195 秒の穴があれば端末へも\n195 秒のあいだ何も流さないので、`STALE_REFERENCE_MS` の基準張り直しまで含めて観測できる。\n\nテストプロバイダへ打つのを止めるだけなので「Play 開発者サービスの Fused が最後の測位を\n保持して配り続けるのでは」という懸念があるが、実測ではそうならなかった (後述の\n「検証できること・できないこと」を参照)。ただし確かめたのは 1 機種なので、初めて使う\n端末では下の手順で一度確認する。\n\n```bash\nadb shell dumpsys location | grep -A3 \"fused provider\" | grep \"last location=\"\n```\n\n欠測のあいだ `last location` の `et=` (測位時刻) が止まっていれば途絶になっている。\n値が進み続けるなら Fused が配り直しているので、`--provider gps,network` で `fused` を\n外して試す。\n\n`MAX_PLAUSIBLE_SPEED` は 100m/s (360km/h) なので、320km/h の GPX を `--speed 2`\n以上で流すと速度フィルタが全点を棄却して現在地が凍る。倍速で見たいときは\n`--max-speed` を下げた GPX を作り直す。\n\n## EMA スムージングと配信間隔\n\n固定 α の EMA の追従遅れは、定速・一定間隔のとき `((1-α)/α)·v·Δt` で、配信間隔 Δt に\n比例する。α を精度だけで決めると Δt が変わるたびに遅れも変わるため、\n`getSmoothingAlpha` は精度が `BAD_ACCURACY_THRESHOLD` (200m) 未満の帯で\n`α = Δt / (Δt + T)` を使う。**このとき追従遅れは `v·T` になり Δt に依存しない**。\nT は旧実装の固定 α が 1 秒間隔で持っていた遅れ時間なので、Δt が 1 秒のとき α は\n旧実装と完全に一致する。\n\n精度 200m 以上の帯だけは固定 α (0.3) を維持している。この帯は測位ノイズ\n(σ ≒ accuracy) が到着圏に対して大きく、スムージングが到着判定の安定性そのものを\n担っているため。正規化して α を上げると遅れは詰まるが、平滑後の座標が到着圏を\n出入りして到着表示がばたつく。追従遅れと安定性の積は配信間隔で決まるので、\n10 秒間隔・σ=250m では許容遅れをどこに置いても両立しない。\n\nこの挙動は `src/store/atoms/location.gpxLag.test.ts` が GPX を実パイプラインへ\n流して検証している (`assets/gpx/KatamachiRapid.gpx` は駅間 2.3km と、到着圏が\n最小クランプに張り付く最も不利な条件)。10 秒間隔の測位は、駅に対して当たる位置が\n1 通りではない。テストは最初の測位の遅れとノイズの種を変えた複数の条件で測る。\nばたつきは、`useRefreshStation` と同じく停車時のグレース期間 (`ARRIVED_GRACE_PERIOD_MS`)\nを含めて数える。到着直後に 1 回だけ圏外へ押し出された測位は、表示を変えないためである。\n精度 250m で α を正規化すると、グレース期間を含めてもほとんどの条件でばたつく。\n\n## Jest から GPX を流すテスト\n\nGPX は Xcode / adb だけでなく Jest からも参照する。`src/store/atoms/location.ts` の\n`setLocation` へ直接流し込めるので、速度フィルタ・EMA・基準の張り直しまで含んだ\n測位パイプライン全体を CI で回帰させられる。\n\n| テスト (`src/store/atoms/`) | 対象 | 使う GPX |\n| ---- | ---- | ---- |\n| `location.gpxLag.test.ts` | EMA の追従遅れが表示の切り替わり位置をどれだけ後ろへずらすか | 4 本 (新幹線を除く) |\n| `location.gpxEtaAssist.test.ts` | ETA 補助を有効にしても走行結果が変わらないこと | 精度を持たない全 GPX |\n| `location.subwayGpx.test.ts` | 地下鉄の電波環境で地下鉄分岐へ入ること | F ライナー |\n\nETA 補助 (`eta_assist_enabled`) がパイプラインへ介入する経路は、ETA が許す進行量を\n超えた測位の棄却 (`store/atoms/location.ts`) だけである。精度劣化時に到着圏を緩和する\nR1 (`hooks/useRefreshStation.ts`) も持っていたが、有効化して実走させたところ到着判定が\n悪化したため廃止した。\n\n`location.gpxEtaAssist.test.ts` は点ごとの精度を持つ GPX を対象から外す。あのスイープは\n「GPX は真の軌跡だけを供給し、精度と配信間隔はテストが振る」前提で組まれており、\n`truthAt` で等間隔に再サンプルするため GPX が持つ欠測は補間で消え、記録された精度も\n使われない。電波環境そのものが被検体になるトラックは `location.subwayGpx.test.ts` が\n記録されたまま流す。",
+    "title": "docs/location-simulation.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/location-simulation.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "c42ac010e78c00a935619f3de5d9a03e79aa1449"
+    },
+    "ordinal": 5,
+    "updated_at": "2026-11-12T06:18:31.681Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#785:0",
+    "source_id": "TrainLCD/MobileApp#785",
+    "text": "位置情報の誤差でぶれた時に発生することが多い？",
+    "title": "たまに路線情報から駅名が消える",
+    "url": "https://github.com/TrainLCD/MobileApp/issues/785",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "issue",
+    "metadata": {
+      "number": 785,
+      "state": "closed",
+      "state_reason": "completed",
+      "labels": [
+        "bug"
+      ],
+      "author": "TinyKitten",
+      "release_status": "unknown"
+    },
+    "ordinal": 0,
+    "updated_at": "2021-10-04T11:48:22Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#401:0",
+    "source_id": "TrainLCD/MobileApp#401",
+    "text": "(No body)",
+    "title": "地下鉄に乗っている時だけBestForNavigationに精度を上げる",
+    "url": "https://github.com/TrainLCD/MobileApp/issues/401",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "issue",
+    "metadata": {
+      "number": 401,
+      "state": "closed",
+      "state_reason": "completed",
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "unknown"
+    },
+    "ordinal": 0,
+    "updated_at": "2020-12-26T17:06:49Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#348:0",
+    "source_id": "TrainLCD/MobileApp#348",
+    "text": "- アニメーションをReact Native Reanimatedに移行\r\n- 環状線では終端確認処理を行わない\r\n- 起動時と初回起動時の位置情報取得精度をBalancedにした\r\n- 駅読込中FABを無効化する\r\n- メトロテーマ/DTテーマヘッダー調整\r\n- Apple Watch対応\r\n- 「ただいま」表示をメトロテーマとDTテーマで粛清\r\n- 位置情報監視の精度をHighestに落とす(地下鉄は維持)\r\n- 位置情報監視ストラテジをOtherNavigationに変更\r\n- 駅指定画面でクエリを入力しないでFABをタップするとヘッダーが非表示のままになるバグを修正\r\n- メイン画面行かない限り位置を取り続けない\r\n- 駅検索で近い順にソート\r\n- 総武線快速対応\r\n- Push通知許可アラートで画面を止めないようにした",
+    "title": "v1.5",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/348",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "metadata": {
+      "number": 348,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "production"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2020-12-30T00:24:44Z",
+      "merge_commit_sha": "706a9145860e429e29dbec851367f6f536834bbe",
+      "draft": false,
+      "base_branch": "master",
+      "head_branch": "dev",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2020-12-30T00:24:45Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+    "source_id": "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+    "text": "`receivedSamples`と`dispatchedSamples`には、ネイティブ受信とタスクへの引き渡しを最大40件ずつ記録します。累積件数も別に記録します。`sessionId`と`sampleId`の組で照合します。同一タイムスタンプの測位も別の受信として扱います。引き渡しはJS側の受信完了を意味しません。\n\n`locationDelivery`には継続測位のJS受信と処理結果を残します。タスク、直接購読、前景補完を区別します。バッチの最後以外は従来どおり処理せず、`not-selected`と記録します。処理対象は既存フィルターの実際の戻り値から、採用・重複・精度・ETA・速度による棄却を記録します。手動選択とワンショット取得はこの履歴の対象外です。\n\n`currentConsumers`はコピー時点で存在するタスク消費側の状態です。要求精度、位置精度の権限、背景更新の許可、保留件数、配信条件、タイマー状態を含めます。保留測位の古さと受信時刻は別項目です。通常測位のエラーは`regular-error`、JSタスクのエラーは`locationDelivery.taskErrors`に記録します。JS側にはエラーコードだけを残します。\n\nJS側はコピー開始時、ネイティブ側は非同期取得の実行時に採取します。両者は同時刻のスナップショットではありません。ネイティブの単調時計とJSの壁時計を引き算しません。壁時計の差は端末の時刻変更の影響を受けます。\n\n各履歴の上限は`historyLimit`です。JS履歴はJSランタイム再起動、ネイティブ履歴はプロセス終了で消えます。履歴から見つからないだけでは配信漏れと断定できません。schemaVersion 1のバイナリでは測位IDと現在状態を取得できません。OSがアプリを実行しなかった理由そのものは記録できません。ネイティブの追加を反映するにはアプリのリビルドが必要です。\n\nネイティブ診断が3秒以内に応答しない場合は、取得結果を`read-timeout`として他の情報をコピーします。JS自体が停止している間はこの待機上限のタイマーも実行できません。\n",
+    "title": "docs/background-location-diagnostics.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/background-location-diagnostics.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/background-location-diagnostics.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "8a0a44e55e2f0008347bbe094a9cfd7ce66b1e1c"
+    },
+    "ordinal": 1,
+    "updated_at": "2026-11-12T06:18:30.855Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#761:0",
+    "source_id": "TrainLCD/MobileApp#761",
+    "text": "地下鉄とかで本当に位置情報を取ってるか不安な時に使えそう",
+    "title": "強制位置情報更新機能を実装する",
+    "url": "https://github.com/TrainLCD/MobileApp/issues/761",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "issue",
+    "metadata": {
+      "number": 761,
+      "state": "closed",
+      "state_reason": "completed",
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "unknown"
+    },
+    "ordinal": 0,
+    "updated_at": "2021-05-16T07:38:13Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#3:0",
+    "source_id": "TrainLCD/MobileApp#3",
+    "text": "ストロングしきい値過ぎた\n\n## Changed files\nmodified: app.json\nmodified: src/constants.ts\nmodified: src/store/actions/locationAsync.ts",
+    "title": "地下鉄線内のしきい値変更",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/3",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "metadata": {
+      "number": 3,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2019-12-23T11:10:55Z",
+      "merge_commit_sha": "5d3fa255723899150b0f1c5794cbf3551bf4163b",
+      "draft": false,
+      "base_branch": "master",
+      "head_branch": "fix-threshold",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2020-02-21T13:22:34Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/changelog.md:13",
+    "source_id": "TrainLCD/MobileApp:docs/changelog.md",
+    "text": "- **TODO（担当: @TinyKitten）: API 28–30 の実機／エミュレータ回帰確認。**\n  この更新で `createJobInfo` の API 28–30 分岐が上流実装\n  （`setImportantWhileForeground(true)` と `setOverrideDeadline` の併用）に戻り、\n  旧パッチの `setMinimumLatency(0)` と `setOverrideDeadline` の併用から\n  実挙動が変わる。自動テストを追加していない理由は、対象が `node_modules` 配下の\n  Java コードで `patch-package` 適用後にのみ存在し、Jest からは到達できないため\n  （Android の instrumentation テスト基盤はこのリポジトリに未整備）。上流が\n  late constraint を設定済みなので「制約なし」例外の条件は成立せず、旧パッチが\n  対処していたクラッシュは再発しない見込みだが、Android 9–11 実機での\n  バックグラウンド位置情報の配信を一度確認したい。\n- API 31+ 分岐は挙動を変更していないため、この更新に起因する回帰確認は不要。\n  ただし expedited job を使わない現行方針を API 36+ 限定に絞り込むかどうかは、\n  本番 Sentry での Android 12–15 の `IllegalArgumentException` 発生実績を確認したうえで\n  別途判断する（本更新のスコープ外）。\n- `expo install --fix` は最後に `expo-build-properties` を `app.config.ts` の\n  `plugins` へ自動追記できず非ゼロ終了する。`app.config.ts` が dynamic config かつ\n  元から当該 plugin を登録していない既存の状態に起因するため、この更新では対応していない。\n",
+    "title": "docs/changelog.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/changelog.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "349901303234337b66f37b31a67b3e07220ebf68"
+    },
+    "ordinal": 13,
+    "updated_at": "2026-11-12T06:18:30.932Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/location-simulation.md:3",
+    "source_id": "TrainLCD/MobileApp:docs/location-simulation.md",
+    "text": "> **`--subway-lines` は GPX の書き出しを変えるだけで、アプリの地下鉄分岐には効かない。**\n> `setLocation` の `skipSmoothing` は `stationState.station?.line?.lineType` で判定する。\n> これは StationAPI が返す値なので、`--subway-lines` で地下へ寄せた路線 (みなとみらい線・\n> 西武有楽町線) の区間は、坑口帯 260〜620m の精度が付いていても実機では地上と同じ経路\n> (速度フィルタと低精度 α の EMA) を通る。**実機再生で地下鉄分岐に入るのは API 上\n> `Subway` の区間だけ** で、`FLinerSeibu.gpx` では副都心線の区間にあたる。\n> Jest 側 (`location.subwayGpx.test.ts`) は `lineType` を固定して流すため全区間で分岐を踏む。\n\n地下と地上の別は原則 StationAPI の `lineType` に従うが、これは路線単位の属性なので\n実態と食い違うことがある。全線地下でも `Normal` で登録されている路線があるため、\n`--subway-lines` に路線 ID を渡して地下側へ寄せる。\n\n| 路線 | ID | API の `lineType` | 実際 |\n| ---- | ---- | ---- | ---- |\n| みなとみらい線 | `99310` | `Normal` | 全線地下 |\n| 西武有楽町線 | `22003` | `Normal` | 小竹向原〜練馬が地下 |\n\n逆に**一部だけ地下化されている路線 (東急東横線の渋谷〜代官山) は路線単位では\n表せない**ので、駅数の多い側に倒して地上のまま扱う。`--subway-lines` に経路上に無い\n路線 ID を渡した場合はエラーにする (地下扱いにしたつもりの区間が黙って地上のまま\n出るのを防ぐため)。同じ理由で `--signal-profile subway` を伴わない `--subway-lines` も\nエラーにする。経路に地下の駅が 1 つも無いまま `--signal-profile subway` を指定した\n場合は、欠測が発生しないことを標準エラーで知らせる。\n\n生成時、どの路線を地下として扱ったかを標準エラーに出す。生成物からは読み取れない\n情報なので、意図どおりに分かれたかはここで確認する。\n\n```text\n区間の扱い: みなとみらい線(地下) / 東急東横線(地上) / 東京メトロ副都心線(地下) / 西武有楽町線(地下) / 西武池袋線(地上)\n```\n\n```bash\n\n\n# Fライナー相当 (元町・中華街→飯能)\nnpm run gpx:generate -- \\\n  --line-group 152 --signal-profile subway \\\n  --subway-lines 99310,22003 --out assets/gpx/FLinerSeibu.gpx\n```\n\n## 同梱している GPX\n\n| ファイル | 内容 |\n| ---- | ---- |\n| `assets/gpx/SampleJY.gpx` | 山手線。外部ツールで記録した実走行ログ |\n| `assets/gpx/SampleTohokuShinkansen.gpx` | 東北新幹線 盛岡→仙台。最高 320km/h、一ノ関に停車、通過駅 5 駅を経由 |\n| `assets/gpx/KeioSpecialExpress.gpx` | 京王線 特急 新宿→京王八王子。到着時間推定に合わせて走る |\n| `assets/gpx/HitachiShinagawaSendai.gpx` | 特急ひたち 品川→仙台。到着時間推定に合わせて走る |\n| `assets/gpx/KatamachiRapid.gpx` | 片町線 快速 京田辺→木津。駅間 2.3km 前後の全駅停車 |\n| `assets/gpx/SobuRapid.gpx` | 総武快速線 錦糸町→津田沼。駅間 3.6〜7.6km (線路の長さ) の全駅停車 |\n| `assets/gpx/FLinerSeibu.gpx` | Fライナー相当 元町・中華街→飯能。地下鉄の電波環境付き |\n\n`SampleTohokuShinkansen.gpx` は盛岡以南の 320km/h 区間を再現するためのもの。\n経路上の 8 駅すべてに `ARRIVED_MAX_THRESHOLD` (200m) 以内まで接近するので、\n各駅の到着判定・通過判定をそのまま観測できる。\n\n`KeioSpecialExpress.gpx` は在来線側のサンプルで、種別グループの停車パターン\n(経路 32 駅 / うち停車 12 駅) をそのまま走る。StationAPI のデータが変わらなければ、\n同じコマンドを再実行するとバイト単位で同じ内容が得られる。京王線の特急は到着時間\n推定の較正テーブルに無いので、所要時間は一般則による推定値になる。\n\n`HitachiShinagawaSendai.gpx` は、通過駅が長く続く在来線特急のサンプル。東海道線・上野東京ライン・\n常磐快速線・常磐線の 4 路線を直通し、経路 94 駅のうち 30 駅に停車する。`--line-group 116` で\n生成した。約 307 分・18394 点と同梱のサンプルで最も長い。巡航速度は到着時間推定に合わせて\n決まり、最高でも 82km/h にとどまる。",
+    "title": "docs/location-simulation.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/location-simulation.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "c42ac010e78c00a935619f3de5d9a03e79aa1449"
+    },
+    "ordinal": 3,
+    "updated_at": "2026-11-12T06:18:31.681Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#764:0",
+    "source_id": "TrainLCD/MobileApp#764",
+    "text": "closes #761\n\n## Review: Sw-Saturn\nhttps://github.com/TrainLCD/MobileApp/pull/764#pullrequestreview-660414415\n\nAPPROVED\n\n\n\n\n## Changed files\nmodified: android/app/src/main/assets/translations/en.json\nmodified: android/app/src/main/assets/translations/ja.json\nmodified: ios/TrainLCD/translations/en.json\nmodified: ios/TrainLCD/translations/ja.json\nmodified: src/components/Layout/Permitted.tsx\nmodified: src/providers/SpeechProvider.tsx",
+    "title": "強制位置情報更新",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/764",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "metadata": {
+      "number": 764,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2021-05-16T07:38:13Z",
+      "merge_commit_sha": "64168f5b26e7fae6b6ed043afe543bae875631a0",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "feature/force-refresh",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2021-05-16T07:38:14Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+    "source_id": "TrainLCD/MobileApp:docs/home-screen-widgets.md",
+    "text": "プリセット一覧は各行をその路線色で表示します。プリセット名は18pt/spの太字にします。\niOSの小・中サイズは先頭の1件を表示し、ウィジェット全体をその路線色にします。\niOSのプリセット中サイズは内容の上部、大サイズはカード一覧の上部に、\n乗車中の中サイズと同じ電車アイコンと「TrainLCD」を表示します。\n正方形では駅名の間に下向き矢印を置き、横長では駅名を横に並べます。\n乗車中にも同じ路線見出しと駅名のレイアウトを使います。\niOSの横並びの駅名は、乗車中とプリセットの中・大サイズで内容に合わせた幅にします。\n駅名と矢印の間隔は左右とも8ptとし、残りの余白は駅名の間に配分しません。\n乗車中は路線名の下に方面を表示します。iOSの乗車中・プリセットの小／中サイズと、\nAndroidの乗車中の正方形／横長は、見出しから駅名までの内容全体を上下中央に揃えます。\nAndroidでは表示内容を測定し、必要な高さを確保できるレイアウトを選びます。\nAndroid 12以降はランチャーから渡された各サイズで個別に判定します。\nサイズ一覧がない場合は、最小幅×最大高と最大幅×最小高を縦・横のサイズとして扱います。\n正方形が収まらなければ横長に、横長も収まらなければ路線名だけの1行表示に切り替えます。\n\n### 駅名の文字サイズ\n\n駅名はiOSの小サイズ・横長・プリセット一覧で24ptの太字にします。\n駅名の行は24ptの高さを確保し、縦方向の圧縮で文字を縮小しません。\n小サイズの項目間隔は2pt、横長は6ptにし、駅名の高さを確保します。\n乗車中の小サイズは駅情報がある場合だけ路線名を1行にし、駅情報がない場合は2行に戻します。\nAndroidの乗車中は24sp、プリセット一覧は20spを上限にします。\n長い駅名は従来どおり縮小し、駅番号は11pt/spのまま表示します。\n\n### 駅番号\n\n乗車中の現在駅・次駅と、プリセットの始発駅・終着駅には、駅名の下に駅番号を表示します。\n英字と数字の間はハイフンで区切り、11pt/spの太字で駅名に対して中央揃えにします。\n表示する駅の片方でも番号がある場合は、iOSは16pt、Androidは14spの番号欄を両駅に確保します。\niOSの番号自体の行高は14ptとし、駅名との間に2ptの余白を設けます。\n片方が欠番でも駅名・矢印の位置を揃えます。両駅とも番号がない場合は番号欄を確保しません。\n駅そのものがない終点では次駅の欄ごと隠し、非表示の次駅の番号は枠取りの判定に含めません。\n番号を持たない旧保存データは空欄として読み込みます。\n短い駅名でも番号が収まるよう、iOSは48pt、Androidの正方形は48spの最小幅を設けます。\n長い番号はその幅に合わせて縮小します。両駅とも番号がない場合は番号用の最小幅も設けません。\nAndroidの読み上げでは、駅名と番号を組にして説明します。番号がない場合は駅名のみです。\n\n乗車中は`stationNumber`・`nextStationNumber`、プリセットは`fromStationNumber`・\n`toStationNumber`を同期・保存します。番号の変更も表示内容の差分に含めます。\niOSの乗車中はライブアクティビティの番号を共有し、Androidの乗車中とプリセットは\n各駅の`line.lineSymbols`に対応する`stationNumbers`を優先します。\n対応する番号がなければ、既存の番号選択と同じく先頭を使います。\n\n表示確認では、両駅に番号がある場合、片方だけにある場合、両方にない場合を切り替え、\n小・中・大、長い駅名、終点、旧保存データで位置と見切れを確認します。\nAndroidではフォントサイズ変更とリサイズ後の表示も確認します。\n\n## データ経路\n\nアプリのプロセスが落ちていてもウィジェットは描画されるため、\n表示に必要な文字列はすべて解決済みの状態でネイティブへ渡し、端末ストレージへ永続化する。\n\n```text\nJS (解決済みの表示用文字列)\n  ├─ iOS     → PresetsWidgetModule → App Group の UserDefaults → WidgetCenter.reloadTimelines\n  └─ Android → WidgetModule        → SharedPreferences        → notifyAppWidgetViewDataChanged\n```\n\n- iOS の App Group ID は `Info.plist` の `APP_GROUP_ID`(既定値 `group.me.tinykitten.trainlcd`)。\n- Android の SharedPreferences 名は `me.tinykitten.trainlcd.widget`。\n- 表示内容に差分が無い更新は書き込まない。iOS は WidgetKit のリロードバジェット、\n  Android は再描画ブロードキャストを無駄に消費しないため。\n\n## 乗車中の駅情報\n\n現在駅はライブアクティビティと同じ停車駅基準です。走行中は最後の停車駅を表示します。\n次駅は表示用の次駅を使い、現在駅と同じ駅になった遷移では記録基準の次駅に戻します。\niOSでは既存のライブアクティビティの値をApp Groupへ保存します。\nAndroidでは`useUpdateWidget`で同じ選択規則を使います。",
+    "title": "docs/home-screen-widgets.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/home-screen-widgets.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/home-screen-widgets.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "a2f3570afbf247b6555736af3c623600e761ff72"
+    },
+    "ordinal": 1,
+    "updated_at": "2026-11-12T06:18:27.590Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/home-screen-widgets.md:2",
+    "source_id": "TrainLCD/MobileApp:docs/home-screen-widgets.md",
+    "text": "`stationName`と`nextStationName`も差分比較に含めます。駅が変わった場合に更新し、\n駅名が変わらない更新ではネイティブ側の再描画を抑えます。\n終点などで次駅がない場合は矢印と次駅を表示しません。\n旧保存データなど両方の駅名がない場合は従来の方面を表示します。\n降車時は従来どおり未乗車表示へ戻します。\n\n### 横長の最終更新時刻\n\n乗車中の横長ウィジェットでは、駅名の下に「最終更新 14:32」を表示します。\niOSの中サイズとAndroidの横長レイアウトが対象です。時刻は端末の時刻表記に従います。\n表示情報を保存するときに、iOSはApp Groupの`widgetUpdatedAt`（Unix秒）、\nAndroidはSharedPreferencesの`updatedAt`（Unixミリ秒）へ記録します。\n同一内容の更新を抑制する既存処理は維持し、再描画やリサイズでは時刻を進めません。\niOSでは再起動後も保存済みの表示内容と乗車状態を比較し、同じ情報なら時刻を維持します。\n降車時には時刻を削除します。未乗車時と時刻を持たない旧データでは表示しません。\nAndroidでは時刻行も含めて必要な高さを測定します。\n\n変更時は次の手順で実機確認します。\n\n1. 乗車開始後に横長ウィジェットへ時刻が表示されることを確認します。\n2. 同じ表示内容を再送しても時刻が変わらず、駅名の変更後には進むことを確認します。\n3. アプリを終了して再起動し、同じ乗車情報を再送しても保存済みの時刻が維持されることを確認します。\n4. 降車後と時刻キーのない旧データで時刻が表示されないことを確認します。旧データに同じ情報を再送しても時刻を補わず、降車後の再乗車では新しい時刻になることも確認します。\n5. 日本語・英語、12時間・24時間表記、Androidのリサイズで見切れを確認します。\n\n## プリセットウィジェット\n\n横長（`systemMedium`）では、プリセット名を路線記号の右側にある路線名の下へ表示します。\n乗車中の方面表示と同じ`WidgetLineHeader`を使い、14ptの文字と2ptの行間に揃えます。\n見出しと駅名の間隔は6ptとし、内容全体を上下中央に配置します。\n駅名の下には「プリセット」のピルを表示し、乗車中と区別できるようにします。\n乗車中の最終更新時刻に相当する位置に、10ptの太字で表示します。\n背景には前景色を18%の不透明度で敷き、左右8pt・上下3ptの余白を設けます。\n英語表示では既存の翻訳「Presets」を使います。駅情報がない場合にもピルを表示します。\n小サイズでは、路線記号の右側に路線名と18pt太字のプリセット名をまとめます。\n路線名は1行にし、項目間隔を2ptにして24ptの駅名が収まる高さを確保します。\n\n表示確認では、横長のプリセットと乗車中を並べ、短い名前と長い名前で見出しの配置を確認します。\n駅情報がない場合、小サイズ、大サイズの一覧でも見切れがないことを確認します。\n\n### 同期\n\n`usePresetCarouselData` が取得済みのプリセット(駅情報込み)を `usePresetsWidgetSync` が\n表示用の文字列へ変換してネイティブへ渡す。始発駅・終着駅の解決はアプリ内のプリセットカードと\n共通の `getPresetRouteEndpoints` を使う。\n\n乗換経路のプリセットは、保存した区間(`SavedRoute.legs`)ごとに系統の駅を拾い、つないだ駅リストから\n始発駅・終着駅を求めます(`buildSavedRouteStations`)。ウィジェットに出る路線名・路線色は、\n始発駅の路線(1 区間目の路線)のものです。\n\n同期される項目は `PresetsWidgetItem`(`src/utils/native/presetsWidget.ts`)で、\n`lineColor` と `lineSymbol` は解決できない場合に空文字を渡し、\nネイティブ側でブランドカラー・路線名の先頭 1 文字へフォールバックさせる。\n\n### ディープリンク\n\n行をタップすると以下の URL でアプリが起動する。\n\n```text\ntrainlcd://?preset=<SavedRoute.id>          # 本番\ntrainlcd-canary://?preset=<SavedRoute.id>   # Canary\n```\n\n`useDeepLink` は `preset` を他の経路パラメータ(`id` / `sids` / `sgid`)より優先して処理し、\nクイックアクションと同じ `pendingQuickActionRouteId` を立てて路線選択画面へ戻す。\n`SelectLineScreen` がそれを検知して当該プリセットの行き先選択を開く。\n\n経路そのものは URL に含まれず端末内の DB から解決するため、\n`preset` の値は UUID 書式に一致するもののみ受け付ける。\n\n### サイズと表示件数\n\nサイズは乗車中ウィジェットと揃えている(iOS は `systemSmall`、Android は 2x2)。\n\nAndroid は `ListView` + `RemoteViewsService`(`PresetsWidgetService`)のコレクション\nウィジェットで、入るぶんだけ表示され残りは縦スクロールで辿れる。縦スクロールできる以上\nリサイズしても見られる情報は増えないため、`resizeMode` は `none` で 2x2 に固定している。",
+    "title": "docs/home-screen-widgets.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/home-screen-widgets.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/home-screen-widgets.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "a2f3570afbf247b6555736af3c623600e761ff72"
+    },
+    "ordinal": 2,
+    "updated_at": "2026-11-12T06:18:27.590Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/home-screen-widgets.md:3",
+    "source_id": "TrainLCD/MobileApp:docs/home-screen-widgets.md",
+    "text": "行数をウィジェットの高さから dp で見積もる方式は採らない。端末・ランチャー・画面の向きで\n実寸が変わるため必ずずれる(`OPTION_APPWIDGET_MIN_HEIGHT` は横向き時＝取り得る最小の\n高さで、これを基準にすると縦向きで収まるはずの行まで落ちる)。アダプタに任せることで\n高さ計算自体を持たない。\n\niOS は WidgetKit にスクロールが無いため、表示できる件数はウィジェットの高さで決まる。\nファミリーごとに件数を決め打ちすると端末サイズ差で余白が出たり見切れたりするため、\n`GeometryReader` で実際の描画高を測り、`rowHeight` / `rowSpacing` から収まる行数を求める。\n\niOSの大サイズはヘッダーとその下の余白を除いた高さを測り、行高92pt・行間8ptから表示件数を求めます。\n駅名はFigmaの大サイズに合わせて24ptの太字で表示します。\n各カードには上下10ptの余白を設け、駅番号欄もカードの内側に確保します。\n駅情報がない行の路線名はDynamic Typeの上限をxxxLargeにし、固定行高に収めます。\n従来の72ptの行より表示件数が減る場合がありますが、行全体のタップと保存順は維持します。\nAndroidは従来どおりスクロールで全件に到達できます。\n\niOSの路線記号は、直径を固定した円に中央揃えで重ねます。\n文字を縮小する場合も中央揃えを指定し、乗車中とプリセットで同じ部品を使います。\n\nAndroid の行は `AbsListView.LayoutParams` がマージンを持たないため、行間は行レイアウト外側の\n`FrameLayout` のパディングで作り、カードの下敷き(`widget_preset_row_background`)は\nその内側に敷いて余白まで塗らないようにしている。\n\n| ファミリー | 表示 | タップ |\n| --- | --- | --- |\n| `systemSmall` | 1 件を縦に積んで表示 | `widgetURL` でウィジェット全体 |\n| `systemMedium` | 1 件を横並びで表示 | `widgetURL` でウィジェット全体 |\n| `systemLarge` | 収まるだけの行 | 行ごとの `Link` |\n\n`systemSmall` はウィジェット全体が単一のタップ領域で、行ごとの `Link` が個別のタップ先に\nならない。行を並べても 1 件しか開けず件数を増やす意味が無いため、1 件だけを出す\n(`PresetsWidgetFeatured`)。その 1 件は「始発駅 → 終着駅」を横一列に置くと正方形の\n横幅で先に頭打ちになり駅名がすぐ省略されるので、サークル → プリセット名 → 始発駅 →\n下向き矢印 → 終着駅 の順に縦へ積み、1 駅あたりの幅をフルに使う。\n\n## 変更時に揃えるべき箇所\n\n- ウィジェットの kind 文字列: iOS の `Widget.kind` と、リロードを呼ぶネイティブモジュール側の定数。\n- ストレージのキー名: iOS の `PresetsEntry.storageKey` と `PresetsWidgetModule.presetsStorageKey`、\n  Android の `PresetsWidgetStore` のフィールド名、JS の `PresetsWidgetItem`。\n- 同期する最大件数: JS の `MAX_PRESETS_WIDGET_ITEMS`(両 OS 共通)。\n  描画側は iOS が実測、Android が `ListView` に任せており、どちらも件数の決め打ちを持たない。\n- 未設定時のフォールバック表示: iOS / Android の双方で同じ文言・同じ色になるようにする\n  (色は iOS の `LockScreenEntry.fallbackLineColor` / Android の\n  `WidgetStateStore.PLACEHOLDER_LINE_COLOR` と `@color/widget_brand`)。\n- 前景色の判定式と閾値: iOS の `lineForegroundColor` と Android の `WidgetTheme.onLineColor`。\n\n## 走行中の経路切り替え確認\n\n走行画面を開いている間にプリセットウィジェットや共有リンクから経路を開くと、切り替え確認を表示します。プリセット名を取得できる場合は「プリセット名に切り替えますか？」と表示します。対象プリセットの路線に記号画像がある場合は、情報アイコンの代わりに表示します。設定画面を重ねている場合も確認します。ホーム画面のクイックアクションも同じ動作です。\n\n「切り替える」を選ぶまで経路の取得や画面遷移を開始しません。キャンセル、背景タップ、Androidの戻る操作では現在の経路と設定を維持します。確認中に届いた追加のリンクは適用しません。アプリの初回起動や路線選択画面では確認せずに開きます。\n",
+    "title": "docs/home-screen-widgets.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/home-screen-widgets.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/home-screen-widgets.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "a2f3570afbf247b6555736af3c623600e761ff72"
+    },
+    "ordinal": 3,
+    "updated_at": "2026-11-12T06:18:27.590Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+    "source_id": "TrainLCD/MobileApp:docs/square-running-screen.md",
+    "text": "# 正方形の走行画面\n\n画面の長辺が短辺の1.2倍以下の場合は、正方形用の走行画面を表示します。\n縦画面設定の有無にかかわらず適用します。PiP表示を優先します。\nそれ以外の画面では、従来の縦画面設定と横画面表示を使います。\n\n初期表示はC案の乗換案内です。ヘッダーや駅名をタップすると、B案の駅一覧に切り替わります。\nB案の駅一覧や下段をタップするとC案に戻ります。\nスクロール中は表示を切り替えません。駅一覧は現在駅より前も含む全駅を進行方向順に保持します。環状線も現在駅を基準に回転させません。\n設定ボタンは既存の設定メニューを開きます。C案の乗換路線は既存の路線選択処理を使います。\nタッチロック中はこれらの操作を無効にします。\n\nB案では駅名の右にAPI表記の駅番号、その右にポートレートと同じ残り分のETAを表示します。\n同名のバス停が連続する場合は、縦画面と同じ条件で停留所名にのりば番号を添えます。横画面の路線図とLED案内でも同じ条件で表示します。\nETAは現在駅より先の停車駅に表示し、丸めて0分なら「まもなく」、一部未取得なら「--」と表示します。現在駅より先にある表示対象の停車駅にETAが一つもない場合は、列を表示しません。通過駅や表示対象外の駅の推定値はこの判定に含めません。現在駅が前方補正された場合は、補正後の現在駅より先の停車駅だけを表示対象と列の有無の判定に使います。補正後の現在駅が表示順に見つからない場合は、記録上の現在駅を基準にします。\nB案では通過済みの駅にラベルを付けず、文字と記号の濃淡で区別します。\nB案の下段には「のりかえ」と乗換路線の記号を表示します。\nラベルはアプリが日本語環境なら「のりかえ」、それ以外なら「Transfers」に固定します。路線数と路線名は表示しません。\n路線の記号と駅番号は既存のAPIデータと描画コンポーネントを使います。\n乗換がない場合は、その旨を表示します。\n\n駅名と状態の文言は既存のヘッダー状態に従います。\nC案は日本語と英語を同時には表示せず、中国語・韓国語を含む既存の言語切替に従います。\n言語が切り替わっても、C案とB案の選択を維持します。\n背景はライト・ダーク設定に従い、路線色と種別色はデータを使います。\n\n## 確認\n\n- `runningLayout.test.ts`: 正方形の境界と既存の縦横画面判定を確認します。\n- `SquareMain.test.tsx`: 言語・駅順・環状線・ナンバリングと設定の接続を確認します。\n- `SquareMainView.test.tsx`: C案とB案の切替・乗換ラベルと記号の下段・タッチロックと操作の分離を確認します。\n\n## Galaxy Z Flipのカバー画面\n\nSamsungのFlex Window向けに「TrainLCD カバー画面」ウィジェットを追加しています。\nカバー画面のウィジェット一覧で有効にし、タップするとカバー画面を指定してアプリを開きます。\n既存のホーム画面ウィジェットの登録と起動先は変更しません。\n起動後は既存のナビゲーションを使います。乗車中であれば走行画面を表示します。\n\nウィジェットにはSamsung指定の`sub_screen`メタデータと`keyguard`カテゴリを設定しています。\n起動には`ActivityOptions.launchDisplayId = 1`を使います。\n端末のロックとOSの起動制限には従います。\nGood LockのMultiStarからアプリを起動する方法もSamsungが案内しています。\n\nAndroidでは画面サイズの変更イベントを購読し、ウィンドウの寸法が変わらない場合も表示を再判定します。\nAndroidではウィンドウだけでなく、装飾領域を含む画面の縦横比も正方形判定に使います。\n画面全体による補正は、ウィンドウの各辺が画面全体の70%以上100%以下の場合に限定します。\nこれは表示領域を確保するためのアプリ側の基準で、OSの分割画面状態を判別するものではありません。\n360×374の画面で360×280のウィンドウは補正し、360×180の半画面ではウィンドウ自体の縦横比で判定します。\n描画領域では既存のSafe Areaを使い、画面の上下左右のインセットを確保します。\nMainActivityには既にリサイズ許可と画面サイズ変更への追従設定があります。\n\n仕様の出典:\n\n- [Samsung Flex Window: ウィジェット登録と起動先の指定](https://developer.samsung.com/galaxy-z/flex_window.html)\n- [Samsung: Good Lockからの起動と画面サイズへの対応](https://developer.samsung.com/sdp/blog/en/2024/01/09/best-practices-of-app-development-for-various-screen-sizespowered-by-good-lock)\n\n実機確認の項目:\n\n- カバー画面の一覧にウィジェットが現れ、タップでカバー画面にアプリが開くこと。\n- 本体画面で乗車を開始してから、カバー画面でも同じ乗車状態を表示すること。\n- C案とB案の切替、日英切替、設定画面が使えること。\n- カメラ部分とシステムバーに文字や操作部分が隠れないこと。\n- 開閉後に画面サイズと操作領域が更新されること。",
+    "title": "docs/square-running-screen.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/square-running-screen.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "metadata": {
+      "path": "docs/square-running-screen.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "e8527f40b82a11520caa8fcadb8b16e1b9f527c1"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T06:18:29.968Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#7403:0",
+    "source_id": "TrainLCD/MobileApp#7403",
+    "text": "## 概要\n\nバス走行中、Apple Watchの乗換欄には鉄道路線だけを表示します。\n\n## 変更の種類\n\n- [x] バグ修正\n- [ ] 新機能\n- [ ] リファクタリング\n- [ ] ドキュメント\n- [ ] CI/CD\n- [ ] その他\n\n## 変更内容\n\n- iPhoneからApple Watchへ乗換候補を送る際、バス乗車中はバス系統を除きます。\n- 鉄道の候補は従来どおり路線名で表示します。\n- バス系統と鉄道路線が混在する停留所で、到着時と次の停留所の案内時に鉄道路線名だけが送られることをテストします。\n\n## テスト\n\n- [x] `npm run lint` が通ること\n- [x] `npm test` が通ること（関連4スイート、23件）\n- [x] `npm run typecheck` が通ること\n\n`npm test -- --runInBand useAppleWatch useTransferLinesFromStation useTransferLines useTransferTargetStation`\n\n## 関連Issue\n\n- iPhoneの走行画面で同じ絞り込みを行った #7399\n\n## スクリーンショット（任意）\n\n<!-- create-pr:screenshots:start -->\n乗換候補の抽出結果をテストで確認しました。画面の撮影は省略しています。\n<!-- create-pr:screenshots:end -->\n\n\n",
+    "title": "バス走行中のApple Watchの乗換案内からバス系統を除外する",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/7403",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "metadata": {
+      "merged_at": "2026-11-08T13:18:03Z",
+      "base_branch": "dev"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-08T13:18:06Z"
+  }
+]

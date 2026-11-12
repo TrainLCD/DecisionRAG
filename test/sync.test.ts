@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { sync } from '../src/sync.js';
 import { passagesFor, saveSource } from '../src/store.js';
 import { verifySignature, webhook } from '../src/webhook.js';
-import worker from '../src/index.js';
+import { contractWorker as worker } from './helpers.js';
 import { fixture, mockFetch } from './helpers.js';
 
 const issue = { number: 1, title: '報告', body: '測位が止まる', html_url: 'https://github.com/TrainLCD/Issues/issues/1', updated_at: '2026-11-06T00:00:00Z', state: 'open', state_reason: null, labels: [{ name: 'bug' }], user: { login: 'reporter' } };

@@ -2,7 +2,8 @@ import { Marked } from 'marked';
 import { answer } from './answer.js';
 import { GitHub } from './github.js';
 import { readText } from './http.js';
-import { Jev } from './jev.js';
+import { LocalDecision, type Judge } from './jev.js';
+type JudgeFactory = (env: Env) => Judge;
 import { DEFAULT_BUDGETS, d1Store, retrieve, planRetrieval, retrievePlannedPage } from './retrieval.js';
 import { encodeCursor, decodeCursor } from './search-cursor.js';
 import { enqueue, sync } from './sync.js';
@@ -35,7 +36,7 @@ async function requireToken(request: Request, env: Env): Promise<void> {
 }
 
 /** Search within the caller's allowed scope and record server-side phase timings. */
-async function search(request: Request, env: Env, path: string): Promise<Response> {
+async function search(request: Request, env: Env, path: string, createJudge: JudgeFactory): Promise<Response> {
   const body = await bodyJson(request);
   if (typeof body.query !== 'string' || !body.query.trim() || body.query.length > 1500) throw new HttpError(400, 'query_must_be_1_to_1500_characters');
   if (body.include_feedback !== undefined && typeof body.include_feedback !== 'boolean')
@@ -62,7 +63,7 @@ async function search(request: Request, env: Env, path: string): Promise<Respons
     timings.scope_ms = Date.now() - scopeStart;
     return { publicRepos, feedbackRepo: body.include_feedback ? `${env.GITHUB_ORG.toLowerCase()}/issues` : undefined };
   });
-  const judge = new Jev(env);
+  const judge = createJudge(env);
   const store = d1Store(env, scope, timings);
   const budgets = { ...DEFAULT_BUDGETS, maxDocuments };
   let pagination: { page: number; total_pages: number; next_cursor: string | null } | undefined;
@@ -86,7 +87,7 @@ async function search(request: Request, env: Env, path: string): Promise<Respons
       else timings.model_ms += step.elapsed_ms;
     }
     return { ...result, evidence: excerpts, hit_count: hitCount, pagination, trace: judge.trace, timings, elapsed_ms: Date.now() - start,
-      retrieval: 'hierarchical_decision', release_inference: 'github_release_commit_ancestry' };
+      retrieval: judge.engine ?? 'hierarchical_decision', release_inference: 'github_release_commit_ancestry' };
   };
   if (path === '/answer' && request.headers.get('accept')?.includes('text/event-stream')) {
     const abort = new AbortController();
@@ -119,11 +120,11 @@ async function search(request: Request, env: Env, path: string): Promise<Respons
 }
 
 /** Dispatch public endpoints before applying the authentication gate for admin routes. */
-async function route(request: Request, env: Env): Promise<Response> {
+async function route(request: Request, env: Env, createJudge: JudgeFactory): Promise<Response> {
   const path = new URL(request.url).pathname;
   if (path === '/health' && request.method === 'GET') return Response.json({ ok: true });
   if (path === '/webhooks/github' && request.method === 'POST') return webhook(request, env);
-  if ((path === '/search' || path === '/answer') && request.method === 'POST') return search(request, env, path);
+  if ((path === '/search' || path === '/answer') && request.method === 'POST') return search(request, env, path, createJudge);
   await requireToken(request, env);
   if (path === '/sync' && request.method === 'POST') {
     await enqueue(env, { type: 'org', page: 1 });
@@ -147,11 +148,12 @@ async function route(request: Request, env: Env): Promise<Response> {
   }
   throw new HttpError(404, 'not_found');
 }
-const worker: ExportedHandler<Env, SyncJob> = {
+export function createWorker(createJudge: JudgeFactory = () => new LocalDecision()): ExportedHandler<Env, SyncJob> {
+return {
   /** Handle HTTP errors without exposing upstream payloads or credentials. */
   async fetch(request, env) {
     try {
-      const response = await route(request, env);
+      const response = await route(request, env, createJudge);
       response.headers.set('Cache-Control', 'no-store');
       response.headers.set('X-Content-Type-Options', 'nosniff');
       return response;
@@ -186,5 +188,6 @@ const worker: ExportedHandler<Env, SyncJob> = {
     await env.DB.prepare("DELETE FROM sync_jobs WHERE status='completed' AND updated_at<datetime('now','-7 days')").run();
   },
 };
-export default worker;
+}
+export default createWorker();
 

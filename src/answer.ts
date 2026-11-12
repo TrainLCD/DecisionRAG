@@ -67,6 +67,7 @@ export async function answer(query: string, evidence: Evidence[], env: Env, judg
   const answerEvidence = evidence.slice(0, verificationPassageLimit);
   const external = env.ANSWER_MODEL && env.ANSWER_API_KEY;
   if (!env.AI && !external) {
+    if (judge.extract) return judge.extract(query, answerEvidence);
     const assessment = await judge.assess(query, answerEvidence);
     const status = gate(env, assessment);
     return { status: status === 'ready' ? 'evidence_ready' : status, answer: null, citations: [], assessment };
@@ -80,7 +81,7 @@ export async function answer(query: string, evidence: Evidence[], env: Env, judg
   ];
   const responseFormat = { type: 'json_object' as const };
   let generation: GenerationResponse | undefined;
-  const unavailable = { status: 'generation_unavailable', answer: null, citations: [] };
+  const unavailable = judge.extract ? judge.extract(query, verificationEvidence) : { status: 'generation_unavailable', answer: null, citations: [] };
   const base = external ? URL.parse(env.ANSWER_BASE_URL || 'https://api.openai.com/v1') : null;
   if (external) {
     if (!base || base.protocol !== 'https:' || base.username || base.password || base.search || base.hash)
@@ -137,6 +138,7 @@ export async function answer(query: string, evidence: Evidence[], env: Env, judg
     return unavailable;
   }
   if (!draft.claims.length && !(draft.summaries as unknown[] | undefined)?.length) {
+    if (judge.extract) return judge.extract(query, verificationEvidence);
     const assessment = await judge.assess(query, verificationEvidence);
     const status = gate(env, assessment) === 'conflicting_evidence' ? 'conflicting_evidence' : 'insufficient_evidence';
     return { status, answer: null, citations: [], assessment };
@@ -153,14 +155,14 @@ export async function answer(query: string, evidence: Evidence[], env: Env, judg
     summaries.push({ ...claim, source_id: sourceId });
   }
   const allClaims = [...claims, ...summaries];
-  if (!allClaims.length) return { status: 'verification_failed', answer: null, citations: [] };
+  if (!allClaims.length) return judge.extract ? judge.extract(query, verificationEvidence) : { status: 'verification_failed', answer: null, citations: [] };
   const verification = await judge.verify(query, verificationEvidence, allClaims);
   const status = gate(env, { supported: verification.complete, conflict: verification.conflict });
   if (status === 'conflicting_evidence') return { status, answer: null, citations: [], verification };
   const threshold = boundedNumber(env.SUPPORT_THRESHOLD, 0.85, 0, 1);
   const verified = claims.filter((_, i) => (verification.claims[i] ?? 0) >= threshold);
   const verifiedSummaries = summaries.filter((_, i) => (verification.claims[claims.length + i] ?? 0) >= threshold);
-  if (!verified.length && !verifiedSummaries.length) return { status: 'verification_failed', answer: null, citations: [], verification };
+  if (!verified.length && !verifiedSummaries.length) return judge.extract ? judge.extract(query, verificationEvidence) : { status: 'verification_failed', answer: null, citations: [], verification };
   const complete = verified.length > 0 && verified.length === draft.claims.length && status === 'ready';
   const text = verified.map(claim => `${claim.text} ${claim.citations.map(id => `[${id}]`).join(' ')}`).join('\n');
   const citations = [...new Set([...verified, ...verifiedSummaries].flatMap(claim => claim.citations))];

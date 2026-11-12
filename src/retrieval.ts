@@ -39,7 +39,8 @@ export interface RetrievalPlan { ids: string[] }
 /** Route large collections by repository and source type before scanning their titles. */
 async function routedDocuments(query: string, store: RetrievalStore, judge: Judge, budget: Budgets): Promise<Candidate[]> {
   const roots = await store.branches();
-  const selected = (await judge.score(query, roots, 'branch_screening')).slice(0, budget.branches);
+  const scored = await judge.score(query, roots, 'branch_screening');
+  const selected = judge.exhaustive ? scored : scored.slice(0, budget.branches);
   let screened = 0;
   // No lexical/vector prefilter: every document title in each retained branch is evaluated.
   const branchesToScreen = selected.map(({ item }) => ({ branch: item, after: '', documents: [] as Candidate[] }));
@@ -67,6 +68,7 @@ export async function planRetrieval(query: string, store: RetrievalStore, judge:
   const direct = await store.documents(directLimit + 1);
   let documents = direct.length <= directLimit ? direct : await routedDocuments(query, store, judge, budget);
   const scopedDocuments = documents;
+  if (judge.selectDocuments) return { ids: await judge.selectDocuments(query, documents, budget.documents) };
   if (documents.length > 128) {
     const groups: { id: string; members: Candidate[]; description: string }[] = [];
     const describe = (members: Candidate[]) => {

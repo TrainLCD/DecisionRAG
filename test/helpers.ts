@@ -1,3 +1,6 @@
+import { createWorker } from '../src/index.js';
+import { Jev } from './legacy-judge.js';
+export const contractWorker = createWorker(env => new Jev(env));
 import { DatabaseSync } from 'node:sqlite';
 import { readdirSync, readFileSync } from 'node:fs';
 import type { Env, SyncJob } from '../src/types.js';

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { collectGeneration, draftPreview, readSse } from '../src/stream.js';
 import { answer } from '../src/answer.js';
 import type { Env } from '../src/types.js';
-import type { Judge } from '../src/jev.js';
+import type { Judge } from './legacy-judge.js';
 
 const encoder = new TextEncoder();
 const frame = (content: string) => 'data: ' + JSON.stringify({ choices: [{ delta: { content } }] }) + '\r\n\r\n';
