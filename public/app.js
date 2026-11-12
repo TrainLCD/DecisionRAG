@@ -455,7 +455,7 @@ function renderResult(data, mode, query) {
   if (data.timings) {
     const row = element("div", "trace-row", "所要時間の内訳");
     const { scope_ms, storage_ms, model_ms, generation_ms } = data.timings;
-    const parts = ["DB取得 " + number(storage_ms) + " ms", "Clef判定 " + number(model_ms) + " ms"];
+    const parts = ["DB取得 " + number(storage_ms) + " ms", "ローカル判定 " + number(model_ms) + " ms"];
     if (scope_ms) parts.unshift("公開範囲の確認 " + number(scope_ms) + " ms");
     if (generation_ms) parts.push("要約生成 " + number(generation_ms) + " ms");
     row.append(element("span", "", parts.join(" / ")));
