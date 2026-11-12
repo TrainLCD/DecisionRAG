@@ -46,7 +46,19 @@ pub fn split_passages(body: &str) -> Vec<String> {
     // Use Unicode boundaries and count UTF-16 units, avoiding split surrogate pairs.
     let mut out = Vec::new();
     let mut current = String::new();
-    for paragraph in body.split("\n\n") {
+    static HEADINGS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?m)^#{1,6} ").unwrap());
+    let mut boundaries = vec![0];
+    boundaries.extend(
+        HEADINGS
+            .find_iter(body)
+            .map(|m| m.start())
+            .filter(|i| *i > 0),
+    );
+    boundaries.push(body.len());
+    for paragraph in boundaries
+        .windows(2)
+        .flat_map(|range| body[range[0]..range[1]].split("\n\n"))
+    {
         if !current.is_empty()
             && current.encode_utf16().count() + paragraph.encode_utf16().count() + 2 > 2400
         {

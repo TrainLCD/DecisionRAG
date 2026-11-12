@@ -154,8 +154,11 @@ async fn collect(h: &impl Host) -> Result<Value> {
                     .call("emit", json!({"event":"draft","data":preview(&content)}))
                     .await;
             }
+            if done {
+                break;
+            }
         }
-        if eof {
+        if eof || done {
             break;
         }
     }

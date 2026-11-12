@@ -76,3 +76,5 @@ node --loader ./scripts/wasm-test-loader.mjs scripts/local-fixture-server.mjs
 `npm run test:browser` は実Rust/WASMとSQLiteのフィクスチャサーバーを使い、ChromiumでSSE、総件数、10件ずつのページ送り、再検索・再生成なし、0件検索を確認する。CIにスクリーンショットと結果JSONを保存する。
 
 カーソルのAES-GCM暗号形式は旧実装と互換だが、索引リビジョンの正規化が変わるため切り替え前の有効カーソルは409で検索やり直しになる。Webのページ送りはカーソルを使わないため影響しない。
+
+合成索引の走査ベンチマーク（`scripts/benchmark-index.mjs`）では、末尾だけが一致する20,000文書を省略なく検索できた。ローカルSQLite・同一WASM isolateで約799ms、WASM線形メモリ約66.6MiB。ホストJS・SQLiteのメモリおよびリモートI/Oは含まない。詳細は `evaluation/rust-index.json`。

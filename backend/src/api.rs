@@ -278,8 +278,7 @@ fn signature(secret: &str, body: &str, signature: &str) -> bool {
     if secret.is_empty() || signature.len() != 71 || !signature.starts_with("sha256=") {
         return false;
     }
-    let decoded: Option<Vec<u8>> = signature[7..]
-        .as_bytes()
+    let decoded: Option<Vec<u8>> = signature.as_bytes()[7..]
         .chunks(2)
         .map(|pair| {
             if !pair
