@@ -523,6 +523,22 @@ mod tests {
         assert_eq!(out["reasons"][2], "local_rule_conflict");
     }
     #[test]
+    fn verification_binds_numbers_to_subjects_within_one_citation() {
+        let out = run(json!({"op":"verify","evidence":[
+            {"citation":"p1","text":"Zephyr checksum uses version 41 and Orchid cache uses version 42."}
+        ],"claims":[
+            {"text":"Zephyr checksum uses version 42.","citations":["p1"]},
+            {"text":"Orchid cache uses version 41.","citations":["p1"]},
+            {"text":"Zephyr checksum uses version 41.","citations":["p1"]},
+            {"text":"Orchid cache uses version 42 and Zephyr checksum uses version 41.","citations":["p1"]}
+        ]}));
+        assert_eq!(out["reasons"][0], "local_rule_conflict");
+        assert_eq!(out["reasons"][1], "local_rule_conflict");
+        for i in [2, 3] {
+            assert_ne!(out["reasons"][i], "local_rule_conflict");
+        }
+    }
+    #[test]
     fn gtfs_multi_paragraph_answer_is_not_rejected_as_a_contradiction() {
         let captured: Value =
             serde_json::from_str(include_str!("../test/fixtures/gtfs-answer-regression.json"))
