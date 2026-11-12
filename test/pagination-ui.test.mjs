@@ -122,3 +122,47 @@ test('answer stream exposes full hits before completion and preserves them throu
     assert.equal(c.requests.length, 1);
   } finally { c.close(); }
 });
+
+for (const transport of ['json', 'sse']) {
+  test(`${transport} timing breakdown renders local decisions and the actual stage metrics`, async () => {
+    let data = {
+      ...result(1), status: 'summarized',
+      timings: { scope_ms: 813, storage_ms: 122, model_ms: 784, generation_ms: 11130 },
+      trace: [
+        { stage: 'document_screening', candidates: 3342, calls: 0, elapsed_ms: 784, model: ['rust-rules-v1'] },
+        { stage: 'passage_scoring', candidates: 472, calls: 0, elapsed_ms: 0, model: ['rust-rules-v1'] },
+        { stage: 'generate_answer', candidates: 20, calls: 1, elapsed_ms: 11130, model: ['@cf/google/gemma-4-26b-a4b-it'] },
+        { stage: 'verify_answer', candidates: 4, calls: 0, elapsed_ms: 0, model: ['rust-rules-v1'] },
+      ],
+    };
+    const c = client(() => transport === 'json' ? Response.json(data) : new Response(
+      `event: sources\ndata: ${JSON.stringify(result(1))}\n\nevent: result\ndata: ${JSON.stringify(data)}\n\n`,
+      { headers: { 'Content-Type': 'text/event-stream' } },
+    ));
+    const rows = () => [...c.$('trace-list').querySelectorAll('.trace-row')].map(row =>
+      [row.firstChild.textContent, row.querySelector('span').textContent]);
+    try {
+      c.submit(transport === 'sse');
+      await until(() => !c.$('search-button').disabled);
+      assert.equal(c.$('trace-panel').hidden, false);
+      assert.deepEqual(rows(), [
+        ['所要時間の内訳', '公開範囲の確認 813 ms / DB取得 122 ms / ローカル判定 784 ms / 要約生成 11,130 ms'],
+        ['文書の選択', '候補 3,342 · API 0 回 · 784 ms · rust-rules-v1'],
+        ['本文の評価', '候補 472 · API 0 回 · 0 ms · rust-rules-v1'],
+        ['要約の生成', '候補 20 · API 1 回 · 11,130 ms · @cf/google/gemma-4-26b-a4b-it'],
+        ['回答の検証', '候補 4 · API 0 回 · 0 ms · rust-rules-v1'],
+      ]);
+      assert.doesNotMatch(c.$('trace-panel').textContent, /clef/i);
+
+      // A subsequent search must replace old timings and retain meaningful zeros.
+      data = { ...result(1), timings: { scope_ms: 0, storage_ms: 0, model_ms: 0, generation_ms: 0 },
+        trace: [{ stage: 'document_screening', candidates: 0, calls: 0, elapsed_ms: 0, model: ['rust-rules-v1'] }] };
+      c.submit(transport === 'sse');
+      await until(() => !c.$('search-button').disabled);
+      assert.deepEqual(rows(), [
+        ['所要時間の内訳', 'DB取得 0 ms / ローカル判定 0 ms'],
+        ['文書の選択', '候補 0 · API 0 回 · 0 ms · rust-rules-v1'],
+      ]);
+    } finally { c.close(); }
+  });
+}
