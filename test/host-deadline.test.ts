@@ -26,8 +26,8 @@ test('queue hosts do not install the HTTP 180 second deadline', async () => {
   AbortSignal.timeout = ms => { durations.push(ms); return new AbortController().signal; };
   try {
     await host(env, { messages: [] }).close();
-    assert.deepEqual(durations, []);
+    assert.deepEqual(durations, [720000]);
     await host(env).close();
-    assert.deepEqual(durations, [180000]);
+    assert.deepEqual(durations, [720000, 180000]);
   } finally { AbortSignal.timeout = original; sqlite.close(); }
 });

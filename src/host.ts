@@ -51,7 +51,7 @@ export function host(env: Env, options: {
     emit?: Emit;
     messages?: readonly Message<SyncJob>[];
 } = {}) {
-    const signal = options.signal ?? (options.messages ? new AbortController().signal : AbortSignal.timeout(180000));
+    const signal = options.signal ?? (AbortSignal.timeout(options.messages ? 720000 : 180000));
     let jobIndex = 0;
     let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
     let decoder = new TextDecoder();
