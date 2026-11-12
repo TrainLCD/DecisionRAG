@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import worker from '../src/index.js';
 import { fixture } from './helpers.js';
@@ -8,8 +8,10 @@ import { saveSource } from './reference/store.js';
 const { JSDOM } = createRequire(import.meta.url)('jsdom');
 const captured = JSON.parse(readFileSync('test/fixtures/gtfs-answer-regression.json', 'utf8'));
 
+for (const variant of ['draft', 'followup_draft']) {
+ const draft = captured[variant];
 for (const stream of [false, true]) {
-  test(`GTFS captured answer survives final verification and ${stream ? 'streaming UI' : 'JSON'} rendering`, async () => {
+  test(`GTFS ${variant} captured answer survives final verification and ${stream ? 'streaming UI' : 'JSON'} rendering`, async () => {
     const f = fixture();
     let dom: any;
     let finishGeneration: (() => void) | undefined;
@@ -21,7 +23,7 @@ for (const stream of [false, true]) {
         const context = JSON.parse(input.messages[1].content.split('\n\n')[0]).evidence;
         const citations = context.map((e: any) => e.citation);
         assert.ok(citations.length >= 3);
-        const content = JSON.stringify({ claims: captured.draft.answer.map((text: string) => ({ text, citations })), summaries: [{ source_id: source.source_id, text: captured.draft.summaries[0], citations }] });
+        const content = JSON.stringify({ claims: draft.answer.map((text: string) => ({ text, citations })), summaries: draft.summaries.map((text: string) => ({ source_id: source.source_id, text, citations })) });
         if (!stream) return { choices: [{ message: { content } }] };
         return new ReadableStream({ start(controller) {
           controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`));
@@ -58,16 +60,27 @@ for (const stream of [false, true]) {
         finishGeneration!();
         await until(() => !$('search-button').disabled);
         const panel = $('answer-panel');
-        for (const text of captured.draft.answer) {
+        for (const text of draft.answer) {
           assert.ok(panel.textContent.includes(text.replaceAll('`', '')), text);
         }
         assert.doesNotMatch(panel.textContent, /回答を確認できませんでした|資料の記載：|生成中/);
         assert.ok(panel.querySelector('code'), 'Markdown remains rendered after final event');
-        result = JSON.parse((await wire).split('event: result\ndata: ')[1]!.trim());
+        const replay = await wire;
+        result = JSON.parse(replay.split('event: result\ndata: ')[1]!.trim());
+        if (variant === 'followup_draft') {
+          mkdirSync('test-results', { recursive: true });
+          writeFileSync('test-results/gtfs-answer-stream.sse', replay);
+        }
       } else result = await response.json();
-      for (const text of captured.draft.answer) assert.ok(result.answer?.includes(text), JSON.stringify(result.verification));
-      assert.equal(result.ticket_summaries[0].text, captured.draft.summaries[0]);
+      for (const text of draft.answer) assert.ok(result.answer?.includes(text), JSON.stringify(result.verification));
+      assert.equal(result.ticket_summaries.length, 1);
+      assert.ok(result.ticket_summaries[0].text.includes(draft.summaries[1]), JSON.stringify(result.verification));
+      assert.ok(result.ticket_summaries[0].text.includes(draft.summaries[2]));
+      if (variant === 'followup_draft') assert.ok(!result.ticket_summaries[0].text.includes('FNC-1a'));
+      else assert.ok(result.ticket_summaries[0].text.includes(draft.summaries[0]));
       assert.equal(result.verification.semantic_status, 'unknown');
     } finally { dom?.window.close(); f.sqlite.close(); }
   });
+}
+
 }
