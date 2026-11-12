@@ -170,9 +170,12 @@ pub(super) fn supports(claim: &str, source: &str) -> bool {
                         .filter(|u| u.starts_with("topic:"))
                         .collect()
                 };
-                topics(claim).is_subset(&topics(source))
-                    && overlap(claim, source) >= 0.75
-                    && compatible(claim, source)
+                let (claim_main, claim_condition) = condition_parts(claim);
+                let (source_main, source_condition) = condition_parts(source);
+                claim_condition == source_condition
+                    && topics(claim_main).is_subset(&topics(source_main))
+                    && overlap(claim_main, source_main) >= 0.75
+                    && compatible(claim_main, source_main)
             })
         })
 }
@@ -225,7 +228,7 @@ fn assertion_clauses(text: &str) -> Vec<String> {
         let joined = if condition.is_empty() {
             part.to_owned()
         } else {
-            format!("{} {part}", std::mem::take(&mut condition))
+            format!("{}, {part}", std::mem::take(&mut condition))
         };
         split_conjunction(&joined, &mut clauses);
     }
@@ -233,6 +236,39 @@ fn assertion_clauses(text: &str) -> Vec<String> {
         clauses.push(condition);
     }
     clauses
+}
+
+// Conditions qualify a proposition; their nouns must not supply its subject.
+fn condition_parts(text: &str) -> (&str, &str) {
+    if ["if ", "unless ", "only when ", "when "]
+        .iter()
+        .any(|p| text.starts_with(p))
+        && let Some((condition, main)) = text.split_once(',')
+    {
+        return (main.trim(), condition.trim());
+    }
+    for separator in [" if ", " unless ", " only when ", " when "] {
+        if let Some(at) = text.find(separator) {
+            return (text[..at].trim(), text[at + 1..].trim());
+        }
+    }
+    if let Some((condition, main)) = text.split_once(',')
+        && (condition.ends_with("場合") || condition.ends_with("とき"))
+    {
+        return (main.trim(), condition.trim());
+    }
+    (text, "")
+}
+
+fn explicit_subject(text: &str) -> bool {
+    // An elided subject starts directly with a predicate ("and added").
+    // Retain the shared subject instead of creating a subjectless assertion.
+    for (index, word) in text.split_whitespace().enumerate() {
+        if english_predicate(word) {
+            return index > 0;
+        }
+    }
+    false
 }
 
 fn english_predicate(text: &str) -> bool {
@@ -271,7 +307,7 @@ fn split_conjunction(text: &str, out: &mut Vec<String>) {
         let (left, right) = (&text[..at], &text[at + 5..]);
         // Noun coordination shares the predicate on its right. Splitting it
         // would detach both the action and its modality from the first noun.
-        if english_predicate(left) && english_predicate(right) {
+        if english_predicate(left) && english_predicate(right) && explicit_subject(right) {
             out.push(left.to_owned());
             split_conjunction(right, out);
             return;
@@ -358,6 +394,25 @@ pub(super) fn numeric_conflict(claim: &str, sources: &[&str]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn conditions_cannot_supply_the_action_subject() {
+        assert!(!supports(
+            "GPS is added if offline",
+            "If GPS is offline, bus guidance is added"
+        ));
+        assert!(!supports(
+            "GPS is added if GPS is offline",
+            "If GPS is offline, bus guidance is added"
+        ));
+        assert!(supports(
+            "Bus guidance was added",
+            "Bus guidance was removed and added"
+        ));
+        assert!(!supports(
+            "Bus guidance was added",
+            "Bus guidance was removed and GPS updates were added"
+        ));
+    }
     #[test]
     fn preserves_shared_predicates_and_attached_conditions() {
         for (claim, source) in [
