@@ -354,7 +354,9 @@ fn split_conjunction(text: &str, out: &mut Vec<String>) {
             out.push(left.to_owned());
             if elided {
                 // Share omitted auxiliaries, but never the preceding action or negation.
-                let auxiliaries = if right.split_whitespace().any(english_auxiliary) {
+                // Later clauses must not supply this predicate's auxiliary.
+                let immediate = right.split(" and ").next().unwrap_or(right);
+                let auxiliaries = if immediate.split_whitespace().any(english_auxiliary) {
                     String::new()
                 } else {
                     shared_auxiliaries(left)
@@ -448,6 +450,25 @@ pub(super) fn numeric_conflict(claim: &str, sources: &[&str]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn later_clauses_do_not_change_shared_auxiliaries() {
+        for source in [
+            "Bus guidance may be removed and added and GPS updates were fixed",
+            "Bus guidance may be removed and added and displayed",
+            "Bus guidance may be removed and also added and GPS updates were fixed",
+        ] {
+            assert!(supports("Bus guidance may be added", source), "{source}");
+        }
+        assert!(!supports(
+            "Bus guidance may be added",
+            "Bus guidance may be removed and was added and GPS updates were fixed"
+        ));
+        assert!(!supports(
+            "Bus guidance may not be added",
+            "Bus guidance may not be removed and added and GPS updates were fixed"
+        ));
+    }
+
     #[test]
     fn coordinated_actions_preserve_shared_auxiliaries() {
         assert!(supports(
