@@ -311,6 +311,17 @@ fn english_predicate(text: &str) -> bool {
 }
 
 fn split_conjunction(text: &str, out: &mut Vec<String>) {
+    let (main, condition) = condition_parts(text);
+    if !condition.is_empty() {
+        let mut actions = Vec::new();
+        split_conjunction(main, &mut actions);
+        out.extend(
+            actions
+                .into_iter()
+                .map(|action| format!("{condition}, {action}")),
+        );
+        return;
+    }
     for (at, _) in text.match_indices(" and ") {
         let (left, right) = (&text[..at], &text[at + 5..]);
         // Noun coordination shares the predicate on its right. Splitting it
@@ -415,6 +426,14 @@ mod tests {
     use super::*;
     #[test]
     fn coordinated_actions_keep_their_own_negation() {
+        assert!(supports(
+            "Bus guidance was added if GPS is offline",
+            "If GPS is offline, bus guidance was removed and added"
+        ));
+        assert!(!supports(
+            "GPS was added if GPS is offline",
+            "If GPS is offline, bus guidance was removed and added"
+        ));
         assert!(!supports(
             "Bus guidance was not added",
             "Bus guidance was not removed and was added"
