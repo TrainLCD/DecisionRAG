@@ -12,6 +12,20 @@ let refreshing = false;
 const RESULT_PAGE_SIZE = 10;
 let resultEvidence = [];
 let resultPage = 0;
+let answerTimer;
+function stopAnswerTimer() {
+  clearInterval(answerTimer);
+  answerTimer = undefined;
+}
+function startAnswerTimer(elapsedMs) {
+  stopAnswerTimer();
+  const startedAt = performance.now();
+  const initialMs = Number(elapsedMs) || 0;
+  const label = $("response-time");
+  answerTimer = setInterval(() => {
+    label.textContent = "回答時間：" + ((initialMs + performance.now() - startedAt) / 1000).toFixed(2) + "秒";
+  }, 10);
+}
 const requests = new Set();
 const number = (value) =>
   Number.isFinite(Number(value)) ? Number(value).toLocaleString("ja-JP") : "—";
@@ -212,6 +226,7 @@ function controls() {
   $("results").setAttribute("aria-busy", String(searching));
 }
 function clearResults() {
+  stopAnswerTimer();
   if (resultEvidence.some((item) => location.hash === "#" + evidenceId(item.citation))) {
     history.replaceState(history.state, "", location.pathname + location.search);
   }
@@ -375,6 +390,7 @@ async function readAnswerStream(response, onEvent) {
 function renderAnswerProgress(event, data, query) {
   if (event === "sources") {
     renderResult({ ...data, status: "retrieved" }, "answer", query);
+    startAnswerTimer(data.elapsed_ms);
     notice("回答を生成しています…", "loading");
   } else if (event === "draft") {
     const panel = $("answer-panel");
@@ -487,6 +503,7 @@ function renderResult(data, mode, query) {
     element("strong", "", hitCount),
     element("span", "muted", (mode === "answer" ? "回答時間：" : "検索時間：") + (Number(data.elapsed_ms) / 1000).toFixed(2) + "秒"),
   );
+  summary.lastElementChild.id = "response-time";
   summary.hidden = false;
   if (data.status === "summarized") {
     notice("質問: " + query);
@@ -767,6 +784,7 @@ $("search-form").addEventListener("submit", async (event) => {
     }
   } finally {
     if (current === session) {
+      stopAnswerTimer();
       searching = false;
       controls();
     }
