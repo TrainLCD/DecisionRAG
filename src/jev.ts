@@ -139,13 +139,14 @@ export class Jev implements Judge {
     // Use Clef's larger context, or fail before any model call if even it cannot fit.
     if (navigation && batches.some(items => screeningRequest(query, items, documentScreening, stage === 'page_screening').tokenUpperBound > clefTextTokenBudget))
       throw new HttpError(503, 'candidate_too_large');
-    let calls = 0;
+    let calls = 0, flashFallbacks = 0;
     const scoreBatch = async (items: T[]): Promise<ScoredBatch<T>[]> => {
       calls++;
       try {
         const request = screeningRequest(query, items, documentScreening, stage === 'page_screening', stage === 'passage_scoring');
-        const result = await this.call(request.state, request.questions,
-          navigation && !useClef(items[0]!) && request.tokenUpperBound <= flashTextTokenBudget);
+        const wantsFlash = navigation && !useClef(items[0]!) || stage === 'passage_scoring' && this.env.PASSAGE_MODEL === 'clef-flash';
+        if (wantsFlash && request.tokenUpperBound > flashTextTokenBudget) flashFallbacks++;
+        const result = await this.call(request.state, request.questions, wantsFlash && request.tokenUpperBound <= flashTextTokenBudget);
         return [{ result, scored: binaryScores(items, result) }];
       } catch (error) {
         if (!(error instanceof HttpError) || error.code !== 'upstream_context_limit' || items.length < 2) throw error;
@@ -157,7 +158,11 @@ export class Jev implements Judge {
     const responses = (await mapConcurrent(batches, stage === 'branch_screening' ? 4 : navigation ? 16 : candidates.length <= 20 ? 12 : 6, scoreBatch)).flat();
     const scored = responses.flatMap(r => r.scored).sort((a, b) => b.probability - a.probability);
     this.trace.push({ stage, candidates: candidates.length, selected: scored.slice(0, 12).map(r => r.item.id),
-      calls, model: [...new Set(responses.map(r => r.result.model))],
+      calls, flash_fallbacks: flashFallbacks,
+      model_usage: Object.fromEntries([...new Set(responses.map(r => r.result.model))].map(model => {
+        const rows = responses.filter(r => r.result.model === model);
+        return [model, { calls: rows.length, input_tokens: rows.reduce((n,r) => n+r.result.usage.input_tokens,0), output_tokens: rows.reduce((n,r) => n+r.result.usage.output_tokens,0) }];
+      })), model: [...new Set(responses.map(r => r.result.model))],
       input_tokens: responses.reduce((n, r) => n + r.result.usage.input_tokens, 0),
       output_tokens: responses.reduce((n, r) => n + r.result.usage.output_tokens, 0), elapsed_ms: Date.now() - start });
     return scored;

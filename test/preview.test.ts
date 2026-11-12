@@ -38,3 +38,23 @@ test('preview preserves health, search validation and private status authenticat
     }
   } finally { sqlite.close(); }
 });
+
+test('evaluation fingerprint includes public source changes but excludes private sources', async () => {
+  const { env, sqlite } = fixture();
+  const { mockFetch } = await import('./helpers.js');
+  const { evaluationSnapshot } = await import('../src/evaluation.js');
+  const { saveSource } = await import('../src/store.js');
+  const restore = mockFetch(() => Response.json([{ full_name: 'TrainLCD/Public', private: false, visibility: 'public', archived: false }]));
+  try {
+    for (const repo of ['TrainLCD/Public', 'TrainLCD/Private'])
+      sqlite.prepare("INSERT INTO repositories(repo,description,default_branch) VALUES(?,'','main')").run(repo);
+    const source = { id: 'TrainLCD/Public#1', repo: 'TrainLCD/Public', kind: 'issue' as const, title: 'Public', url: 'https://github.com/TrainLCD/Public/issues/1', body: 'Original', metadata: {}, updated_at: '2026-11-12' };
+    await saveSource(env, source);
+    const before = await evaluationSnapshot(env);
+    await saveSource(env, { ...source, id: 'TrainLCD/Private#1', repo: 'TrainLCD/Private', body: 'secret' });
+    assert.deepEqual(await evaluationSnapshot(env), before);
+    await saveSource(env, { ...source, body: 'Changed' });
+    assert.notEqual((await evaluationSnapshot(env)).revision, before.revision);
+    assert.deepEqual(before.source_ids, [source.id]);
+  } finally { restore(); sqlite.close(); }
+});

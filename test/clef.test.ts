@@ -93,3 +93,45 @@ test('provider capacity and rate failures expose only fixed recoverable categori
       (error: any) => error.status === status && error.code === code && !error.message.includes('private'));
   }
 });
+
+test('passage Flash is opt-in, preserves batching and falls back for oversized full payloads', async () => {
+  const calls: Array<{ model: string; texts: string[] }> = [];
+  const env = { PASSAGE_MODEL: 'clef-flash', AI: { async run(model: string, input: any) {
+    calls.push({ model, texts: Object.values(input.state.candidates ?? {}) });
+    const bytes = new TextEncoder().encode(JSON.stringify({ state: input.state, questions: input.questions })).byteLength;
+    if (model.endsWith('clef-flash')) assert.ok(bytes <= 20480);
+    return { model, answers: Object.fromEntries(Object.keys(input.questions).map(id => [id, { type: 'noul', noul: 0.9 }])),
+      usage: { input_tokens: 1, output_tokens: 0 } };
+  } } } as unknown as Env;
+  const candidates = [{ id: 'small', description: '本文' }, { id: 'large', description: 'あ'.repeat(8000) }];
+  const judge = new Jev(env);
+  const rows = await judge.score('検索'.repeat(750), candidates, 'passage_scoring');
+  assert.deepEqual(rows.map(r => r.item), candidates);
+  assert.deepEqual(calls.map(c => c.model), ['@cf/cloudflare/clef-flash', '@cf/cloudflare/clef']);
+  assert.deepEqual(calls.flatMap(c => c.texts), candidates.map(c => c.description));
+  calls.length = 0;
+  await new Jev({ ...env, PASSAGE_MODEL: undefined }).score('query', candidates, 'passage_scoring');
+  assert.ok(calls.every(c => c.model === '@cf/cloudflare/clef'));
+  calls.length = 0;
+  const many = Array.from({ length: 21 }, (_, i) => ({ id: String(i), description: 'あ'.repeat(400) }));
+  await judge.score('query', many, 'passage_scoring');
+  assert.equal(calls.length, 1, 'do not change batch boundaries to make Flash fit');
+  assert.equal(calls[0]!.model, '@cf/cloudflare/clef');
+  assert.deepEqual(calls[0]!.texts, many.map(c => c.description));
+});
+
+test('passage Flash leaves Choice and answer verification on Clef', async () => {
+  const models: string[] = [];
+  const env = { PASSAGE_MODEL: 'clef-flash', AI: { async run(model: string, input: any) {
+    models.push(model);
+    const answers = Object.fromEntries(Object.entries(input.questions).map(([id, q]: [string, any]) => [id,
+      q.type === 'choice' ? { type: 'choice', choice: 'p0', probabilities: { p0: 0.8, p1: 0.2 }, confidence: 0.8 }
+        : { type: 'noul', noul: 0.9 }]));
+    return { model, answers, usage: { input_tokens: 1, output_tokens: 0 } };
+  } } } as unknown as Env;
+  const judge = new Jev(env);
+  await judge.rankPassages('q', [{ id: '1', description: 'one' }, { id: '2', description: 'two' }], 20);
+  await judge.verify('q', [], [{ text: 'claim', citations: ['p0'] }]);
+  await judge.assess('q', []);
+  assert.deepEqual(models, ['@cf/cloudflare/clef-flash', '@cf/cloudflare/clef-flash', '@cf/cloudflare/clef', '@cf/cloudflare/clef', '@cf/cloudflare/clef']);
+});

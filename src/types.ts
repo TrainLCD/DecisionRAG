@@ -10,6 +10,7 @@ export interface Env {
   ANSWER_API_KEY?: string;
   ANSWER_MODEL?: string;
   SCREENING_MODEL?: 'clef' | 'clef-flash';
+  PASSAGE_MODEL?: 'clef' | 'clef-flash';
   ANSWER_BASE_URL?: string;
   SUPPORT_THRESHOLD?: string;
   CONFLICT_THRESHOLD?: string;
@@ -30,6 +31,8 @@ export interface Scored<T> { item: T; probability: number }
 export interface Trace {
   stage: string; candidates: number; selected: string[];
   calls: number; model: string[]; input_tokens: number; output_tokens: number;
+  flash_fallbacks?: number;
+  model_usage?: Record<string, { calls: number; input_tokens: number; output_tokens: number }>;
   elapsed_ms: number;
 }
 export type SyncJob =
