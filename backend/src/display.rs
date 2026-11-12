@@ -57,6 +57,9 @@ pub fn evidence_text(text: &str) -> String {
         } else if let Some(part) = payload_line(line, payload.len() >= 256) {
             pending.push_str(line);
             payload.push_str(part);
+            if line.trim_end().ends_with("-->") || !part.is_empty() && part.len() < 32 {
+                flush(&mut output, &mut pending, &mut payload);
+            }
         } else {
             flush(&mut output, &mut pending, &mut payload);
             output.push_str(line);
@@ -129,6 +132,11 @@ mod tests {
             "\n[エンコードされたデータを省略]\n"
         );
         assert_eq!(evidence_text("Ab1Ab1Ab1\n"), "Ab1Ab1Ab1\n");
+        let comment = format!("<!--\n{}\n-->\nSummary\n本文", encoded());
+        assert_eq!(
+            evidence_text(&comment),
+            "\n[エンコードされたデータを省略]\nSummary\n本文"
+        );
     }
     #[test]
     fn preserves_fenced_and_indented_long_code_expressions() {
