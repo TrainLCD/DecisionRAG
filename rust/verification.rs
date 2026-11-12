@@ -51,6 +51,8 @@ fn qualifiers_compatible(claim: &str, source: &str) -> bool {
     for group in [
         &[
             "ない",
+            "なかった",
+            "せず",
             "ません",
             "未対応",
             "未実装",
@@ -64,6 +66,10 @@ fn qualifiers_compatible(claim: &str, source: &str) -> bool {
             "doesn't",
             "don't",
             "isn't",
+            "didn't",
+            "wasn't",
+            "weren't",
+            "couldn't",
         ][..],
         &[
             "場合",
@@ -155,6 +161,55 @@ pub(super) fn contradicts(claim: &str, source: &str) -> bool {
     // may summarize several cited paragraphs. Check factual omissions against
     // the entire cited context in verify(), not independently per sentence.
     overlap(claim, source) >= 0.75 && !qualifiers_compatible(claim, source)
+}
+
+fn numeric_tokens(text: &str) -> Vec<&str> {
+    text.split(|c: char| !c.is_ascii_alphanumeric() && !matches!(c, '.' | '_' | '-' | '#'))
+        .map(|s| s.trim_matches(['.', '-', '_']))
+        .filter(|s| s.chars().any(|c| c.is_ascii_digit()))
+        .collect()
+}
+
+/// Bind each numeric assertion to the closest subject-bearing source, instead
+/// of borrowing a matching number from an unrelated citation. Separate clauses
+/// can still summarize different sources and different numbers.
+pub(super) fn numeric_conflict(claim: &str, sources: &[&str]) -> bool {
+    let claim = normalize(claim);
+    let sources: Vec<_> = sources.iter().map(|s| normalize(s)).collect();
+    for clause in claim
+        .split(['、', ',', ';', '。', '\n'])
+        .flat_map(|s| s.split(" and "))
+    {
+        let numbers = numeric_tokens(clause);
+        if numbers.is_empty() {
+            continue;
+        }
+        let subject: BTreeSet<_> = units(clause)
+            .into_iter()
+            .filter(|s| !s.chars().any(|c| c.is_ascii_digit()))
+            .collect();
+        if subject.is_empty() {
+            continue;
+        }
+        let scores: Vec<_> = sources
+            .iter()
+            .map(|source| subject.intersection(&units(source)).count())
+            .collect();
+        let best = scores.iter().copied().max().unwrap_or(0);
+        if best as f64 / (subject.len() as f64) < 0.75 {
+            continue;
+        }
+        for number in numbers {
+            if !sources
+                .iter()
+                .zip(&scores)
+                .any(|(source, score)| *score == best && contains(source, number))
+            {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 #[cfg(test)]

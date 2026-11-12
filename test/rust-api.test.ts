@@ -161,3 +161,27 @@ test('Rust exact ticket lookup uses source identity and preserves numeric bounda
  const response=await f.request({query:'#7403'});assert.equal(response.status,200);const result:any=await response.json();assert.deepEqual(result.evidence.map((p:any)=>p.source_id),['TrainLCD/App#7403']);
  }finally{f.sqlite.close();}
 });
+
+test('Rust counts selected passages before reading bodies and never truncates a broad search', async () => {
+    const f = await setup(2);
+    try {
+        f.sqlite.exec('DELETE FROM passages');
+        for (const [id, count] of [['doc0', 2000], ['doc1', 2001]] as const) {
+            f.sqlite.prepare(`WITH RECURSIVE n(x) AS (SELECT 0 UNION ALL SELECT x+1 FROM n WHERE x+1<?) INSERT INTO passages(id,source_id,ordinal,text) SELECT ?||':'||x,?,x,'GPS位置情報を更新する。' FROM n`).run(count, id, id);
+        }
+        let bodyReads = 0;
+        const prepare = f.env.DB.prepare.bind(f.env.DB);
+        f.env.DB.prepare = (sql: string) => { if (sql.startsWith('SELECT p.*')) bodyReads++; return prepare(sql); };
+        const over = await f.request({ query: 'GPS' });
+        assert.equal(over.status, 422);
+        assert.equal((await over.json() as any).error, 'passage_screening_budget_exceeded');
+        assert.equal(bodyReads, 0, 'Budget must be checked before fetching passage bodies');
+        f.sqlite.exec("DELETE FROM passages WHERE id='doc1:2000'");
+        const boundary = await f.request({ query: 'GPS' });
+        const result: any = await boundary.json();
+        assert.equal(boundary.status, 200);
+        assert.equal(result.hit_count, 4000);
+        assert.equal(result.evidence.length, 4000);
+        assert.equal(bodyReads, 1);
+    } finally { f.sqlite.close(); }
+});

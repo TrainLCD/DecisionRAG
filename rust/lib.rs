@@ -269,7 +269,9 @@ fn verify(evidence: &[Evidence], claims: &[Claim]) -> Value {
                     sentences(&e.text).chain(std::iter::once(e.title.as_str()))
                 })
                 .collect();
+            let numeric_conflict = !exact && verification::numeric_conflict(&c.text, &sources);
             let paraphrase = !exact
+                && !numeric_conflict
                 && sources
                     .iter()
                     .any(|source| verification::supports(&c.text, source));
@@ -279,10 +281,15 @@ fn verify(evidence: &[Evidence], claims: &[Claim]) -> Value {
                 verification::overlap(&c.text, a).total_cmp(&verification::overlap(&c.text, b))
             });
             let contradicted = !exact
-                && !paraphrase
                 && related
-                && (nearest.is_some_and(|source| verification::contradicts(&c.text, source))
-                    || !verification::facts_compatible(&normalize(&c.text), &normalize(&context)));
+                && (numeric_conflict
+                    || (!paraphrase
+                        && (nearest
+                            .is_some_and(|source| verification::contradicts(&c.text, source))
+                            || !verification::facts_compatible(
+                                &normalize(&c.text),
+                                &normalize(&context),
+                            ))));
             reasons.push(if exact {
                 "exact_source_span"
             } else if paraphrase {
@@ -464,6 +471,21 @@ mod tests {
     }
     fn candidate(id: &str, text: &str) -> Value {
         json!({"id":id,"description":text})
+    }
+    #[test]
+    fn verification_keeps_numbers_with_their_subject_and_rejects_past_negation() {
+        let out = run(json!({"op":"verify","evidence":[
+            {"citation":"p1","text":"Zephyr checksum uses version 41."},
+            {"citation":"p2","text":"Orchid cache uses version 42."},
+            {"citation":"p3","text":"バスの乗換案内を追加しなかった。"}
+        ],"claims":[
+            {"text":"Zephyr checksum uses version 42.","citations":["p1","p2"]},
+            {"text":"Zephyr checksum uses version 41 and Orchid cache uses version 42.","citations":["p1","p2"]},
+            {"text":"バスの乗換案内を追加した。","citations":["p3"]}
+        ]}));
+        assert_eq!(out["reasons"][0], "local_rule_conflict");
+        assert_eq!(out["reasons"][1], "semantic_support_unknown");
+        assert_eq!(out["reasons"][2], "local_rule_conflict");
     }
     #[test]
     fn gtfs_multi_paragraph_answer_is_not_rejected_as_a_contradiction() {
