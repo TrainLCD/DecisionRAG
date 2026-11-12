@@ -172,7 +172,12 @@ pub(super) fn supports(claim: &str, source: &str) -> bool {
                 };
                 let (claim_main, claim_condition) = condition_parts(claim);
                 let (source_main, source_condition) = condition_parts(source);
-                claim_condition == source_condition
+                claim_condition
+                    .trim_end_matches(['.', '。', '!', '！', '?', '？'])
+                    .trim()
+                    == source_condition
+                        .trim_end_matches(['.', '。', '!', '！', '?', '？'])
+                        .trim()
                     && topics(claim_main).is_subset(&topics(source_main))
                     && overlap(claim_main, source_main) >= 0.75
                     && compatible(claim_main, source_main)
@@ -260,15 +265,18 @@ fn condition_parts(text: &str) -> (&str, &str) {
     (text, "")
 }
 
-fn explicit_subject(text: &str) -> bool {
-    // An elided subject starts directly with a predicate ("and added").
-    // Retain the shared subject instead of creating a subjectless assertion.
-    for (index, word) in text.split_whitespace().enumerate() {
+fn subject_prefix(text: &str) -> &str {
+    for (at, word) in text.match_indices(|c: char| !c.is_whitespace()) {
+        // Inspect only complete words, preserving the original subject spelling.
+        if at > 0 && !text[..at].ends_with(char::is_whitespace) {
+            continue;
+        }
+        let word = text[at..].split_whitespace().next().unwrap_or(word);
         if english_predicate(word) {
-            return index > 0;
+            return text[..at].trim();
         }
     }
-    false
+    ""
 }
 
 fn english_predicate(text: &str) -> bool {
@@ -307,9 +315,20 @@ fn split_conjunction(text: &str, out: &mut Vec<String>) {
         let (left, right) = (&text[..at], &text[at + 5..]);
         // Noun coordination shares the predicate on its right. Splitting it
         // would detach both the action and its modality from the first noun.
-        if english_predicate(left) && english_predicate(right) && explicit_subject(right) {
+        if english_predicate(left) && english_predicate(right) {
+            let subject = subject_prefix(right);
+            let elided = subject.is_empty()
+                || subject
+                    .split_whitespace()
+                    .all(|w| ["also", "then", "not", "never"].contains(&w));
             out.push(left.to_owned());
-            split_conjunction(right, out);
+            if elided {
+                // Copy only the subject, never the preceding predicate's negation.
+                let expanded = format!("{} {right}", subject_prefix(left));
+                split_conjunction(&expanded, out);
+            } else {
+                split_conjunction(right, out);
+            }
             return;
         }
     }
@@ -394,6 +413,33 @@ pub(super) fn numeric_conflict(claim: &str, sources: &[&str]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn coordinated_actions_keep_their_own_negation() {
+        assert!(!supports(
+            "Bus guidance was not added",
+            "Bus guidance was not removed and was added"
+        ));
+        assert!(!supports(
+            "Bus guidance was not added",
+            "Bus guidance was not removed and added"
+        ));
+        assert!(supports(
+            "Bus guidance was not added",
+            "Bus guidance was removed and was not added"
+        ));
+        assert!(supports(
+            "Bus guidance was added",
+            "Bus guidance was removed and added"
+        ));
+        assert!(supports(
+            "Bus guidance is displayed if offline.",
+            "If offline, bus guidance is displayed."
+        ));
+        assert!(!supports(
+            "Bus guidance is displayed if online.",
+            "If offline, bus guidance is displayed."
+        ));
+    }
     #[test]
     fn conditions_cannot_supply_the_action_subject() {
         assert!(!supports(
