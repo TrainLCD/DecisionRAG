@@ -18,7 +18,8 @@
     "build:rust": "node scripts/build-rust.mjs",
     "test:rust": "cargo test --workspace --locked",
     "pretest": "npm run build:rust",
-    "test:browser": "node scripts/browser-test.mjs"
+    "test:browser": "node scripts/browser-test.mjs",
+    "pretest:browser": "npm run build:rust && tsc -p tsconfig.test.json"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261106.1",

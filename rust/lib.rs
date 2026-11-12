@@ -11,15 +11,32 @@ pub fn normalize(s: &str) -> String {
 fn ascii_word(c: char) -> bool {
     c.is_ascii_alphanumeric() || c == '_'
 }
-fn contains(text: &str, term: &str) -> bool {
-    text.match_indices(term).any(|(i, _)| {
-        let end = i + term.len();
-        (!term.starts_with(|c: char| c.is_ascii_alphanumeric())
-            || !text[..i].chars().next_back().is_some_and(ascii_word))
-            && (!term.ends_with(|c: char| c.is_ascii_alphanumeric())
-                || !text[end..].chars().next().is_some_and(ascii_word))
-    })
+fn word_boundary(text: &str, term: &str, i: usize) -> bool {
+    let end = i + term.len();
+    (!term.starts_with(|c: char| c.is_ascii_alphanumeric())
+        || !text[..i].chars().next_back().is_some_and(ascii_word))
+        && (!term.ends_with(|c: char| c.is_ascii_alphanumeric())
+            || !text[end..].chars().next().is_some_and(ascii_word))
 }
+fn contains(text: &str, term: &str) -> bool {
+    text.match_indices(term)
+        .any(|(i, _)| word_boundary(text, term, i))
+}
+fn remove_alias(text: &str, term: &str) -> String {
+    let mut out = String::new();
+    let mut from = 0;
+    for (i, _) in text
+        .match_indices(term)
+        .filter(|(i, _)| word_boundary(text, term, *i))
+    {
+        out.push_str(&text[from..i]);
+        out.push(' ');
+        from = i + term.len();
+    }
+    out.push_str(&text[from..]);
+    out
+}
+
 fn cjk(c: char) -> bool {
     ('\u{3400}'..='\u{9fff}').contains(&c) || ('\u{30a0}'..='\u{30ff}').contains(&c)
 }
@@ -35,17 +52,22 @@ fn features(query: &str) -> Vec<Feature> {
     let mut residual = q.clone();
     let mut result = Vec::new();
     for &(name, weight, aliases) in rules::CONCEPTS {
-        if aliases.iter().any(|a| contains(&q, a)) {
+        if aliases.iter().any(|a| contains(&q, a))
+            || (name == "location" && q.split_whitespace().any(|word| word == "location"))
+        {
             result.push(Feature {
                 name: name.into(),
                 aliases: aliases.iter().map(|a| a.to_string()).collect(),
                 weight,
                 exact: false,
             });
+            if name == "location" && q.split_whitespace().any(|word| word == "location") {
+                residual = remove_alias(&residual, "location");
+            }
             let mut sorted = aliases.to_vec();
             sorted.sort_by_key(|a| std::cmp::Reverse(a.len()));
             for alias in sorted {
-                residual = residual.replace(alias, " ");
+                residual = remove_alias(&residual, alias);
             }
         }
     }
@@ -141,7 +163,9 @@ fn score(fs: &[Feature], c: &Candidate) -> Score {
     } else {
         0.0
     };
-    if missing_exact {
+    // A multi-topic question needs evidence for more than one feature. A lone
+    // GPS mention in an unrelated review must not pass on weight alone.
+    if missing_exact || (fs.len() > 1 && matched.len() < 2) {
         value = value.min(0.49);
     }
     Score {
@@ -172,10 +196,37 @@ struct Claim {
     citations: Vec<String>,
 }
 fn sentences(text: &str) -> impl Iterator<Item = &str> {
-    text.split_inclusive(['。', '！', '？', '\n'])
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
+    let mut spans = Vec::new();
+    let mut from = 0;
+    for (i, c) in text.char_indices() {
+        let end = i + c.len_utf8();
+        let english = matches!(c, '.' | '!' | '?')
+            && text[end..].chars().next().is_none_or(char::is_whitespace);
+        let abbreviation = if c == '.' && english {
+            let token = text[..i]
+                .split_whitespace()
+                .next_back()
+                .unwrap_or("")
+                .to_lowercase();
+            [
+                "e.g", "i.e", "etc", "mr", "mrs", "ms", "dr", "prof", "vs", "no",
+            ]
+            .contains(&token.as_str())
+                || (token.len() == 1 && token.bytes().all(|b| b.is_ascii_alphabetic()))
+        } else {
+            false
+        };
+        if matches!(c, '。' | '！' | '？' | '\n') || (english && !abbreviation) {
+            spans.push(&text[from..end]);
+            from = end;
+        }
+    }
+    if from < text.len() {
+        spans.push(&text[from..]);
+    }
+    spans.into_iter().map(str::trim).filter(|s| !s.is_empty())
 }
+
 fn exact_claim(claim: &str, evidence: &Evidence) -> bool {
     // Exact whole spans only. Removing a negation or a conditional prefix must
     // not turn source text into a verified assertion. No fuzzy entailment.
@@ -221,7 +272,7 @@ fn extracts(query: &str, evidence: &[Evidence]) -> Value {
     let mut seen = HashSet::new();
     let mut summaries = Vec::new();
     for e in evidence {
-        if !seen.insert(&e.source_id) {
+        if seen.contains(&e.source_id) {
             continue;
         }
         let mut spans: Vec<_> = sentences(&e.text)
@@ -242,6 +293,7 @@ fn extracts(query: &str, evidence: &[Evidence]) -> Value {
             rank(b).total_cmp(&rank(a))
         });
         if let Some(span) = spans.first() {
+            seen.insert(&e.source_id);
             summaries.push(json!({"source_id":e.source_id,"text":format!("資料の記載：『{}』", span),"citations":[e.citation],"method":"extractive"}));
         }
     }
@@ -378,6 +430,44 @@ mod tests {
         assert_eq!(out["scores"][0]["id"], "location");
         assert!(out["scores"][0]["score"].as_f64().unwrap() > 0.5);
         assert!(out["scores"][1]["score"].as_f64().unwrap() <= 0.5);
+    }
+    #[test]
+    fn aliases_preserve_identifiers_and_english_sentences() {
+        let out = run(
+            json!({"op":"score","query":"GPS useGPSProvider","candidates":[candidate("exact","GPS useGPSProvider")]}),
+        );
+        assert!(out["scores"][0]["score"].as_f64().unwrap() > 0.9);
+        assert_eq!(
+            sentences(
+                "Use Location.Accuracy and version 1.2. Dr. Smith checks GPS. Updates continue!"
+            )
+            .collect::<Vec<_>>(),
+            vec![
+                "Use Location.Accuracy and version 1.2.",
+                "Dr. Smith checks GPS.",
+                "Updates continue!"
+            ]
+        );
+        let long = "GPS location updates continue in background. ".repeat(15);
+        let out = run(
+            json!({"op":"extract","query":"GPS","evidence":[{"citation":"p1","source_id":"a","text":"GPS"},{"citation":"p2","source_id":"a","text":long}]}),
+        );
+        assert_eq!(out["ticket_summaries"][0]["citations"], json!(["p2"]));
+        assert_eq!(out["ticket_summaries"].as_array().unwrap().len(), 1);
+    }
+    #[test]
+    fn location_is_not_layout_or_url_syntax() {
+        let out = run(
+            json!({"op":"score","query":"地下鉄で位置更新が止まる問題","candidates":[
+            candidate("layout", "ボタンの位置を修正。画面の表示位置を調整する。"),
+            candidate("url", "Use window.location to update the URL. <location>https://example.test</location>"),
+            candidate("source", "Location: src/components/Layout.tsx"),
+            candidate("incidental", "GraphQL schema review: a GPS field uses nullable numeric values."),
+            candidate("gps", "Background location updates stop in underground tunnels.")]}),
+        );
+        for row in out["scores"].as_array().unwrap() {
+            assert_eq!(row["score"].as_f64().unwrap() > 0.5, row["id"] == "gps");
+        }
     }
     #[test]
     fn identifiers_and_word_boundaries_are_not_substrings() {

@@ -3,9 +3,10 @@ import {spawn} from 'node:child_process';
 import {mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const server=spawn(process.execPath,['--loader','./scripts/wasm-test-loader.mjs','scripts/local-fixture-server.mjs'],{stdio:['ignore','pipe','inherit']});
-await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(Error('Fixture startup timeout')),15000);server.stdout.on('data',data=>{if(String(data).includes('Fixture ready')){clearTimeout(timeout);resolve();}});server.on('exit',code=>reject(Error('Fixture exited '+code)));});
+
 let browser,page;
 try{
+ await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(Error('Fixture startup timeout')),15000);server.stdout.on('data',data=>{if(String(data).includes('Fixture ready')){clearTimeout(timeout);resolve();}});server.on('error',error=>{clearTimeout(timeout);reject(error);});server.on('exit',code=>{clearTimeout(timeout);reject(Error('Fixture exited '+code));});});
  browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
  page=await browser.newPage({viewport:{width:1280,height:900}});const errors=[];page.on('pageerror',e=>errors.push(e.message));let searches=0;
  page.on('request',r=>{if(/\/(search|answer)$/.test(r.url()))searches++;});

@@ -1,0 +1,58 @@
+{
+  "query": "地下鉄で位置更新が止まる問題",
+  "scope": "First actual read-only preview against production public index; revised rules below were evaluated offline on the captured 393 hits only. Not a labeled accuracy benchmark.",
+  "initial_preview": {
+    "commit": "c5fd7151eb10146778ce73fd14876652040c692d",
+    "documents": 3342,
+    "hits": 393,
+    "elapsed_ms": 5596,
+    "timings": {
+      "generation_ms": 0,
+      "model_ms": 3643,
+      "retrieval_ms": 5596,
+      "scope_ms": 869,
+      "storage_ms": 1084
+    }
+  },
+  "old_production": {
+    "hits": 35,
+    "elapsed_ms": 14160
+  },
+  "revised_rules_offline": {
+    "hits": 49,
+    "old_result_excluded": [
+      {
+        "id": "TrainLCD/MobileApp:docs/changelog.md:1",
+        "title": "docs/changelog.md"
+      },
+      {
+        "id": "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "title": "docs/background-location-diagnostics.md"
+      },
+      {
+        "id": "TrainLCD/MobileApp#447:0",
+        "title": "Expo SDK 39に戻す"
+      },
+      {
+        "id": "TrainLCD/MobileApp#448:0",
+        "title": "rollback expo 39"
+      },
+      {
+        "id": "TrainLCD/MobileApp:docs/changelog.md:12",
+        "title": "docs/changelog.md"
+      },
+      {
+        "id": "TrainLCD/MobileApp#1652:0",
+        "title": "位置情報関連の修正"
+      },
+      {
+        "id": "TrainLCD/MobileApp#785:0",
+        "title": "たまに路線情報から駅名が消える"
+      },
+      {
+        "id": "TrainLCD/MobileApp:docs/changelog.md:13",
+        "title": "docs/changelog.md"
+      }
+    ]
+  }
+}

@@ -3,14 +3,14 @@
   "results": [
     {
       "documents": 1000,
-      "elapsed_ms": 98.21054899999996,
+      "elapsed_ms": 72.767979,
       "wasm_memory_bytes": 5177344,
       "hit_count": 1,
       "trace": [
         {
           "calls": 0,
           "candidates": 1000,
-          "elapsed_ms": 74,
+          "elapsed_ms": 54,
           "input_tokens": 0,
           "model": [
             "rust-rules-v1"
@@ -50,14 +50,14 @@
     },
     {
       "documents": 5000,
-      "elapsed_ms": 220.68133700000004,
+      "elapsed_ms": 228.19095,
       "wasm_memory_bytes": 18612224,
       "hit_count": 1,
       "trace": [
         {
           "calls": 0,
           "candidates": 5000,
-          "elapsed_ms": 213,
+          "elapsed_ms": 221,
           "input_tokens": 0,
           "model": [
             "rust-rules-v1"
@@ -97,14 +97,14 @@
     },
     {
       "documents": 20000,
-      "elapsed_ms": 798.7875919999999,
+      "elapsed_ms": 788.780581,
       "wasm_memory_bytes": 69795840,
       "hit_count": 1,
       "trace": [
         {
           "calls": 0,
           "candidates": 20000,
-          "elapsed_ms": 782,
+          "elapsed_ms": 768,
           "input_tokens": 0,
           "model": [
             "rust-rules-v1"

@@ -15,8 +15,9 @@ pub async fn encode(h: &impl Host, value: &Value, secret: &str) -> Result<String
     let random = h.call("random", serde_json::json!(12)).await?;
     let nonce: Vec<u8> = array(&random)?
         .iter()
-        .map(|v| v.as_u64().unwrap_or(0) as u8)
-        .collect();
+        .map(|v| v.as_u64().and_then(|n| u8::try_from(n).ok()))
+        .collect::<Option<_>>()
+        .ok_or_else(|| Error::new(503, "invalid_random_bytes"))?;
     if nonce.len() != 12 {
         return Err(Error::new(503, "invalid_random_bytes"));
     }
@@ -62,4 +63,39 @@ pub fn decode(token: &str, secret: &str, query: &str, scope: &Value) -> Result<V
         return Err(invalid());
     }
     Ok(v)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{
+        future::Future,
+        task::{Context, Poll, Waker},
+    };
+    struct BadRandom(Value);
+    impl Host for BadRandom {
+        async fn call(&self, _: &str, _: Value) -> Result<Value> {
+            Ok(self.0.clone())
+        }
+    }
+    #[test]
+    fn nonce_rejects_invalid_host_bytes() {
+        for bad in [
+            serde_json::json!(-1),
+            serde_json::json!(256),
+            serde_json::json!("0"),
+            Value::Null,
+        ] {
+            let mut bytes = vec![serde_json::json!(0); 12];
+            bytes[0] = bad;
+            let host = BadRandom(serde_json::json!(bytes));
+            let value = serde_json::json!({});
+            let mut task = std::pin::pin!(encode(&host, &value, "secret"));
+            let Poll::Ready(result) = task.as_mut().poll(&mut Context::from_waker(Waker::noop()))
+            else {
+                panic!("test host must complete immediately")
+            };
+            assert_eq!(result.unwrap_err().code, "invalid_random_bytes");
+        }
+    }
 }
