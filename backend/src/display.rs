@@ -20,6 +20,7 @@ pub fn evidence_text(text: &str) -> String {
     let mut pending = String::new();
     let mut payload = String::new();
     let mut fence: Option<(u8, usize)> = None;
+    let mut tail_seen = false;
     fn flush(output: &mut String, pending: &mut String, payload: &mut String) {
         // Long mixed-case, numeric runs are opaque payloads. Short IDs, hashes,
         // ordinary prose, URLs and code lines are retained without modification.
@@ -53,15 +54,19 @@ pub fn evidence_text(text: &str) -> String {
         }
         if fenced || delimiter || line.starts_with("    ") || line.starts_with('\t') {
             flush(&mut output, &mut pending, &mut payload);
+            tail_seen = false;
             output.push_str(line);
-        } else if let Some(part) = payload_line(line, payload.len() >= 256) {
+        } else if let Some(part) = payload_line(line, payload.len() >= 256 && !tail_seen) {
             pending.push_str(line);
             payload.push_str(part);
+            tail_seen |= !part.is_empty() && part.len() < 32;
             if line.trim_end().ends_with("-->") {
                 flush(&mut output, &mut pending, &mut payload);
+                tail_seen = false;
             }
         } else {
             flush(&mut output, &mut pending, &mut payload);
+            tail_seen = false;
             output.push_str(line);
         }
     }
@@ -132,6 +137,10 @@ mod tests {
             "\n[エンコードされたデータを省略]\n"
         );
         assert_eq!(evidence_text("Ab1Ab1Ab1\n"), "Ab1Ab1Ab1\n");
+        assert_eq!(
+            evidence_text(&format!("{wrapped}\nSummary\n本文")),
+            "\n[エンコードされたデータを省略]\nSummary\n本文"
+        );
         assert_eq!(
             evidence_text(&format!("<!--\n{wrapped}\n-->\nSummary\n本文")),
             "\n[エンコードされたデータを省略]\nSummary\n本文"
