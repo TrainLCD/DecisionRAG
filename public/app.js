@@ -375,10 +375,10 @@ function renderAnswerProgress(event, data, query) {
     const panel = $("answer-panel");
     panel.hidden = false;
     panel.replaceChildren(element("p", "muted", "生成中"), element("h3", "", "質問への回答"));
-    for (const text of data.answer || []) panel.append(element("p", "", text));
+    for (const [index, text] of (data.answer || []).entries()) panel.append(linkAnswerCitations(markdownContent(text, data.answer_html?.[index])));
     if (data.summaries?.length) {
       panel.append(element("h3", "", "各チケットの要約"));
-      for (const text of data.summaries) panel.append(element("p", "", text));
+      for (const [index, text] of data.summaries.entries()) panel.append(linkAnswerCitations(markdownContent(text, data.summaries_html?.[index])));
     }
     notice("回答を生成・検証しています…", "loading");
   }
@@ -504,7 +504,7 @@ function renderResult(data, mode, query) {
         const source = evidence.find(entry => entry.source_id === item.source_id);
         if (!source || typeof item.text !== "string") continue;
         panel.append(linkAnswerCitations(element("h4", "", "[" + source.citation + "]")));
-        panel.append(element("p", "", item.text));
+        panel.append(linkAnswerCitations(markdownContent(item.text, item.text_html, "", safeSourceUrl(source.url))));
       }
     }
   }

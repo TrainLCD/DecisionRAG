@@ -91,7 +91,11 @@ pub fn preview(input: &str) -> Value {
             i += 1;
         }
     }
-    json!({"answer":parts[0],"summaries":parts[1]})
+    let markup: Vec<Vec<_>> = parts
+        .iter()
+        .map(|items| items.iter().map(|text| crate::api::html(text)).collect())
+        .collect();
+    json!({"answer":parts[0],"summaries":parts[1],"answer_html":markup[0],"summaries_html":markup[1]})
 }
 async fn collect(h: &impl Host) -> Result<Value> {
     let mut pending = String::new();
