@@ -298,3 +298,25 @@ test('code block line breaks are preserved while paragraph soft breaks match', a
     assert.equal(body.querySelector('pre').textContent, 'location\nupdates\n');
   } finally { c.close(); }
 });
+
+test('display-only payload filtering preserves cards, totals and Markdown', async () => {
+  const data = result(11);
+  data.evidence[0].text = 'DwQgtGAEAqAWCWBnSTIEMB26CuAXA9'.repeat(50);
+  data.evidence[0].display_text = '[エンコードされたデータを省略]\n読める本文';
+  data.evidence[0].text_html = '<p>[エンコードされたデータを省略]</p><p><strong>読める本文</strong></p>';
+  data.evidence[1].text = data.evidence[0].text;
+  data.evidence[1].display_text = '[エンコードされたデータを省略]';
+  const c = client(() => Response.json(data));
+  try {
+    c.submit();
+    await until(() => !c.$('search-button').disabled);
+    expectPage(c, 0, 11);
+    assert.doesNotMatch(c.$('evidence-list').textContent, /DwQgt/);
+    assert.equal(c.$('evidence-list').querySelector('strong').textContent, '読める本文');
+    c.navs()[0].querySelector('[data-page-step="1"]').click();
+    expectPage(c, 1, 11);
+    c.navs()[0].querySelector('[data-page-step="-1"]').click();
+    assert.doesNotMatch(c.$('evidence-list').textContent, /DwQgt/);
+    assert.equal(c.requests.length, 1);
+  } finally { c.close(); }
+});
