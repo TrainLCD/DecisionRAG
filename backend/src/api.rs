@@ -421,4 +421,3 @@ pub async fn event(h: &impl Host, c: &Config, input: Value) -> Result<()> {
     .await?;
     Ok(())
 }
-
