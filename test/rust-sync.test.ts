@@ -164,7 +164,7 @@ test('feedback and administrative APIs require a configured token', async () => 
 test('issue watermark waits for saving and retries resume the same page', async () => {
   const { env, sqlite } = fixture();
   const repo = 'TrainLCD/Issues';
-  sqlite.prepare('INSERT INTO repositories(repo,default_branch,issues_dispatched_at) VALUES(?,?,?)').run(repo, 'main', '2026-01-01T00:00:00.000Z');
+  sqlite.prepare("INSERT INTO repositories(repo,description,default_branch,issues_dispatched_at) VALUES(?,'test',?,?)").run(repo, 'main', '2026-01-01T00:00:00.000Z');
   let fail = true;
   const fetched: number[] = [];
   const restore = mockFetch(url => {
@@ -194,7 +194,7 @@ test('issue watermark waits for saving and retries resume the same page', async 
 test('an older docs fetch cannot reactivate a replaced snapshot', async () => {
   const { env, sqlite } = fixture();
   const repo = 'TrainLCD/MobileApp';
-  sqlite.prepare('INSERT INTO repositories(repo,default_branch,docs_commit) VALUES(?,?,?)').run(repo, 'main', 'original');
+  sqlite.prepare("INSERT INTO repositories(repo,description,default_branch,docs_commit) VALUES(?,'test',?,?)").run(repo, 'main', 'original');
   const restore = mockFetch(url => {
     if (url.includes('/commits/')) return Response.json({ sha: 'old', commit: { tree: { sha: 'old-tree' } } });
     sqlite.prepare('UPDATE repositories SET docs_commit=? WHERE repo=?').run('new', repo);
@@ -209,7 +209,7 @@ test('an older docs fetch cannot reactivate a replaced snapshot', async () => {
 test('resyncing an unchanged document preserves its complete searchable record', async () => {
   const { env, sqlite } = fixture();
   const repo = 'TrainLCD/MobileApp';
-  sqlite.prepare('INSERT INTO repositories(repo,default_branch,docs_commit) VALUES(?,?,?)').run(repo, 'main', 'first');
+  sqlite.prepare("INSERT INTO repositories(repo,description,default_branch,docs_commit) VALUES(?,'test',?,?)").run(repo, 'main', 'first');
   const restore = mockFetch(() => Response.json({ encoding: 'base64', content: Buffer.from('GPSの更新処理についての説明').toString('base64') }));
   try {
     const doc = { type: 'doc' as const, repo, path: 'README.md', sha: 'same-blob', commit: 'first' };
@@ -224,7 +224,7 @@ test('resyncing an unchanged document preserves its complete searchable record',
 test('release history retries resume from the last persisted cursor', async () => {
   const { env, sqlite } = fixture();
   const repo = 'TrainLCD/MobileApp', tip = 'a'.repeat(40), ancestor = 'b'.repeat(40);
-  sqlite.prepare('INSERT INTO repositories(repo,default_branch) VALUES(?,?)').run(repo, 'main');
+  sqlite.prepare("INSERT INTO repositories(repo,description,default_branch) VALUES(?,'test',?)").run(repo, 'main');
   let fail = true, firstPages = 0, ack = 0, retry = 0;
   const restore = mockFetch((_url, init) => {
     const { query, variables } = JSON.parse(String(init?.body));
