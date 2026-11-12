@@ -103,22 +103,43 @@ pub async fn run(h: &impl Host, c: &Config, job: &Value) -> Result<()> {
             h.call("checkpoint", progress.clone()).await?;
             let offset = job["offset"].as_u64().unwrap_or(0) as usize;
             for (index, issue) in array(&rows)?.iter().enumerate().skip(offset) {
-                Box::pin(run(
-                    h,
-                    c,
-                    &json!({"type":"issue","repo":repo,"number":issue["number"]}),
-                ))
-                .await?;
+                let item = json!({"type":"issue","repo":repo,"number":issue["number"]});
+                let failure_id = format!("issue-failure:{repo}#{}", issue["number"]);
+                match Box::pin(run(h, c, &item)).await {
+                    Ok(()) => {
+                        db(
+                            h,
+                            "DELETE FROM sync_jobs WHERE id=?",
+                            vec![json!(failure_id)],
+                        )
+                        .await?;
+                    }
+                    Err(error)
+                        if matches!(
+                            error.code.as_str(),
+                            "github_changed_files_limit_exceeded"
+                                | "github_pagination_budget_exceeded"
+                                | "source_size_budget_exceeded"
+                        ) =>
+                    {
+                        // Isolate item-specific limits, but do not mark an incomplete
+                        // scan as synchronized. The next scheduled scan retries it.
+                        db(h, "INSERT INTO sync_jobs(id,job,status,updated_at,error) VALUES(?,?,'failed',?,?) ON CONFLICT(id) DO UPDATE SET job=excluded.job,status='failed',updated_at=excluded.updated_at,error=excluded.error",
+                            vec![json!(failure_id), json!(item.to_string()), json!(iso(now())), json!(error.code)]).await?;
+                        progress["had_failures"] = json!(true);
+                    }
+                    Err(error) => return Err(error),
+                }
                 progress["offset"] = json!(index + 1);
                 h.call("checkpoint", progress.clone()).await?;
             }
             if array(&rows)?.len() == 100 {
-                let mut next = job.clone();
+                let mut next = progress.clone();
                 next["page"] = json!(page + 1);
                 next.as_object_mut().unwrap().remove("items");
                 next.as_object_mut().unwrap().remove("offset");
                 enqueue(h, next).await?;
-            } else {
+            } else if progress["had_failures"] != true {
                 db(h,"UPDATE repositories SET issues_dispatched_at=? WHERE repo=? AND (issues_dispatched_at IS NULL OR issues_dispatched_at<?)",vec![job["started"].clone(),json!(repo),job["started"].clone()]).await?;
             }
         }

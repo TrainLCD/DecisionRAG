@@ -180,7 +180,6 @@ pub(super) fn supports(claim: &str, source: &str) -> bool {
 fn assertion_clauses(text: &str) -> Vec<String> {
     let mut text = text.to_owned();
     for separator in [
-        " and ",
         " but ",
         " whereas ",
         " while ",
@@ -201,11 +200,84 @@ fn assertion_clauses(text: &str) -> Vec<String> {
         };
         text = text.replace(separator, &replacement);
     }
-    text.split(['、', ',', ';', '。', '\n'])
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .map(str::to_owned)
-        .collect()
+    let mut clauses = Vec::new();
+    let mut condition = String::new();
+    for part in text.split_inclusive(['、', ',', ';', '。', '\n']) {
+        let ends_sentence = part.ends_with([';', '。', '\n']);
+        let part = part
+            .trim()
+            .trim_end_matches(['、', ',', ';', '。', '\n'])
+            .trim();
+        if part.is_empty() {
+            continue;
+        }
+        // A leading condition qualifies the following action, not an unrelated
+        // later sentence. Keep it attached instead of treating it as evidence.
+        let leading_condition = ["if ", "unless ", "only when ", "when "]
+            .iter()
+            .any(|p| part.starts_with(p))
+            || part.ends_with("場合")
+            || part.ends_with("とき");
+        if leading_condition && condition.is_empty() && !ends_sentence {
+            condition = part.to_owned();
+            continue;
+        }
+        let joined = if condition.is_empty() {
+            part.to_owned()
+        } else {
+            format!("{} {part}", std::mem::take(&mut condition))
+        };
+        split_conjunction(&joined, &mut clauses);
+    }
+    if !condition.is_empty() {
+        clauses.push(condition);
+    }
+    clauses
+}
+
+fn english_predicate(text: &str) -> bool {
+    has(
+        text,
+        &[
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "may",
+            "might",
+            "can",
+            "could",
+            "will",
+            "would",
+            "has",
+            "have",
+            "had",
+            "does",
+            "do",
+            "did",
+            "added",
+            "removed",
+            "implemented",
+            "fixed",
+            "displayed",
+            "updated",
+        ],
+    )
+}
+
+fn split_conjunction(text: &str, out: &mut Vec<String>) {
+    for (at, _) in text.match_indices(" and ") {
+        let (left, right) = (&text[..at], &text[at + 5..]);
+        // Noun coordination shares the predicate on its right. Splitting it
+        // would detach both the action and its modality from the first noun.
+        if english_predicate(left) && english_predicate(right) {
+            out.push(left.to_owned());
+            split_conjunction(right, out);
+            return;
+        }
+    }
+    out.push(text.to_owned());
 }
 
 pub(super) fn contradicts(claim: &str, source: &str) -> bool {
@@ -286,6 +358,49 @@ pub(super) fn numeric_conflict(claim: &str, sources: &[&str]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn preserves_shared_predicates_and_attached_conditions() {
+        for (claim, source) in [
+            (
+                "Bus guidance may be added",
+                "Bus guidance and GPS updates may be added",
+            ),
+            (
+                "GPS updates may be added",
+                "Bus guidance and GPS updates may be added",
+            ),
+            (
+                "Bus guidance is displayed if offline",
+                "If offline, bus guidance is displayed",
+            ),
+            (
+                "If offline, bus guidance is displayed",
+                "Bus guidance is displayed if offline",
+            ),
+        ] {
+            assert!(supports(claim, source), "{claim} / {source}");
+        }
+        for (claim, source) in [
+            (
+                "Bus guidance is added",
+                "Bus guidance and GPS updates may be added",
+            ),
+            (
+                "Bus guidance is displayed",
+                "If offline, bus guidance is displayed",
+            ),
+            (
+                "Bus guidance was added",
+                "Bus guidance was removed and GPS updates were added",
+            ),
+            (
+                "GPS updates are displayed if offline",
+                "If offline, bus guidance is displayed; GPS updates are displayed",
+            ),
+        ] {
+            assert!(!supports(claim, source), "{claim} / {source}");
+        }
+    }
     #[test]
     fn binds_negation_and_actions_to_their_subjects() {
         for (claim, source) in [
