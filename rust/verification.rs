@@ -159,20 +159,22 @@ pub(super) fn supports(claim: &str, source: &str) -> bool {
         return false;
     }
     let sources = assertion_clauses(&source);
-    assertion_clauses(&claim).iter().all(|claim| {
-        sources.iter().any(|source| {
-            // A shared action in a different subject's clause is not evidence.
-            let topics = |text: &str| -> BTreeSet<_> {
-                units(text)
-                    .into_iter()
-                    .filter(|u| u.starts_with("topic:"))
-                    .collect()
-            };
-            topics(claim).is_subset(&topics(source))
-                && overlap(claim, source) >= 0.75
-                && compatible(claim, source)
+    let claims = assertion_clauses(&claim);
+    !claims.is_empty()
+        && claims.iter().all(|claim| {
+            sources.iter().any(|source| {
+                // A shared action in a different subject's clause is not evidence.
+                let topics = |text: &str| -> BTreeSet<_> {
+                    units(text)
+                        .into_iter()
+                        .filter(|u| u.starts_with("topic:"))
+                        .collect()
+                };
+                topics(claim).is_subset(&topics(source))
+                    && overlap(claim, source) >= 0.75
+                    && compatible(claim, source)
+            })
         })
-    })
 }
 
 fn assertion_clauses(text: &str) -> Vec<String> {

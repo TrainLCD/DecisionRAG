@@ -472,6 +472,24 @@ mod tests {
         json!({"id":id,"description":text})
     }
     #[test]
+    fn verification_rejects_swapped_negations_and_borrowed_actions() {
+        for (claim, source) in [
+            (
+                "GPSは更新するが、バスは表示しない。",
+                "GPSは更新しないが、バスは表示する。",
+            ),
+            (
+                "バスの乗換案内を追加した。",
+                "バスの乗換案内を削除し、GPSの更新機能を追加した。",
+            ),
+        ] {
+            let input = json!({"op":"verify","evidence":[{"citation":"p1","text":source}],"claims":[{"text":claim,"citations":["p1"]}]});
+            let output: Value =
+                serde_json::from_slice(&process(input.to_string().as_bytes())).unwrap();
+            assert_eq!(output["claims"], json!([0.0]), "{claim}");
+        }
+    }
+    #[test]
     fn extraction_skips_unrelated_spans_without_hiding_later_evidence() {
         let input = json!({"op":"extract","query":"GPS","evidence":[
             {"citation":"p1","source_id":"one","title":"GPS","text":"バスの乗換案内を追加しました。"}
