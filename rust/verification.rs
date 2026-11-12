@@ -170,9 +170,25 @@ fn numeric_tokens(text: &str) -> Vec<&str> {
         .collect()
 }
 
-fn numeric_clauses(text: &str) -> impl Iterator<Item = &str> {
-    text.split(['、', ',', ';', '。', '\n'])
+fn numeric_clauses(text: &str) -> Vec<String> {
+    let mut clauses: Vec<String> = Vec::new();
+    for part in text
+        .split(['、', ',', ';', '。', '\n'])
         .flat_map(|s| s.split(" and "))
+    {
+        // Bare numeric continuations inherit the preceding subject (TLS 1.2 and 1.3).
+        let bare_numbers = !numeric_tokens(part).is_empty()
+            && part.chars().all(|c| {
+                c.is_ascii_digit() || c.is_whitespace() || matches!(c, '.' | '-' | '_' | '#')
+            });
+        if bare_numbers && let Some(previous) = clauses.last_mut() {
+            previous.push(' ');
+            previous.push_str(part);
+            continue;
+        }
+        clauses.push(part.to_owned());
+    }
+    clauses
 }
 
 /// Bind each numeric assertion to the closest subject-bearing source, instead
@@ -183,11 +199,11 @@ pub(super) fn numeric_conflict(claim: &str, sources: &[&str]) -> bool {
     let sources: Vec<_> = sources.iter().map(|s| normalize(s)).collect();
     let sources: Vec<_> = sources.iter().flat_map(|s| numeric_clauses(s)).collect();
     for clause in numeric_clauses(&claim) {
-        let numbers = numeric_tokens(clause);
+        let numbers = numeric_tokens(&clause);
         if numbers.is_empty() {
             continue;
         }
-        let subject: BTreeSet<_> = units(clause)
+        let subject: BTreeSet<_> = units(&clause)
             .into_iter()
             .filter(|s| !s.chars().any(|c| c.is_ascii_digit()))
             .collect();
