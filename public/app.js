@@ -399,7 +399,14 @@ function renderAnswerProgress(event, data, query) {
     for (const [index, text] of (data.answer || []).entries()) panel.append(linkAnswerCitations(markdownContent(text, data.answer_html?.[index])));
     if (data.summaries?.length) {
       panel.append(element("h3", "", "各チケットの要約"));
-      for (const [index, text] of data.summaries.entries()) panel.append(linkAnswerCitations(markdownContent(text, data.summaries_html?.[index])));
+      for (const [index, text] of data.summaries.entries()) {
+        const sourceId = data.summary_source_ids?.[index];
+        const source = typeof sourceId === "string"
+          ? resultEvidence.find(entry => entry.source_id === sourceId)
+          : undefined;
+        if (source) panel.append(linkAnswerCitations(element("h4", "", "[" + source.citation + "]")));
+        panel.append(linkAnswerCitations(markdownContent(text, data.summaries_html?.[index], "", safeSourceUrl(source?.url))));
+      }
     }
     notice("回答を生成・検証しています…", "loading");
   }
