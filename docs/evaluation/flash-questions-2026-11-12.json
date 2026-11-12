@@ -1,0 +1,612 @@
+{
+  "frozen_at": "2026-11-12T05:27:25.360207+00:00",
+  "version": 1,
+  "label_status": "Provisional AI labels, not independent human ground truth",
+  "limitations": [
+    "Public sources only; insufficient cases deliberately scoped to named documents, not a proof of absence across all corpus.",
+    "Small development sample overrepresents StationAPI docs; no claim of universal precision.",
+    "Existing diagnostic queries include tunnel and through-service cases; no independent holdout claim for those topics."
+  ],
+  "questions": [
+    {
+      "id": "Q01",
+      "query": "iOSでトンネルに長く入ると位置情報の追従が止まる問題には、どのように対処した？",
+      "category": "symptom_and_fix",
+      "split": "development",
+      "critical": true,
+      "scope": "public",
+      "answerability": "answerable",
+      "required_facts": [
+        {
+          "id": "F1",
+          "description": "トンネルでの位置更新停止の対処は、iOSで位置更新を止めない変更。#423が#420を閉じる関係を含む。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/MobileApp#423",
+                "url": "https://github.com/TrainLCD/MobileApp/pull/423",
+                "version": "2020-12-30T17:19:28Z",
+                "excerpt": "位置情報更新をiosで止めないようにした\ncloses #420"
+              }
+            ]
+          ]
+        }
+      ],
+      "insufficiency_basis": null,
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q02",
+      "query": "地下鉄成増で直通情報がすぐに反映されなかった原因と修正は？",
+      "category": "symptom_and_fix",
+      "split": "development",
+      "critical": true,
+      "scope": "public",
+      "answerability": "answerable",
+      "required_facts": [
+        {
+          "id": "F1",
+          "description": "成増と地下鉄成増の駅名不一致により現在駅の種別を取得できなかった。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/MobileApp#1023",
+                "url": "https://github.com/TrainLCD/MobileApp/pull/1023",
+                "version": "2021-11-15T14:06:22Z",
+                "excerpt": "種別を取得する処理で現在の駅を駅名で取ってくる処理を使用していたが、「成増」が最寄り駅の場合「地下鉄成増」の駅名の駅で種別を取ることが出来なかった"
+              }
+            ]
+          ]
+        },
+        {
+          "id": "F2",
+          "description": "自動種別選択の修正PRが直通情報問題#1022を閉じている。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/MobileApp#1023",
+                "url": "https://github.com/TrainLCD/MobileApp/pull/1023",
+                "version": "2021-11-15T14:06:22Z",
+                "excerpt": "急行種別が自動選択されないバグを修正\ncloses #1022"
+              }
+            ]
+          ]
+        }
+      ],
+      "insufficiency_basis": null,
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q03",
+      "query": "StationAPIの近傍検索でバスを除外していないのに、鉄道駅しか返らないのはなぜ？",
+      "category": "symptom_and_fix",
+      "split": "development",
+      "critical": false,
+      "scope": "public",
+      "answerability": "answerable",
+      "required_facts": [
+        {
+          "id": "F1",
+          "description": "種別未指定では鉄道駅が先で、limitが全体にかかるので鉄道で埋まればバスは返らない。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/StationAPI:docs/nearby-bus-stops.md",
+                "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/nearby-bus-stops.md",
+                "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+                "excerpt": "鉄道駅を先に、バス停を後に\n返します。それぞれの中は距離の昇順です。`limit` は種別ごとではなく並べた後の\n全体にかかるため、鉄道駅だけで `limit` 件そろう地点ではバス停は返りません。"
+              }
+            ]
+          ]
+        }
+      ],
+      "insufficiency_basis": null,
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q04",
+      "query": "鉄道の駅グループIDを指定してバス停を取得しようとすると空になる理由は？",
+      "category": "symptom_and_fix",
+      "split": "holdout",
+      "critical": false,
+      "scope": "public",
+      "answerability": "answerable",
+      "required_facts": [
+        {
+          "id": "F1",
+          "description": "鉄道とバスの駅グループIDは別値域なので同一グループには入らない。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/StationAPI:docs/nearby-bus-stops.md",
+                "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/nearby-bus-stops.md",
+                "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+                "excerpt": "バス停の駅グループ\n  (`station_g_cd`) は鉄道とは別の値域で生成しているため、鉄道駅と同じ\n  グループには入りません。"
+              }
+            ]
+          ]
+        }
+      ],
+      "insufficiency_basis": null,
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q05",
+      "query": "StationAPIでtransportTypeを省略した場合、旧gRPC版と今のWorker版は何が違う？",
+      "category": "specification",
+      "split": "development",
+      "critical": true,
+      "scope": "public",
+      "answerability": "answerable",
+      "required_facts": [
+        {
+          "id": "F1",
+          "description": "旧版はRail、Worker版はRailAndBus扱いでバスを含む。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/StationAPI:docs/nearby-bus-stops.md",
+                "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/nearby-bus-stops.md",
+                "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+                "excerpt": "gRPC 版では未指定を `Rail` として扱っていましたが、Worker 版では\n  バスを含めた結果を既定で返すよう、意図的に変えています。"
+              }
+            ]
+          ]
+        }
+      ],
+      "insufficiency_basis": null,
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q06",
+      "query": "StationAPIはなぜBFFを廃止できた？現在のAPIとデータ保存方式も知りたい。",
+      "category": "specification",
+      "split": "development",
+      "critical": false,
+      "scope": "public",
+      "answerability": "answerable",
+      "required_facts": [
+        {
+          "id": "F1",
+          "description": "gRPC-WebからGraphQLを直接返す構成にしてBFFを廃止。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/StationAPI:docs/architecture.md",
+                "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/architecture.md",
+                "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+                "excerpt": "gRPC-Web を使い続ける理由がなかったため、GraphQL を直接返す構成に\n改め、BFF も廃止しました。"
+              }
+            ]
+          ]
+        },
+        {
+          "id": "F2",
+          "description": "データはWASMにビルド時埋め込み、DBを使わない。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/StationAPI:docs/architecture.md",
+                "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/architecture.md",
+                "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+                "excerpt": "データはビルド時に WASM バイナリへ埋め込んで配布します。\n**サーバープロセスもデータベースもありません。**"
+              }
+            ]
+          ]
+        }
+      ],
+      "insufficiency_basis": null,
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q07",
+      "query": "バス停から乗り換えられる鉄道駅はどこまでの距離で、同一路線の複数駅はどう選ぶ？",
+      "category": "specification",
+      "split": "holdout",
+      "critical": false,
+      "scope": "public",
+      "answerability": "answerable",
+      "required_facts": [
+        {
+          "id": "F1",
+          "description": "直線距離300m以内、同一路線は最寄駅のみ。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/StationAPI:docs/nearby-bus-stops.md",
+                "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/nearby-bus-stops.md",
+                "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+                "excerpt": "バスののりばから直線距離で 300m 以内にある有効な鉄道駅を検索します。\n候補は距離順で、同じ路線に複数の駅がある場合は最寄りの駅だけを使います。"
+              }
+            ]
+          ]
+        }
+      ],
+      "insufficiency_basis": null,
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q08",
+      "query": "バス停なのにhasTrainTypesがtrueになるのはなぜ？上下の運行パターンはどうまとめる？",
+      "category": "specification",
+      "split": "development",
+      "critical": false,
+      "scope": "public",
+      "answerability": "answerable",
+      "required_facts": [
+        {
+          "id": "F1",
+          "description": "route_idとshape_id単位でBusRoute種別7を作る。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/StationAPI:docs/nearby-bus-stops.md",
+                "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/nearby-bus-stops.md",
+                "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+                "excerpt": "`(route_id, shape_id)` の運行パターンごとに次の 2 つを生成している\nためです。\n\n- `types` の行 (`kind = TrainTypeKind::BusRoute (= 7)`)"
+              }
+            ]
+          ]
+        },
+        {
+          "id": "F2",
+          "description": "停留所集合が同じshapeは一種別にまとめBothにする。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/StationAPI:docs/nearby-bus-stops.md",
+                "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/nearby-bus-stops.md",
+                "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+                "excerpt": "同じ系統の中で通る停留所の集合が同じ shape は、上下線と\nみなして 1 つの種別にまとめ、`direction = Both` (双方向) として返します。"
+              }
+            ]
+          ]
+        }
+      ],
+      "insufficiency_basis": null,
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q09",
+      "query": "iOSの位置情報更新を止めない修正PRは、提案だけでなくマージされている？",
+      "category": "implementation_status",
+      "split": "development",
+      "critical": false,
+      "scope": "public",
+      "answerability": "answerable",
+      "required_facts": [
+        {
+          "id": "F1",
+          "description": "PR423は2020-12-30にマージ済み。ストア配信とは区別する。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/MobileApp#423",
+                "url": "https://github.com/TrainLCD/MobileApp/pull/423",
+                "version": "2020-12-30T17:19:28Z",
+                "excerpt": "merged=true; merged_at=2020-12-30T17:19:27Z"
+              }
+            ]
+          ]
+        }
+      ],
+      "insufficiency_basis": null,
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q10",
+      "query": "GTFS調査報告では運行カレンダー導入を提案しているが、実装済みとして扱ってよい？",
+      "category": "implementation_status",
+      "split": "holdout",
+      "critical": true,
+      "scope": "public",
+      "answerability": "answerable",
+      "required_facts": [
+        {
+          "id": "F1",
+          "description": "調査後の追記はcalendarによる運行日管理を取り込んでいないと明記。提案の段階と区別。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md",
+                "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/gtfs-bus-integration-research.md",
+                "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+                "excerpt": "GTFS から読むのは routes・stops・trips・stop_times・translations だけで、calendar による運行日の管理は取り込んでいない。"
+              }
+            ]
+          ]
+        }
+      ],
+      "insufficiency_basis": null,
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q11",
+      "query": "都営バスのGTFSには中国語と韓国語の翻訳も含まれるという説明は、2026年9月の確認後も正しい？",
+      "category": "implementation_status",
+      "split": "development",
+      "critical": false,
+      "scope": "public",
+      "answerability": "answerable",
+      "required_facts": [
+        {
+          "id": "F1",
+          "description": "9月取得分はja, ja-Hrkt, enのみ。中国語と韓国語は含まれない。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md",
+                "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/gtfs-bus-integration-research.md",
+                "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+                "excerpt": "2026-09 時点で取得した都営バス GTFS の translations.txt に含まれる言語は `ja` / `ja-Hrkt` (読み) / `en` だけで、中国語と韓国語は含まれていない。"
+              }
+            ]
+          ]
+        }
+      ],
+      "insufficiency_basis": null,
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q12",
+      "query": "StationAPIのCSVデータを更新しただけで稼働中のWorkerへ反映される？",
+      "category": "implementation_status",
+      "split": "holdout",
+      "critical": false,
+      "scope": "public",
+      "answerability": "answerable",
+      "required_facts": [
+        {
+          "id": "F1",
+          "description": "ビルド埋め込みなのでデータ更新ごとに再デプロイが必要。起動時自動反映ではない。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/StationAPI:docs/architecture.md",
+                "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/architecture.md",
+                "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+                "excerpt": "データは WASM に埋め込まれるため、**データを更新するたびに再デプロイが\n必要です。** 起動時にデータを読み込んで自動的に反映する仕組みではありません。"
+              }
+            ]
+          ]
+        }
+      ],
+      "insufficiency_basis": null,
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q13",
+      "query": "地下でGPSが取れなくなって、そのまま追従が復帰しなくなるiPhoneの件、対応した変更を探して。",
+      "category": "paraphrase",
+      "split": "holdout",
+      "critical": false,
+      "scope": "public",
+      "answerability": "answerable",
+      "required_facts": [
+        {
+          "id": "F1",
+          "description": "iOSの位置更新を止めないPR423とトンネル症状420の関係。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/MobileApp#423",
+                "url": "https://github.com/TrainLCD/MobileApp/pull/423",
+                "version": "2020-12-30T17:19:28Z",
+                "excerpt": "位置情報更新をiosで止めないようにした\ncloses #420"
+              }
+            ]
+          ]
+        }
+      ],
+      "insufficiency_basis": null,
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q14",
+      "query": "StationAPIで元の駅CSVをそのまま使うと、各停やバスが本番と食い違うのはなぜ？",
+      "category": "paraphrase",
+      "split": "development",
+      "critical": false,
+      "scope": "public",
+      "answerability": "answerable",
+      "required_facts": [
+        {
+          "id": "F1",
+          "description": "各停の仮想系統は正本CSVに含まれず生成が必要。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/StationAPI:docs/architecture.md",
+                "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/architecture.md",
+                "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+                "excerpt": "列車種別を持たない路線には、各駅停車の系統を補う必要があります (約 2,400 行。\n  有効な駅の約 21% が該当します)。これらの行は `data/*.csv` には含まれて\n  いません"
+              }
+            ]
+          ]
+        },
+        {
+          "id": "F2",
+          "description": "バスはGTFSとODPTから生成する。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/StationAPI:docs/architecture.md",
+                "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/architecture.md",
+                "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+                "excerpt": "バス停・バス路線・バス系統は、GTFS と ODPT の JSON から生成する必要が\n  あります"
+              }
+            ]
+          ]
+        }
+      ],
+      "insufficiency_basis": null,
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q15",
+      "query": "同じ駅でも路線ごとの座標がずれていると、近いはずのバス停を取りこぼさない？",
+      "category": "paraphrase",
+      "split": "holdout",
+      "critical": false,
+      "scope": "public",
+      "answerability": "answerable",
+      "required_facts": [
+        {
+          "id": "F1",
+          "description": "代表座標からの最大隔たりを300mに加え候補検索し、各駅から300m以内で採用する。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/StationAPI:docs/nearby-bus-stops.md",
+                "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/nearby-bus-stops.md",
+                "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+                "excerpt": "検索半径は 300m に「代表の座標と各駅の座標の\n最大の隔たり」を足したものにしています。そのうえで、採用するかどうかは駅ごとの\n座標から 300m 以内かどうかで判定します。"
+              }
+            ]
+          ]
+        }
+      ],
+      "insufficiency_basis": null,
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q16",
+      "query": "都営バスを取り込むにもODPTのキーが必須？西武・京王とは条件が違う？",
+      "category": "paraphrase",
+      "split": "development",
+      "critical": false,
+      "scope": "public",
+      "answerability": "answerable",
+      "required_facts": [
+        {
+          "id": "F1",
+          "description": "都営は公開エンドポイントで認証不要、西武京王はキーが必要。",
+          "acceptable_evidence_sets": [
+            [
+              {
+                "source_id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md",
+                "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/gtfs-bus-integration-research.md",
+                "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+                "excerpt": "都営バスの GTFS は ODPT の公開用エンドポイント (`api-public.odpt.org`) から認証なしで取得できる。API キー (`ODPT_ACCESS_TOKEN`) が必要なのは、後から加えた西武バス・京王バス・東急バスのデータである。"
+              }
+            ]
+          ]
+        }
+      ],
+      "insufficiency_basis": null,
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q17",
+      "query": "MobileAppのPR #423の本文とマージ情報だけから、修正がApp Storeで配信された日付を教えて。",
+      "category": "insufficient",
+      "split": "development",
+      "critical": true,
+      "scope": "public",
+      "answerability": "insufficient",
+      "required_facts": [],
+      "insufficiency_basis": {
+        "scope": "PR423 body and merge metadata only",
+        "reason": "本文はcloses #420と動作確認のみ。マージ日時はストア配信日時の根拠ではない。",
+        "evidence": [
+          {
+            "source_id": "TrainLCD/MobileApp#423",
+            "url": "https://github.com/TrainLCD/MobileApp/pull/423",
+            "version": "2020-12-30T17:19:28Z",
+            "excerpt": "位置情報更新をiosで止めないようにした\ncloses #420"
+          }
+        ]
+      },
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q18",
+      "query": "都営バスGTFSの調査報告書だけから、中国語・韓国語訳が今後提供される予定日を知りたい。",
+      "category": "insufficient",
+      "split": "development",
+      "critical": false,
+      "scope": "public",
+      "answerability": "insufficient",
+      "required_facts": [],
+      "insufficiency_basis": {
+        "scope": "gtfs-bus-integration-research.md only",
+        "reason": "翻訳の現状と懸念はあるが将来提供日は記載なし。全文確認。",
+        "evidence": [
+          {
+            "source_id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md",
+            "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/gtfs-bus-integration-research.md",
+            "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+            "excerpt": "中国語と韓国語は含まれていない。"
+          }
+        ]
+      },
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q19",
+      "query": "StationAPIのアーキテクチャ文書だけから、先月のCloudflare請求額を円で教えて。",
+      "category": "insufficient",
+      "split": "holdout",
+      "critical": false,
+      "scope": "public",
+      "answerability": "insufficient",
+      "required_facts": [],
+      "insufficiency_basis": {
+        "scope": "architecture.md only",
+        "reason": "構成文書に月次請求実績はない。全文確認。",
+        "evidence": [
+          {
+            "source_id": "TrainLCD/StationAPI:docs/architecture.md",
+            "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/architecture.md",
+            "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+            "excerpt": "Cloudflare Workers 上で\n動作し、データはビルド時に WASM バイナリへ埋め込んで配布します。"
+          }
+        ]
+      },
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    },
+    {
+      "id": "Q20",
+      "query": "近傍バス停検索の仕様書だけから、駅からバス停へ必ず何分以内で歩いて乗り換えられるか教えて。",
+      "category": "insufficient",
+      "split": "holdout",
+      "critical": false,
+      "scope": "public",
+      "answerability": "insufficient",
+      "required_facts": [],
+      "insufficiency_basis": {
+        "scope": "nearby-bus-stops.md only",
+        "reason": "直線距離の判定であり徒歩時間や乗換保証はない。全文確認。",
+        "evidence": [
+          {
+            "source_id": "TrainLCD/StationAPI:docs/nearby-bus-stops.md",
+            "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/nearby-bus-stops.md",
+            "version": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+            "excerpt": "**半径**: 300m (定数 `NEARBY_BUS_STOP_RADIUS_METERS`)"
+          }
+        ]
+      },
+      "label_status": "AI reviewed; user not independently adjudicated",
+      "label_version": 1
+    }
+  ]
+}
