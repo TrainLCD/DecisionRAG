@@ -1,0 +1,710 @@
+{
+  "method": "AI annotation of pooled passages without model identity or rank. Same labels applied to A/B. Provisional; not independent human review. Relevance includes concrete diagnostic context and remedies, but excludes merely matching terminology.",
+  "annotations": {
+    "Q01": {
+      "TrainLCD/MobileApp#423:0": {
+        "sha256": "9f56b788eef2d5ffaa52e36607a1a8ed26272856d0f1af9ede3eb26975c4dec7",
+        "facts": [
+          "F1"
+        ],
+        "relevant": true,
+        "information": [
+          "F1"
+        ],
+        "note": "タイトルの修正内容とcloses #420を併せて対応関係を確認。"
+      },
+      "TrainLCD/MobileApp#420:0": {
+        "sha256": "ed04ff3ca6e178de5fbe3d5ab95ccea777b4d8b4e345597cf184d1a077477ffe",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "symptom"
+        ],
+        "note": "質問の症状そのもの。対処の根拠単独にはならない。"
+      },
+      "TrainLCD/MobileApp#464:0": {
+        "sha256": "490cae16570e6fa07042e37384954ef1fc1dda81d128c0a1bd3682e16c4eadea",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "release-context"
+        ],
+        "note": "iOS更新停止を防ぐ変更を含むリリース。元報告との直接リンクはないのでF1にはしない。"
+      },
+      "TrainLCD/MobileApp:docs/changelog.md:2": {
+        "sha256": "a9956e94ed635791723b0e872d0a33b30b4be2c7e2fc73f866b19e506a3d45a8",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "background-delivery-fix"
+        ],
+        "note": "測位停止時の保留配信を直す対応。別時点の補足として関連、元のトンネル修正とは区別。"
+      },
+      "TrainLCD/MobileApp:docs/changelog.md:3": {
+        "sha256": "8a289bc32258b6d73fb09b8f7e78c6658bd5c181565ee79d8e823288ec85ec58",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "distance-filter-recovery"
+        ],
+        "note": "地下で背景測位を復旧する実装変更と実車確認手順。別時点の補足として関連。"
+      },
+      "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0": {
+        "sha256": "bf367a7cf30b96d956998a7c696763097db675b502dfe9b7348c3af3448ee744",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "diagnostic-method"
+        ],
+        "note": "iOS背景測位の停止・復旧を識別する診断方法。対処後の調査に役立つ補足。"
+      },
+      "TrainLCD/THQ:docs/location-freeze-regression.md:1": {
+        "sha256": "b94bae99fdf39338b5a2570be34135faf935c3515dc5bcfe3f18a58d1a2d1b30",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "位置ログ欠落の集計仕様。iOS更新停止への対処は説明しない。"
+      }
+    },
+    "Q02": {
+      "TrainLCD/MobileApp#1022:0": {
+        "sha256": "666c50343dbd8444c16ee6da0cb794c0ef64c91ecd791ebf9b7370fd2532e136",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "symptom"
+        ],
+        "note": "地下鉄成増の直通表示の症状。"
+      },
+      "TrainLCD/MobileApp#1023:0": {
+        "sha256": "1d00fc493c55ecab53bdb8bed5e9d488a5039e5ad06d176d705a482a73c86c51",
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "relevant": true,
+        "information": [
+          "F1",
+          "F2"
+        ],
+        "note": "駅名不一致の原因とcloses #1022の修正関係を確認。"
+      }
+    },
+    "Q03": {
+      "TrainLCD/StationAPI:docs/nearby-bus-stops.md:0": {
+        "sha256": "666dbca92865d0c8275a928c06757939d281d0aa47da7f4a489c0f9fa4885588",
+        "facts": [
+          "F1"
+        ],
+        "relevant": true,
+        "information": [
+          "F1"
+        ],
+        "note": "鉄道優先と合計limitによってバスが残らない条件を本文で確認。代替根拠として両構成に追加。"
+      },
+      "TrainLCD/StationAPI:docs/architecture.md:4": {
+        "sha256": "7273dd1856d1bf40a6ad3daa9457b575e2fd2b1e263edfddaf051860573b70db",
+        "facts": [
+          "F1"
+        ],
+        "relevant": true,
+        "information": [
+          "F1"
+        ],
+        "note": "鉄道優先と合計limitによってバスが残らない条件を本文で確認。代替根拠として両構成に追加。"
+      },
+      "TrainLCD/StationAPI:AGENTS.md:10": {
+        "sha256": "f1d937129bed985cdc5b74f42148e320e3acec93fbea142a3ffb37fc185791e3",
+        "facts": [
+          "F1"
+        ],
+        "relevant": true,
+        "information": [
+          "F1"
+        ],
+        "note": "鉄道優先と合計limitによってバスが残らない条件を本文で確認。代替根拠として両構成に追加。"
+      },
+      "TrainLCD/StationAPI:docs/nearby-bus-stops.md:1": {
+        "sha256": "315e863cf23ae35f44ec43ae574fbc1a665ef6346493e8eb0c0f88854eaafc5a",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "bus-only-remedy"
+        ],
+        "note": "stationsNearbyにBusを指定して探す対処例。"
+      },
+      "TrainLCD/StationAPI#940:0": {
+        "sha256": "fbc9590f3094d92fa2de558227c9ddb8ef14f8d9a3b6b8bfd4c9c87e9b950cbf",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "近傍検索の鉄道優先・全体limitの条件を説明しない別クエリや種別・路線追加の説明。"
+      },
+      "TrainLCD/StationAPI:AGENTS.md:8": {
+        "sha256": "915957ae221110db70e316810121a1e1500f33358d15d97c49be84687f67761f",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "近傍検索の鉄道優先・全体limitの条件を説明しない別クエリや種別・路線追加の説明。"
+      },
+      "TrainLCD/StationAPI:AGENTS.md:9": {
+        "sha256": "18fa5048b33819d02dcfb2260c100b09ffdbc194a91514fca97a830cb0237b56",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "近傍検索の鉄道優先・全体limitの条件を説明しない別クエリや種別・路線追加の説明。"
+      },
+      "TrainLCD/StationAPI:docs/nearby-bus-stops.md:2": {
+        "sha256": "e68320d3dbe866041b9145becca7320733c484fb8efb4c92032a5457150cbca5",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "近傍検索の鉄道優先・全体limitの条件を説明しない別クエリや種別・路線追加の説明。"
+      }
+    },
+    "Q05": {
+      "TrainLCD/StationAPI:docs/nearby-bus-stops.md:0": {
+        "sha256": "666dbca92865d0c8275a928c06757939d281d0aa47da7f4a489c0f9fa4885588",
+        "facts": [
+          "F1"
+        ],
+        "relevant": true,
+        "information": [
+          "F1"
+        ],
+        "note": "旧Railと現RailAndBusを明示。移行記録を代替根拠に追加。"
+      },
+      "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:5": {
+        "sha256": "c609cece80b0e8d0aabd9a4aefbab3691365fc925d927883ca875db04266c52a",
+        "facts": [
+          "F1"
+        ],
+        "relevant": true,
+        "information": [
+          "F1"
+        ],
+        "note": "旧Railと現RailAndBusを明示。移行記録を代替根拠に追加。"
+      },
+      "TrainLCD/StationAPI:AGENTS.md:10": {
+        "sha256": "f1d937129bed985cdc5b74f42148e320e3acec93fbea142a3ffb37fc185791e3",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "nearby-order"
+        ],
+        "note": "種別未指定の並び順は旧SQLと同じという補足。既定種別の変更とは別。"
+      },
+      "TrainLCD/StationAPI:docs/architecture.md:4": {
+        "sha256": "7273dd1856d1bf40a6ad3daa9457b575e2fd2b1e263edfddaf051860573b70db",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "nearby-order"
+        ],
+        "note": "種別未指定の並び順は旧SQLと同じという補足。既定種別の変更とは別。"
+      },
+      "TrainLCD/StationAPI:docs/nearby-bus-stops.md:1": {
+        "sha256": "315e863cf23ae35f44ec43ae574fbc1a665ef6346493e8eb0c0f88854eaafc5a",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "explicit-type-example"
+        ],
+        "note": "Rail/Bus指定の使い分け例。"
+      },
+      "TrainLCD/StationAPI:docs/nearby-bus-stops.md:2": {
+        "sha256": "e68320d3dbe866041b9145becca7320733c484fb8efb4c92032a5457150cbca5",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "enrichment-default"
+        ],
+        "note": "未指定で近傍バス路線を付与する現在の動作。"
+      },
+      "TrainLCD/StationAPI:AGENTS.md:8": {
+        "sha256": "915957ae221110db70e316810121a1e1500f33358d15d97c49be84687f67761f",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "別クエリの到達性・列車種別処理で既定transportTypeの比較はない。"
+      }
+    },
+    "Q06": {
+      "TrainLCD/StationAPI:docs/architecture.md:0": {
+        "sha256": "37b02a77641bef0ab33bfbcd2c7d32750912042035e0be7ba49fc040ce5785e6",
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "relevant": true,
+        "information": [
+          "F1",
+          "F2"
+        ],
+        "note": "GraphQL直接応答とBFF廃止、WASM埋め込みとDB廃止の両方を確認。"
+      },
+      "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:0": {
+        "sha256": "eb094b50ef07fde90bb6173e2ec8ea815b39e564f229a01135d999ab42877fe8",
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "relevant": true,
+        "information": [
+          "F1",
+          "F2"
+        ],
+        "note": "GraphQL直接応答とBFF廃止、WASM埋め込みとDB廃止の両方を確認。"
+      },
+      "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:4": {
+        "sha256": "ba9c992eb405cfb5e0740bd5e4ac1fea48ab7b61b18b0a74398203148dcc9eb8",
+        "facts": [
+          "F2"
+        ],
+        "relevant": true,
+        "information": [
+          "F2",
+          "deployment-effect"
+        ],
+        "note": "WASM埋め込み・再ビルド、PostgreSQL廃止を本文で確認。"
+      },
+      "TrainLCD/StationAPI:AGENTS.md:0": {
+        "sha256": "427b7b144f96f0b1c40a78749577d729dd6ba5db6b954f33935215519425b2ce",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "implementation-layout"
+        ],
+        "note": "埋め込みCSVとGraphQLの実装位置。DB不使用の明記はないのでF2全部にはしない。"
+      },
+      "TrainLCD/StationAPI:AGENTS.md:2": {
+        "sha256": "764f5fef81dcbc582eca1f435e3da0303a1e94d00faedee2d56d04b73af63cf5",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "build-flow"
+        ],
+        "note": "データ生成とWorkerビルドの運用補足。"
+      },
+      "TrainLCD/StationAPI:docs/architecture.md:4": {
+        "sha256": "7273dd1856d1bf40a6ad3daa9457b575e2fd2b1e263edfddaf051860573b70db",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "inmemory-indexes"
+        ],
+        "note": "旧PostgreSQLからインメモリ索引への対応表。"
+      },
+      "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:1": {
+        "sha256": "c5ba8acb5d4bf0bddac4c00dbe3edfd095cb917b0f3ee4d3cf6508aaf28c8f85",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "schema-transition"
+        ],
+        "note": "GraphQLスキーマの正本と内部型の移行説明。"
+      },
+      "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:2": {
+        "sha256": "5f07ea646ebb480ed12945f88db7a6b77e51cc4a56ed40395560528e7ad769dc",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "preprocessor-transition"
+        ],
+        "note": "データ生成のRust化でDB不要になった過程の補足。"
+      },
+      "TrainLCD/Functions#7:0": {
+        "sha256": "773152750965b7ec98dfd7cd99eb027d64b07f227d4168e1ee47a97a0af6b0cc",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "client-migration"
+        ],
+        "note": "BFF廃止に伴うクライアント接続変更。履歴として有用。"
+      },
+      "TrainLCD/Functions#9:1": {
+        "sha256": "55fd78a2f4a45ea68e5873ff98595122c901ab9545eac81edc94b5d901b556ce",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "デプロイ成功コメントとレビュー情報だけ。構成や廃止理由を説明しない。"
+      }
+    },
+    "Q08": {
+      "TrainLCD/StationAPI:docs/nearby-bus-stops.md:2": {
+        "sha256": "e68320d3dbe866041b9145becca7320733c484fb8efb4c92032a5457150cbca5",
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "relevant": true,
+        "information": [
+          "F1",
+          "F2"
+        ],
+        "note": "運行パターン単位のBusRoute種別7と同じ停留所集合のBoth統合を確認。"
+      },
+      "TrainLCD/StationAPI:AGENTS.md:10": {
+        "sha256": "f1d937129bed985cdc5b74f42148e320e3acec93fbea142a3ffb37fc185791e3",
+        "facts": [
+          "F1"
+        ],
+        "relevant": true,
+        "information": [
+          "F1"
+        ],
+        "note": "BusRoute7とroute_id/shape_idの関係を明記。"
+      },
+      "TrainLCD/StationAPI:AGENTS.md:11": {
+        "sha256": "ab80f38245de7179bcb09911591a0f795ecb8f16983290ca9b771b52a6ba55e2",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "pattern-import"
+        ],
+        "note": "ODPTのpattern IDをshape_idへ変換しbus TrainTypesとして検索可能にする補足。"
+      },
+      "TrainLCD/StationAPI:AGENTS.md:8": {
+        "sha256": "915957ae221110db70e316810121a1e1500f33358d15d97c49be84687f67761f",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "bus-kind"
+        ],
+        "note": "バス路線がBusRoute7の運行パターンを持つことを説明。F1全体を満たすほど詳細ではない。"
+      },
+      "TrainLCD/StationAPI#650:0": {
+        "sha256": "9502295df5decd7887342ccc0043855e49950ab62d6f386b5bf3a0831bc6eb59",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "現在のバス種別と上下統合の説明を含まない。#650は別の種別未登録バグ、調査案は実装前の別方針。"
+      },
+      "TrainLCD/StationAPI:docs/architecture.md:0": {
+        "sha256": "37b02a77641bef0ab33bfbcd2c7d32750912042035e0be7ba49fc040ce5785e6",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "現在のバス種別と上下統合の説明を含まない。#650は別の種別未登録バグ、調査案は実装前の別方針。"
+      },
+      "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:2": {
+        "sha256": "32fc2c760581deb9f33bcf2444d2cfb39cdc94e32b8e302a04e79318ba6d480e",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "現在のバス種別と上下統合の説明を含まない。#650は別の種別未登録バグ、調査案は実装前の別方針。"
+      },
+      "TrainLCD/StationAPI:docs/nearby-bus-stops.md:0": {
+        "sha256": "666dbca92865d0c8275a928c06757939d281d0aa47da7f4a489c0f9fa4885588",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "現在のバス種別と上下統合の説明を含まない。#650は別の種別未登録バグ、調査案は実装前の別方針。"
+      },
+      "TrainLCD/StationAPI:docs/nearby-bus-stops.md:1": {
+        "sha256": "315e863cf23ae35f44ec43ae574fbc1a665ef6346493e8eb0c0f88854eaafc5a",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "現在のバス種別と上下統合の説明を含まない。#650は別の種別未登録バグ、調査案は実装前の別方針。"
+      }
+    },
+    "Q09": {
+      "TrainLCD/MobileApp#423:0": {
+        "sha256": "9f56b788eef2d5ffaa52e36607a1a8ed26272856d0f1af9ede3eb26975c4dec7",
+        "facts": [
+          "F1"
+        ],
+        "relevant": true,
+        "information": [
+          "F1"
+        ],
+        "note": "merged_at=2020-12-30T17:19:27Zを確認。release_statusだけでストア配信は推定しない。"
+      },
+      "TrainLCD/MobileApp#464:0": {
+        "sha256": "490cae16570e6fa07042e37384954ef1fc1dda81d128c0a1bd3682e16c4eadea",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "release-context"
+        ],
+        "note": "同名の変更を含むv1.6のPR履歴。PR423のマージ日の代替にはしない。"
+      },
+      "TrainLCD/MobileApp#1301:0": {
+        "sha256": "94effb2a3df945aa560bde3e53b2c96d2f3a953fd2177cc2073bf47207d13388",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "別の測位変更・症状報告であり、質問対象PRのマージ状況を裏付けない。"
+      },
+      "TrainLCD/MobileApp#1329:0": {
+        "sha256": "14d7273f27a18af3a41d9e08e098da86d9d47b08244f785ae9f999305c961d63",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "別の測位変更・症状報告であり、質問対象PRのマージ状況を裏付けない。"
+      },
+      "TrainLCD/MobileApp#165:0": {
+        "sha256": "acbee5da63dc3a40592aeccf0763e5c6791916e58e221a3182f5e245a9e20595",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "別の測位変更・症状報告であり、質問対象PRのマージ状況を裏付けない。"
+      },
+      "TrainLCD/MobileApp#267:0": {
+        "sha256": "9c1ad505f81087c17764c0d97acbca1eb6d1a4c917e1e7f7a81d2ebaba3a4fc0",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "別の測位変更・症状報告であり、質問対象PRのマージ状況を裏付けない。"
+      },
+      "TrainLCD/MobileApp:docs/changelog.md:1": {
+        "sha256": "1bbe76559c8bf156e50c60d29f23ccc8ed2ea0f6ed2ec5352b0fd5dde1aeedce",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "別の測位変更・症状報告であり、質問対象PRのマージ状況を裏付けない。"
+      },
+      "TrainLCD/MobileApp:docs/changelog.md:2": {
+        "sha256": "a9956e94ed635791723b0e872d0a33b30b4be2c7e2fc73f866b19e506a3d45a8",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "別の測位変更・症状報告であり、質問対象PRのマージ状況を裏付けない。"
+      },
+      "TrainLCD/MobileApp:docs/changelog.md:3": {
+        "sha256": "8a289bc32258b6d73fb09b8f7e78c6658bd5c181565ee79d8e823288ec85ec58",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "別の測位変更・症状報告であり、質問対象PRのマージ状況を裏付けない。"
+      }
+    },
+    "Q11": {
+      "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/translations.txt:1": {
+        "sha256": "3f8494f7430d47014dd0a909e225d4ea2b095a5f9dbc957f97b2c8c0df1e187c",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "名古屋市SRTの翻訳または鉄道GTFSの較正で、都営バスの2026年9月翻訳状況を説明しない。"
+      },
+      "TrainLCD/StationAPI:scripts/README.md:1": {
+        "sha256": "a8bcf6d62ad8149ee4f65c26d6203d9e4931b88584cacfff5e864f12b8eb34cf",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "名古屋市SRTの翻訳または鉄道GTFSの較正で、都営バスの2026年9月翻訳状況を説明しない。"
+      }
+    },
+    "Q14": {
+      "TrainLCD/StationAPI:docs/architecture.md:1": {
+        "sha256": "fd3d4e858e807d58794a39eaaf70b78802b05c91dda8ef669d05def556a67015",
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "relevant": true,
+        "information": [
+          "F1",
+          "F2"
+        ],
+        "note": "正本CSVに各停生成が必要で、バスはGTFS/ODPTから取り込むパイプラインを確認。"
+      },
+      "TrainLCD/StationAPI:docs/architecture.md:2": {
+        "sha256": "f402dd094b3f755b44668920a7ba9ae37446997b405133ea8dc829016fa94d6b",
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "relevant": true,
+        "information": [
+          "F1",
+          "F2"
+        ],
+        "note": "正本CSVに各停生成が必要で、バスはGTFS/ODPTから取り込むパイプラインを確認。"
+      },
+      "TrainLCD/StationAPI:AGENTS.md:10": {
+        "sha256": "f1d937129bed985cdc5b74f42148e320e3acec93fbea142a3ffb37fc185791e3",
+        "facts": [
+          "F1",
+          "F2"
+        ],
+        "relevant": true,
+        "information": [
+          "F1",
+          "F2"
+        ],
+        "note": "仮想各停はgeneratedのみ、GTFSとTokyu JSON由来のバス運行パターンを説明。"
+      },
+      "TrainLCD/StationAPI:AGENTS.md:11": {
+        "sha256": "ab80f38245de7179bcb09911591a0f795ecb8f16983290ca9b771b52a6ba55e2",
+        "facts": [
+          "F2"
+        ],
+        "relevant": true,
+        "information": [
+          "F2"
+        ],
+        "note": "GTFSと東急ODPT JSONを既存テーブルへ投影する。"
+      },
+      "TrainLCD/StationAPI:CONTRIBUTING.md:0": {
+        "sha256": "a76de8209976230ac0ac95fe2ebb729b0628294694f18556df8ee92ccb85147b",
+        "facts": [
+          "F1"
+        ],
+        "relevant": true,
+        "information": [
+          "F1",
+          "bus-generation"
+        ],
+        "note": "generated欠如時に各停とバスが欠ける。ODPTまで明記しないのでF2全部にはしない。"
+      },
+      "TrainLCD/StationAPI:docs/architecture.md:0": {
+        "sha256": "37b02a77641bef0ab33bfbcd2c7d32750912042035e0be7ba49fc040ce5785e6",
+        "facts": [
+          "F2"
+        ],
+        "relevant": true,
+        "information": [
+          "F2",
+          "build-flow"
+        ],
+        "note": "図でGTFS/ODPTからgeneratedを作る流れを確認。"
+      },
+      "TrainLCD/StationAPI:docs/architecture.md:11": {
+        "sha256": "8844ccfe9d105c8a8f9f3f137a272a5c4f307daab45263f4d15c90e1fa466303",
+        "facts": [
+          "F1"
+        ],
+        "relevant": true,
+        "information": [
+          "F1",
+          "bus-generation"
+        ],
+        "note": "generated欠如時の各停とバスの欠損を明記。"
+      },
+      "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:2": {
+        "sha256": "5f07ea646ebb480ed12945f88db7a6b77e51cc4a56ed40395560528e7ad769dc",
+        "facts": [
+          "F1"
+        ],
+        "relevant": true,
+        "information": [
+          "F1",
+          "bus-generation"
+        ],
+        "note": "各停補完とバス統合の移行記録。ODPT JSONまで同区間で説明しない。"
+      },
+      "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:4": {
+        "sha256": "ba9c992eb405cfb5e0740bd5e4ac1fea48ab7b61b18b0a74398203148dcc9eb8",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "deployment-effect"
+        ],
+        "note": "データ生成の移植と再ビルド・再デプロイの補足。"
+      },
+      "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:5": {
+        "sha256": "c609cece80b0e8d0aabd9a4aefbab3691365fc925d927883ca875db04266c52a",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "SQL応答差分の別問題で各停とバスデータ欠損の理由は説明しない。"
+      }
+    },
+    "Q16": {
+      "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:3": {
+        "sha256": "1d626e2858e1f017d7730ba0d8f89e1db30b8d810a36493d461be85ae7f259a3",
+        "facts": [
+          "F1"
+        ],
+        "relevant": true,
+        "information": [
+          "F1"
+        ],
+        "note": "都営不要、西武・京王必要を同じ本文で明記。"
+      },
+      "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:2": {
+        "sha256": "5f07ea646ebb480ed12945f88db7a6b77e51cc4a56ed40395560528e7ad769dc",
+        "facts": [
+          "F1"
+        ],
+        "relevant": true,
+        "information": [
+          "F1"
+        ],
+        "note": "都営不要、西武・京王必要を同じ本文で明記。"
+      },
+      "TrainLCD/StationAPI:AGENTS.md:1": {
+        "sha256": "26ec3bb93dd016f69c2173eb6e96fd9cf9d50d3dc68b76e5fd5d6cea5b433f07",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "authenticated-feeds"
+        ],
+        "note": "西武・京王など認証付きフィードへのキー利用を説明。"
+      },
+      "TrainLCD/StationAPI:AGENTS.md:11": {
+        "sha256": "ab80f38245de7179bcb09911591a0f795ecb8f16983290ca9b771b52a6ba55e2",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "authenticated-feeds"
+        ],
+        "note": "西武・京王など認証付きフィードへのキー利用を説明。"
+      },
+      "TrainLCD/StationAPI:docs/architecture.md:3": {
+        "sha256": "c20426e09e491f4e1a9825480d64ef4b9506db594920ce63c7d119de0c16d0a0",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "authenticated-feeds"
+        ],
+        "note": "西武・京王など認証付きフィードへのキー利用を説明。"
+      },
+      "TrainLCD/StationAPI:CONTRIBUTING.md:0": {
+        "sha256": "a76de8209976230ac0ac95fe2ebb729b0628294694f18556df8ee92ccb85147b",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "toei-no-token"
+        ],
+        "note": "都営バスはトークン不要という補足。"
+      },
+      "TrainLCD/StationAPI:AGENTS.md:2": {
+        "sha256": "764f5fef81dcbc582eca1f435e3da0303a1e94d00faedee2d56d04b73af63cf5",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "missing-token-behavior"
+        ],
+        "note": "キー未設定時の認証付きフィード欠損とビルド時検証を説明。"
+      },
+      "TrainLCD/StationAPI:data/gtfs-feeds/README.md:0": {
+        "sha256": "9a08959b06992130d7a6c31eeec74bcfa60b36c1f2d8f6758c8a99b80d114ccb",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "authenticated-endpoint"
+        ],
+        "note": "api.odpt.orgの追加フィードへの既存トークン利用を説明。"
+      },
+      "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:4": {
+        "sha256": "ba9c992eb405cfb5e0740bd5e4ac1fea48ab7b61b18b0a74398203148dcc9eb8",
+        "facts": [],
+        "relevant": true,
+        "information": [
+          "token-configuration"
+        ],
+        "note": "トークンの環境Secretへの設定先という運用補足。"
+      },
+      "TrainLCD/StationAPI:scripts/README.md:1": {
+        "sha256": "a8bcf6d62ad8149ee4f65c26d6203d9e4931b88584cacfff5e864f12b8eb34cf",
+        "facts": [],
+        "relevant": false,
+        "information": [],
+        "note": "鉄道GTFSの較正であり、都営バスと西武・京王バスの認証条件ではない。"
+      }
+    }
+  }
+}

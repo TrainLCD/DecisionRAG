@@ -7,6 +7,8 @@ p.add_argument('--commit',required=True)
 p.add_argument('--split',choices=['development','holdout'],default='development')
 p.add_argument('--questions',default='docs/evaluation/flash-questions-2026-11-12.json')
 p.add_argument('--output',required=True)
+p.add_argument('--resume',action='store_true')
+p.add_argument('--max-pairs',type=int,default=36)
 a=p.parse_args()
 out=pathlib.Path(a.output);out.mkdir(parents=True,exist_ok=True)
 raw=pathlib.Path(a.questions).read_bytes(); dataset=json.loads(raw)
@@ -33,14 +35,28 @@ needed={e['source_id'] for q in questions for f in q['required_facts'] for alt i
 missing=needed-set(start['source_ids'])
 if missing:raise RuntimeError('ground truth source absent: '+str(missing))
 meta={'started_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'commit':a.commit,'base_url':a.base_url,'split':a.split,'question_sha256':hashlib.sha256(raw).hexdigest(),'initial_snapshot':start,'warmup':'one separate query per model, excluded; no retries removed','request':{'include_feedback':False,'paginated':False},'order':'AB, BA alternating across question/repetition pairs; serial','repetitions':3}
-(out/'manifest.json').write_text(json.dumps(meta,ensure_ascii=False,indent=2)+'\n')
-for model in ['clef','clef-flash']:
- row={'model':model,**http('/search?passage_model='+model,{'query':'StationAPIはどのようなAPI？','include_feedback':False,'paginated':False})}
- append('warmup.jsonl',row);print('warmup',model,row['http_status'],row['client_ms'],flush=True)
+completed=set()
+if a.resume:
+ previous=json.loads((out/'manifest.json').read_text())
+ if any(previous[k]!=meta[k] for k in ['commit','base_url','split','question_sha256']):raise RuntimeError('resume configuration differs')
+ completed={(r['id'],r['repetition']) for r in map(json.loads,(out/'pairs.jsonl').read_text().splitlines())}
+ old=[json.loads(x) for x in (out/'requests.jsonl').read_text().splitlines()]
+ if any((r['id'],r['repetition']) not in completed for r in old):raise RuntimeError('unpaired prior request requires explicit adjudication')
+ append('resumptions.jsonl',{'at':meta['started_at'],'revision':start['revision'],'completed_pairs':len(completed)})
+else:
+ if (out/'manifest.json').exists():raise RuntimeError('output exists; use --resume')
+ (out/'manifest.json').write_text(json.dumps(meta,ensure_ascii=False,indent=2)+'\n')
+ for model in ['clef','clef-flash']:
+  row={'model':model,**http('/search?passage_model='+model,{'query':'StationAPIはどのようなAPI？','include_feedback':False,'paginated':False})}
+  append('warmup.jsonl',row);print('warmup',model,row['http_status'],row['client_ms'],flush=True)
+run_pairs=0
 for rep in range(3):
  for i,q in enumerate(questions):
+  if (q['id'],rep+1) in completed:continue
+  if run_pairs>=a.max_pairs:print('checkpoint',flush=True);raise SystemExit(0)
   order=['clef','clef-flash'] if (rep*len(questions)+i)%2==0 else ['clef-flash','clef']
   before=revision(); rows=[]
+  append('started-pairs.jsonl',{'id':q['id'],'repetition':rep+1,'before':before['revision'],'order':order})
   for model in order:
    row={'id':q['id'],'repetition':rep+1,'model':model,'started_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),**http('/search?passage_model='+model,{'query':q['query'],'include_feedback':False,'paginated':False})}
    # Save each request immediately; a later snapshot failure cannot erase it.
@@ -48,4 +64,5 @@ for rep in range(3):
    print(q['id'],rep+1,model,row['http_status'],row['client_ms'],row.get('response',{}).get('hit_count'),flush=True)
   after=revision()
   append('pairs.jsonl',{'id':q['id'],'repetition':rep+1,'before':before['revision'],'after':after['revision'],'valid':before['revision']==after['revision'],'order':order})
+  run_pairs+=1
 print('complete',flush=True)
