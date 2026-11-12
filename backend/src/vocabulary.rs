@@ -262,6 +262,7 @@ mod tests {
         let candidate = json!({"term":"Wayfinder","alias":"WF","quote":"Wayfinder (WF)","relation":"abbreviation"});
         assert!(accepted("Use Wayfinder (WF) for navigation.", &candidate).is_some());
         assert!(accepted("Use Wayfinder for navigation.", &candidate).is_none());
+        assert!(accepted("Wayfinder (WF)ではない", &candidate).is_none());
         assert!(accepted("Wayfinder and WF",&json!({"term":"Wayfinder","alias":"WF","quote":"Wayfinder and WF","relation":"abbreviation"})).is_none());
     }
     #[test]

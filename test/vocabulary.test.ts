@@ -110,3 +110,20 @@ test('dictionary changes invalidate continuation cursors instead of mixing scori
     assert.equal(next.status, 409);
   } finally { f.sqlite.close(); }
 });
+
+test('a multi-span source activates only after completion and retries resume persisted progress', async () => {
+  const f = await setup();
+  try {
+    await f.save('Wayfinder (WF)\n\n' + 'Other unrelated content. '.repeat(150));
+    await f.save('Wayfinder', 'target');
+    await f.extract();
+    assert.equal(f.sqlite.prepare('SELECT status FROM vocabulary_runs').get()?.status, 'running');
+    const initial: any = await (await f.request({ query: 'WF' })).json();
+    assert.ok(!initial.evidence.some((e: any) => e.source_id === 'target'));
+    for (let i = 0; i < 10 && f.sqlite.prepare('SELECT status FROM vocabulary_runs').get()?.status !== 'completed'; i++) await f.extract();
+    assert.equal(f.sqlite.prepare('SELECT status FROM vocabulary_runs').get()?.status, 'completed');
+    const final: any = await (await f.request({ query: 'WF' })).json();
+    assert.ok(final.evidence.some((e: any) => e.source_id === 'target'));
+    assert.equal(f.sqlite.prepare('SELECT count(*) AS n FROM vocabulary_entries').get()?.n, 1);
+  } finally { f.sqlite.close(); }
+});

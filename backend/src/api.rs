@@ -173,7 +173,17 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
     };
     let storage_start = now();
     let mut traces = Vec::new();
+    let vocabulary_start = now();
     let vocabulary = crate::vocabulary::load(h, query, scope.as_ref()).await?;
+    traces.push(trace(
+        "vocabulary_expansion",
+        vocabulary.len(),
+        vocabulary
+            .iter()
+            .map(|p| json!([p["term"], p["alias"]]))
+            .collect(),
+        vocabulary_start,
+    ));
     let ids = if let Some(previous) = &previous {
         array(&previous["ids"])?
             .iter()
