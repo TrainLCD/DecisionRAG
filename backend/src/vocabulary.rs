@@ -217,7 +217,8 @@ pub async fn load(
         result.extend(
             rows.iter()
                 .zip(applicable)
-                .filter_map(|(row, applies)| applies.then(|| row.clone())),
+                .filter(|(_, applies)| *applies)
+                .map(|(row, _)| row.clone()),
         );
         if result.len() > 128 {
             return Err(Error::new(422, "vocabulary_expansion_budget_exceeded"));
