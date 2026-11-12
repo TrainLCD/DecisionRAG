@@ -539,6 +539,17 @@ mod tests {
         }
     }
     #[test]
+    fn verification_preserves_numeric_lists_for_one_subject() {
+        let out = run(json!({"op":"verify","evidence":[
+            {"citation":"p1","text":"Zephyr supports TLS 1.2 and 1.3."}
+        ],"claims":[
+            {"text":"Zephyr supports TLS 1.3.","citations":["p1"]},
+            {"text":"Zephyr supports TLS 1.4.","citations":["p1"]}
+        ]}));
+        assert_ne!(out["reasons"][0], "local_rule_conflict");
+        assert_eq!(out["reasons"][1], "local_rule_conflict");
+    }
+    #[test]
     fn gtfs_multi_paragraph_answer_is_not_rejected_as_a_contradiction() {
         let captured: Value =
             serde_json::from_str(include_str!("../test/fixtures/gtfs-answer-regression.json"))
