@@ -17,10 +17,14 @@ try{
  await page.waitForFunction(()=>typeof window.__answerWire==='string');const wire=await page.evaluate(()=>window.__answerWire);assert.ok(wire.includes('event: sources'));assert.ok(wire.includes('event: result'));
  const result=JSON.parse(wire.split('event: result\ndata: ')[1].trim());assert.ok(result.hit_count>20);
  await page.waitForFunction(()=>document.querySelector('#results').getAttribute('aria-busy')==='false');
+ assert.ok(await page.locator('.evidence-excerpt mark.search-match').count()>0,'Real Rust matches must be highlighted');
+ const marks=await page.locator('.evidence-excerpt mark.search-match').allTextContents();
+ assert.equal(await page.locator('mark.search-match').first().evaluate(n=>getComputedStyle(n).backgroundColor),'rgb(255, 235, 112)');
  assert.equal(await page.locator('.evidence-card').count(),10);const first=await page.locator('.evidence-card').first().textContent();
  const next=page.locator('#pagination-top [data-page-step="1"]');await next.click();assert.equal(await page.locator('.evidence-card').count(),10);assert.notEqual(await page.locator('.evidence-card').first().textContent(),first);
  assert.match(await page.locator('#pagination-top [data-page-label]').textContent(),new RegExp('2 / '+Math.ceil(result.hit_count/10)));
  await page.locator('#pagination-top [data-page-step="-1"]').click();assert.equal(await page.locator('.evidence-card').first().textContent(),first);assert.equal(searches,1,'Page navigation must never search or regenerate');
+ assert.deepEqual(await page.locator('.evidence-excerpt mark.search-match').allTextContents(),marks);
  await mkdir('test-results',{recursive:true});await page.screenshot({path:'test-results/rust-browser.png',fullPage:true});
  await page.locator('#query').fill('zzqnonexistentzzq');await page.locator('#search-button').click();await page.waitForFunction(()=>document.querySelector('#results').getAttribute('aria-busy')==='false');assert.equal(await page.locator('.evidence-card').count(),0);
  assert.deepEqual(errors,[]);await writeFile('test-results/browser.json',JSON.stringify({backend:'Rust/WASM',hits:result.hit_count,per_page:10,pagination_requests:0,errors},null,2));console.log('Browser passed: real Rust/WASM, SSE, totals, 10 per page, no regeneration, empty result.');

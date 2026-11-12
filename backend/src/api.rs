@@ -210,6 +210,7 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
         pagination = json!({"page":offset/size+1,"total_pages":passages.len().div_ceil(size),"next_cursor":next});
     }
     for p in &mut evidence {
+        p["highlight_terms"] = json!(decision_rag_core::highlight_terms(query, s(p, "text")));
         let markup = html(s(p, "text"));
         if !markup.is_empty() {
             p["text_html"] = json!(markup);

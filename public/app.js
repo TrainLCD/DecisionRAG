@@ -126,6 +126,65 @@ function markdownContent(text, html, className = "", baseUrl) {
   append(template.content, root);
   return root;
 }
+/** Highlight sanitized text nodes, preserving links, code and Markdown structure. */
+function highlightMatches(root, terms) {
+  if (!Array.isArray(terms) || !terms.length) return;
+  const nodes = [];
+  let text = "";
+  const blocks = new Set(["P", "DIV", "LI", "PRE", "BLOCKQUOTE", "H1", "H2", "H3", "H4", "H5", "H6", "TD", "TH", "BR", "HR"]);
+  function collect(node) {
+    if (node.nodeType === 3) {
+      nodes.push({ node, start: text.length, end: text.length + node.data.length });
+      text += node.data;
+      return;
+    }
+    if (blocks.has(node.nodeName)) text += "\n";
+    for (const child of node.childNodes) collect(child);
+    if (blocks.has(node.nodeName)) text += "\n";
+  }
+  collect(root);
+  // Map NFKC/case-normalized graphemes back to original UTF-16 offsets. This
+  // keeps full-width characters, combining marks and emoji intact.
+  let normalized = "";
+  const offsets = [];
+  for (const { segment, index } of new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text)) {
+    const value = segment.normalize("NFKC").toLowerCase();
+    normalized += value;
+    for (let i = 0; i < value.length; i++) offsets.push([index, index + segment.length]);
+  }
+  const ranges = [];
+  for (const raw of new Set(terms.filter(term => typeof term === "string" && term.length))) {
+    const term = raw.normalize("NFKC").toLowerCase();
+    if (!term) continue;
+    for (let from = 0, at; (at = normalized.indexOf(term, from)) !== -1; from = at + 1) {
+      const end = at + term.length;
+      if (/^[a-z0-9]/.test(term) && /[a-z0-9_]/.test(normalized[at - 1] || "")) continue;
+      if (/[a-z0-9]$/.test(term) && /[a-z0-9_]/.test(normalized[end] || "")) continue;
+      ranges.push([offsets[at][0], offsets[end - 1][1]]);
+    }
+  }
+  ranges.sort((a, b) => a[0] - b[0] || b[1] - a[1]);
+  const merged = [];
+  for (const range of ranges) {
+    const last = merged.at(-1);
+    if (last && range[0] <= last[1]) last[1] = Math.max(last[1], range[1]);
+    else merged.push(range);
+  }
+  for (const { node, start, end } of nodes) {
+    const hits = merged.filter(([a, b]) => a < end && b > start);
+    if (!hits.length) continue;
+    const fragment = document.createDocumentFragment();
+    let from = 0;
+    for (const [a, b] of hits) {
+      const left = Math.max(a, start) - start, right = Math.min(b, end) - start;
+      fragment.append(node.data.slice(from, left));
+      fragment.append(element("mark", "search-match", node.data.slice(left, right)));
+      from = right;
+    }
+    fragment.append(node.data.slice(from));
+    node.replaceWith(fragment);
+  }
+}
 function notice(message, kind = "", target = $("notice")) {
   target.textContent = message;
   target.className = "notice " + kind;
@@ -554,6 +613,7 @@ function renderEvidencePage() {
     const empty = !body || /^\((?:no body|empty document)\)$/i.test(body);
     const excerpt = element("div", "evidence-text");
     const passage = markdownContent(empty ? "内容なし" : body, empty ? undefined : item.text_html, "evidence-excerpt", url);
+    if (!empty) highlightMatches(passage, item.highlight_terms);
     passage.tabIndex = 0;
     excerpt.append(passage);
     card.append(

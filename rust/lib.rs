@@ -123,6 +123,41 @@ fn matching(f: &Feature, text: &str) -> f64 {
     }
     0.0
 }
+
+/// Literal evidence for the same query features used by the local scorer.
+/// Return normalized terms, never markup; consumers highlight visible text only.
+pub fn highlight_terms(query: &str, text: &str) -> Vec<String> {
+    let text = normalize(text);
+    let mut terms = BTreeSet::new();
+    for feature in features(query) {
+        if matching(&feature, &text) == 0.0 {
+            continue;
+        }
+        let explicit: Vec<_> = feature
+            .aliases
+            .iter()
+            .filter(|a| contains(&text, a))
+            .cloned()
+            .collect();
+        if !explicit.is_empty() {
+            terms.extend(explicit);
+        } else if feature.name == "location" {
+            terms.extend(
+                ["到着判定", "接近到着"]
+                    .into_iter()
+                    .filter(|t| text.contains(t))
+                    .map(str::to_owned),
+            );
+        } else {
+            terms.extend(
+                grams(&feature.name)
+                    .into_iter()
+                    .filter(|g| text.contains(g)),
+            );
+        }
+    }
+    terms.into_iter().collect()
+}
 #[derive(Deserialize, Clone)]
 struct Candidate {
     id: String,
@@ -429,6 +464,18 @@ mod tests {
     }
     fn candidate(id: &str, text: &str) -> Value {
         json!({"id":id,"description":text})
+    }
+    #[test]
+    fn highlights_share_scoring_aliases_and_boundaries() {
+        assert_eq!(
+            highlight_terms("GPS", "ＧＰＳと位置更新、gps_tracker、svgps"),
+            vec!["gps", "位置更新"]
+        );
+        assert_eq!(highlight_terms("GPS", "到着判定"), vec!["到着判定"]);
+        assert!(highlight_terms("GPS", "レイアウト位置、location.href").is_empty());
+        assert!(highlight_terms("#7403", "#74030").is_empty());
+        assert_eq!(highlight_terms("#7403", "#7403"), vec!["#7403"]);
+        assert!(highlight_terms("教えてください", "GPS").is_empty());
     }
     #[test]
     fn bilingual_topics_beat_incidental_words() {

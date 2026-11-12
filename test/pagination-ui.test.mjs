@@ -166,3 +166,53 @@ for (const transport of ['json', 'sse']) {
     } finally { c.close(); }
   });
 }
+
+for (const transport of ['json', 'sse']) {
+  test(`${transport}: yellow matches preserve Markdown, Unicode, safety and page snapshots`, async () => {
+    const payload = result(11);
+    for (const item of payload.evidence) Object.assign(item, {
+      text: 'GPS 位置更新',
+      text_html: '<p>ＧＰＳ 位置<strong>更新</strong> gps_tracker svgps 😀 ガ</p><p><a href="https://example.test/GPS">GPS</a> <code>GPS</code></p><pre><code>GPS</code></pre><p>unrelated</p><script>GPS</script><a href="javascript:alert(1)">GPS</a>',
+      highlight_terms: ['gps', '位置更新', '位置', 'ガ'],
+    });
+    const c = client(() => transport === 'json' ? Response.json(payload) : new Response(
+      `event: sources\ndata: ${JSON.stringify(payload)}\n\nevent: result\ndata: ${JSON.stringify(payload)}\n\n`,
+      { headers: { 'Content-Type': 'text/event-stream' } },
+    ));
+    try {
+      c.submit(transport === 'sse');
+      await until(() => !c.$('search-button').disabled);
+      const check = () => {
+        const body = c.window.document.querySelector('.evidence-excerpt');
+        assert.deepEqual([...body.querySelectorAll('mark')].map(n => n.textContent), ['ＧＰＳ', '位置', '更新', 'ガ', 'GPS', 'GPS', 'GPS', 'GPS']);
+        assert.equal(body.querySelector('strong mark').textContent, '更新');
+        assert.equal(body.querySelector('a').href, 'https://example.test/GPS');
+        assert.equal(body.querySelector('pre code mark').textContent, 'GPS');
+        assert.match(body.textContent, /gps_tracker svgps 😀/);
+        assert.equal(body.querySelector('script, [href^="javascript:"], mark mark'), null);
+        assert.equal(body.querySelectorAll('mark.search-match').length, 8);
+      };
+      check();
+      c.$('query').value = 'edited but not submitted';
+      c.navs()[0].querySelector('[data-page-step="1"]').click();
+      check();
+      c.navs()[0].querySelector('[data-page-step="-1"]').click();
+      check();
+      assert.equal(c.requests.length, 1);
+    } finally { c.close(); }
+  });
+}
+test('plain text fallback highlights safely; absent terms leave content unchanged', async () => {
+  const payload = result(2);
+  payload.evidence[0].text = '<img src=x onerror=alert(1)> GPS';
+  payload.evidence[0].highlight_terms = ['gps'];
+  const c = client(() => Response.json(payload));
+  try {
+    c.submit();
+    await until(() => !c.$('search-button').disabled);
+    const bodies = c.window.document.querySelectorAll('.evidence-excerpt');
+    assert.equal(bodies[0].querySelector('mark').textContent, 'GPS');
+    assert.equal(bodies[0].querySelector('img'), null);
+    assert.equal(bodies[1].querySelector('mark'), null);
+  } finally { c.close(); }
+});
