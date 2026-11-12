@@ -312,9 +312,13 @@ pub async fn answer(
     let threshold = bounded(c.support_threshold.as_deref(), 0.85, 0., 1.)?;
     bounded(c.conflict_threshold.as_deref(), 0.7, 0., 1.)?;
     let supported = |i: usize| {
-        verification["claims"][i]
-            .as_f64()
-            .is_some_and(|s| s > 0. && s >= threshold)
+        // Unknown semantic entailment is not a contradiction. Keep a cited,
+        // related paraphrase rather than deleting every natural-language answer.
+        // The response explicitly reports semantic_status=unknown, not verified.
+        verification["reasons"][i] == "semantic_support_unknown"
+            || verification["claims"][i]
+                .as_f64()
+                .is_some_and(|s| s > 0. && s >= threshold)
     };
     let verified: Vec<_> = claims
         .iter()
