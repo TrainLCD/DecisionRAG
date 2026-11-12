@@ -159,3 +159,134 @@ test('feedback and administrative APIs require a configured token', async () => 
   sqlite.close();
 });
 
+
+
+test('issue watermark waits for saving and retries resume the same page', async () => {
+  const { env, sqlite } = fixture();
+  const repo = 'TrainLCD/Issues';
+  sqlite.prepare("INSERT INTO repositories(repo,description,default_branch,issues_dispatched_at) VALUES(?,'test',?,?)").run(repo, 'main', '2026-01-01T00:00:00.000Z');
+  let fail = true;
+  const fetched: number[] = [];
+  const restore = mockFetch(url => {
+    if (url.includes('/issues?')) return Response.json([{ number: 1 }, { number: 2 }]);
+    if (url.endsWith('/comments?per_page=100&page=1')) return Response.json([]);
+    const n = Number(url.match(/\/issues\/(\d+)/)?.[1]);
+    fetched.push(n);
+    if (n === 2 && fail) return Response.json({}, { status: 500 });
+    return Response.json({ ...issue, number: n });
+  });
+  let ack = 0, retry = 0;
+  const body = { type: 'issues', repo, page: 1, started: '2026-11-12T00:00:00.000Z' };
+  const messages = [{ id: 'resume-issues', body, attempts: 1, ack() { ack++; }, retry() { retry++; } }];
+  try {
+    await worker.queue!({ messages } as unknown as MessageBatch<any>, env, {} as ExecutionContext);
+    assert.equal(retry, 1); assert.equal(ack, 0);
+    assert.equal(sqlite.prepare('SELECT issues_dispatched_at AS t FROM repositories').get()?.t, '2026-01-01T00:00:00.000Z');
+    assert.equal(JSON.parse(String(sqlite.prepare('SELECT job FROM sync_jobs').get()?.job)).offset, 1);
+    fail = false;
+    await worker.queue!({ messages } as unknown as MessageBatch<any>, env, {} as ExecutionContext);
+    assert.equal(ack, 1);
+    assert.equal(fetched.filter(n => n === 1).length, 1);
+    assert.equal(sqlite.prepare('SELECT issues_dispatched_at AS t FROM repositories').get()?.t, body.started);
+  } finally { restore(); sqlite.close(); }
+});
+
+test('an older docs fetch cannot reactivate a replaced snapshot', async () => {
+  const { env, sqlite } = fixture();
+  const repo = 'TrainLCD/MobileApp';
+  sqlite.prepare("INSERT INTO repositories(repo,description,default_branch,docs_commit) VALUES(?,'test',?,?)").run(repo, 'main', 'original');
+  const restore = mockFetch(url => {
+    if (url.includes('/commits/')) return Response.json({ sha: 'old', commit: { tree: { sha: 'old-tree' } } });
+    sqlite.prepare('UPDATE repositories SET docs_commit=? WHERE repo=?').run('new', repo);
+    return Response.json({ tree: [], truncated: false });
+  });
+  try {
+    await assert.rejects(sync(env, { type: 'docs', repo }), /docs_snapshot_changed/);
+    assert.equal(sqlite.prepare('SELECT docs_commit FROM repositories').get()?.docs_commit, 'new');
+  } finally { restore(); sqlite.close(); }
+});
+
+test('resyncing an unchanged document preserves its complete searchable record', async () => {
+  const { env, sqlite } = fixture();
+  const repo = 'TrainLCD/MobileApp';
+  sqlite.prepare("INSERT INTO repositories(repo,description,default_branch,docs_commit) VALUES(?,'test',?,?)").run(repo, 'main', 'first');
+  const restore = mockFetch(() => Response.json({ encoding: 'base64', content: Buffer.from('GPSの更新処理についての説明').toString('base64') }));
+  try {
+    const doc = { type: 'doc' as const, repo, path: 'README.md', sha: 'same-blob', commit: 'first' };
+    await sync(env, doc);
+    const before = sqlite.prepare('SELECT * FROM sources').get();
+    sqlite.prepare('UPDATE repositories SET docs_commit=? WHERE repo=?').run('second', repo);
+    await sync(env, { ...doc, commit: 'second' });
+    assert.deepEqual(sqlite.prepare('SELECT * FROM sources').get(), before);
+    // Force save_source instead of the identical-blob early return.
+    sqlite.exec("UPDATE sources SET metadata=json_remove(metadata,'$.blob_sha'), updated_at='2000-01-01T00:00:00.000Z'");
+    await sync(env, { ...doc, commit: 'second' });
+    const saved = sqlite.prepare('SELECT * FROM sources').get();
+    assert.equal(saved?.updated_at, '2000-01-01T00:00:00.000Z');
+    assert.equal(JSON.parse(String(saved?.metadata)).blob_sha, doc.sha);
+    assert.equal(JSON.parse(String(saved?.metadata)).commit, 'second');
+  } finally { restore(); sqlite.close(); }
+});
+
+test('release history retries resume from the last persisted cursor', async () => {
+  const { env, sqlite } = fixture();
+  const repo = 'TrainLCD/MobileApp', tip = 'a'.repeat(40), ancestor = 'b'.repeat(40);
+  sqlite.prepare("INSERT INTO repositories(repo,description,default_branch) VALUES(?,'test',?)").run(repo, 'main');
+  let fail = true, firstPages = 0, releaseCalls = 0, ack = 0, retry = 0;
+  const restore = mockFetch((_url, init) => {
+    const { query, variables } = JSON.parse(String(init?.body));
+    if (query.includes('latestRelease')) {
+      releaseCalls++;
+      return Response.json({ data: { repository: { latestRelease: { tagName: releaseCalls === 1 ? 'v1' : 'v2', url: 'https://example.test/v1', publishedAt: '2026-11-01', isDraft: false, isPrerelease: false, tagCommit: { oid: releaseCalls === 1 ? tip : 'c'.repeat(40) } } } } });
+    }
+    assert.equal(variables.commit, tip);
+    const first = variables.after === null;
+    if (first) firstPages++;
+    if (!first && fail) return Response.json({}, { status: 500 });
+    return Response.json({ data: { repository: { object: { history: { totalCount: 2, nodes: [{ oid: first ? tip : ancestor }], pageInfo: { hasNextPage: first, endCursor: first ? 'next' : null } } } } } });
+  });
+  const messages = [{ id: 'release-resume', body: { type: 'releases', repo }, attempts: 1, ack() { ack++; }, retry() { retry++; } }];
+  try {
+    await worker.queue!({ messages } as unknown as MessageBatch<any>, env, {} as ExecutionContext);
+    assert.equal(retry, 1);
+    assert.equal(sqlite.prepare('SELECT count(*) AS n FROM github_releases').get()?.n, 0);
+    fail = false;
+    await worker.queue!({ messages } as unknown as MessageBatch<any>, env, {} as ExecutionContext);
+    assert.equal(firstPages, 1); assert.equal(ack, 1); assert.equal(releaseCalls, 1);
+    assert.equal(sqlite.prepare('SELECT tag FROM github_releases').get()?.tag, 'v1');
+    assert.equal(sqlite.prepare('SELECT count(*) AS n FROM github_release_commits').get()?.n, 2);
+  } finally { restore(); sqlite.close(); }
+});
+
+test('permanent issue limits are isolated without advancing an incomplete scan watermark', async () => {
+  const { env, sqlite, jobs } = fixture();
+  const repo = 'TrainLCD/MobileApp';
+  const previous = '2026-01-01T00:00:00.000Z';
+  sqlite.prepare("INSERT INTO repositories(repo,description,default_branch,issues_dispatched_at) VALUES(?,'test','main',?)").run(repo, previous);
+  let oversized = true;
+  const restore = mockFetch(url => {
+    if (url.includes('/issues?')) return Response.json(url.includes('page=1&') || url.endsWith('page=1')
+      ? Array.from({ length: 100 }, (_, i) => ({ number: i + 1 })) : [{ number: 101 }]);
+    if (url.includes('/comments') || url.includes('/reviews') || url.includes('/files')) return Response.json([]);
+    if (url.includes('/pulls/1')) return Response.json({ changed_files: oversized ? 3001 : 1, base: {}, head: {} });
+    const number = Number(url.match(/\/issues\/(\d+)/)?.[1]);
+    return Response.json({ ...issue, number, ...(number === 1 ? { pull_request: {} } : {}) });
+  });
+  try {
+    const start = { type: 'issues' as const, repo, page: 1, since: previous, started: '2026-11-12T00:00:00.000Z' };
+    await sync(env, start);
+    assert.equal(sqlite.prepare('SELECT count(*) AS n FROM sources').get()?.n, 99);
+    assert.equal(sqlite.prepare("SELECT error FROM sync_jobs WHERE status='failed'").get()?.error, 'github_changed_files_limit_exceeded');
+    assert.equal(jobs.length, 1);
+    assert.equal((jobs[0] as { page: number }).page, 2);
+    await sync(env, jobs.shift()!);
+    assert.equal(sqlite.prepare('SELECT count(*) AS n FROM sources').get()?.n, 100);
+    assert.equal(sqlite.prepare('SELECT issues_dispatched_at AS t FROM repositories').get()?.t, previous);
+    oversized = false;
+    await sync(env, start);
+    await sync(env, jobs.shift()!);
+    assert.equal(sqlite.prepare('SELECT count(*) AS n FROM sources').get()?.n, 101);
+    assert.equal(sqlite.prepare("SELECT count(*) AS n FROM sync_jobs WHERE status='failed'").get()?.n, 0);
+    assert.equal(sqlite.prepare('SELECT issues_dispatched_at AS t FROM repositories').get()?.t, start.started);
+  } finally { restore(); sqlite.close(); }
+});

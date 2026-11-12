@@ -153,7 +153,223 @@ pub(super) fn overlap(claim: &str, source: &str) -> f64 {
 }
 
 pub(super) fn supports(claim: &str, source: &str) -> bool {
-    overlap(claim, source) >= 0.75 && compatible(claim, source)
+    let claim = normalize(claim);
+    let source = normalize(source);
+    if !qualifiers_compatible(&claim, &source) {
+        return false;
+    }
+    let sources = assertion_clauses(&source);
+    let claims = assertion_clauses(&claim);
+    !claims.is_empty()
+        && claims.iter().all(|claim| {
+            sources.iter().any(|source| {
+                // A shared action in a different subject's clause is not evidence.
+                let topics = |text: &str| -> BTreeSet<_> {
+                    units(text)
+                        .into_iter()
+                        .filter(|u| u.starts_with("topic:"))
+                        .collect()
+                };
+                let (claim_main, claim_condition) = condition_parts(claim);
+                let (source_main, source_condition) = condition_parts(source);
+                claim_condition
+                    .trim_end_matches(['.', '。', '!', '！', '?', '？'])
+                    .trim()
+                    == source_condition
+                        .trim_end_matches(['.', '。', '!', '！', '?', '？'])
+                        .trim()
+                    && topics(claim_main).is_subset(&topics(source_main))
+                    && overlap(claim_main, source_main) >= 0.75
+                    && compatible(claim_main, source_main)
+            })
+        })
+}
+
+fn assertion_clauses(text: &str) -> Vec<String> {
+    let mut text = text.to_owned();
+    for separator in [
+        " but ",
+        " whereas ",
+        " while ",
+        "しかし",
+        "一方",
+        "したが",
+        "するが",
+        "しないが",
+        "せず",
+    ] {
+        // Preserve the predicate/negation on the left of a clause boundary.
+        let replacement = if separator == "せず" {
+            "せず、".into()
+        } else if separator.ends_with('が') {
+            format!("{}、", separator.trim_end_matches('が'))
+        } else {
+            "、".into()
+        };
+        text = text.replace(separator, &replacement);
+    }
+    let mut clauses = Vec::new();
+    let mut condition = String::new();
+    for part in text.split_inclusive(['、', ',', ';', '。', '\n']) {
+        let ends_sentence = part.ends_with([';', '。', '\n']);
+        let part = part
+            .trim()
+            .trim_end_matches(['、', ',', ';', '。', '\n'])
+            .trim();
+        if part.is_empty() {
+            continue;
+        }
+        // A leading condition qualifies the following action, not an unrelated
+        // later sentence. Keep it attached instead of treating it as evidence.
+        let leading_condition = ["if ", "unless ", "only when ", "when "]
+            .iter()
+            .any(|p| part.starts_with(p))
+            || part.ends_with("場合")
+            || part.ends_with("とき");
+        if leading_condition && condition.is_empty() && !ends_sentence {
+            condition = part.to_owned();
+            continue;
+        }
+        let joined = if condition.is_empty() {
+            part.to_owned()
+        } else {
+            format!("{}, {part}", std::mem::take(&mut condition))
+        };
+        split_conjunction(&joined, &mut clauses);
+    }
+    if !condition.is_empty() {
+        clauses.push(condition);
+    }
+    clauses
+}
+
+// Conditions qualify a proposition; their nouns must not supply its subject.
+fn condition_parts(text: &str) -> (&str, &str) {
+    if ["if ", "unless ", "only when ", "when "]
+        .iter()
+        .any(|p| text.starts_with(p))
+        && let Some((condition, main)) = text.split_once(',')
+    {
+        return (main.trim(), condition.trim());
+    }
+    for separator in [" if ", " unless ", " only when ", " when "] {
+        if let Some(at) = text.find(separator) {
+            return (text[..at].trim(), text[at + 1..].trim());
+        }
+    }
+    if let Some((condition, main)) = text.split_once(',')
+        && (condition.ends_with("場合") || condition.ends_with("とき"))
+    {
+        return (main.trim(), condition.trim());
+    }
+    (text, "")
+}
+
+fn subject_prefix(text: &str) -> &str {
+    for (at, word) in text.match_indices(|c: char| !c.is_whitespace()) {
+        // Inspect only complete words, preserving the original subject spelling.
+        if at > 0 && !text[..at].ends_with(char::is_whitespace) {
+            continue;
+        }
+        let word = text[at..].split_whitespace().next().unwrap_or(word);
+        if english_predicate(word) {
+            return text[..at].trim();
+        }
+    }
+    ""
+}
+
+fn english_auxiliary(word: &str) -> bool {
+    [
+        "is", "are", "was", "were", "be", "been", "being", "may", "might", "can", "could", "will",
+        "would", "has", "have", "had", "does", "do", "did",
+    ]
+    .contains(&word)
+}
+
+fn shared_auxiliaries(text: &str) -> String {
+    text[subject_prefix(text).len()..]
+        .split_whitespace()
+        .take_while(|word| {
+            english_auxiliary(word) || ["not", "never", "also", "then"].contains(word)
+        })
+        .filter(|word| english_auxiliary(word))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn english_predicate(text: &str) -> bool {
+    has(
+        text,
+        &[
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "may",
+            "might",
+            "can",
+            "could",
+            "will",
+            "would",
+            "has",
+            "have",
+            "had",
+            "does",
+            "do",
+            "did",
+            "added",
+            "removed",
+            "implemented",
+            "fixed",
+            "displayed",
+            "updated",
+        ],
+    )
+}
+
+fn split_conjunction(text: &str, out: &mut Vec<String>) {
+    let (main, condition) = condition_parts(text);
+    if !condition.is_empty() {
+        let mut actions = Vec::new();
+        split_conjunction(main, &mut actions);
+        out.extend(
+            actions
+                .into_iter()
+                .map(|action| format!("{condition}, {action}")),
+        );
+        return;
+    }
+    for (at, _) in text.match_indices(" and ") {
+        let (left, right) = (&text[..at], &text[at + 5..]);
+        // Noun coordination shares the predicate on its right. Splitting it
+        // would detach both the action and its modality from the first noun.
+        if english_predicate(left) && english_predicate(right) {
+            let subject = subject_prefix(right);
+            let elided = subject.is_empty()
+                || subject
+                    .split_whitespace()
+                    .all(|w| ["also", "then", "not", "never"].contains(&w));
+            out.push(left.to_owned());
+            if elided {
+                // Share omitted auxiliaries, but never the preceding action or negation.
+                // Later clauses must not supply this predicate's auxiliary.
+                let immediate = right.split(" and ").next().unwrap_or(right);
+                let auxiliaries = if immediate.split_whitespace().any(english_auxiliary) {
+                    String::new()
+                } else {
+                    shared_auxiliaries(left)
+                };
+                let expanded = format!("{} {auxiliaries} {right}", subject_prefix(left));
+                split_conjunction(&expanded, out);
+            } else {
+                split_conjunction(right, out);
+            }
+            return;
+        }
+    }
+    out.push(text.to_owned());
 }
 
 pub(super) fn contradicts(claim: &str, source: &str) -> bool {
@@ -234,6 +450,174 @@ pub(super) fn numeric_conflict(claim: &str, sources: &[&str]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn later_clauses_do_not_change_shared_auxiliaries() {
+        for source in [
+            "Bus guidance may be removed and added and GPS updates were fixed",
+            "Bus guidance may be removed and added and displayed",
+            "Bus guidance may be removed and also added and GPS updates were fixed",
+        ] {
+            assert!(supports("Bus guidance may be added", source), "{source}");
+        }
+        assert!(!supports(
+            "Bus guidance may be added",
+            "Bus guidance may be removed and was added and GPS updates were fixed"
+        ));
+        assert!(!supports(
+            "Bus guidance may not be added",
+            "Bus guidance may not be removed and added and GPS updates were fixed"
+        ));
+    }
+
+    #[test]
+    fn coordinated_actions_preserve_shared_auxiliaries() {
+        assert!(supports(
+            "Bus guidance may be added",
+            "Bus guidance may be removed and added"
+        ));
+        assert!(supports(
+            "Bus guidance might have been added",
+            "Bus guidance might have been removed and added"
+        ));
+        let mut clauses = Vec::new();
+        split_conjunction("bus guidance may not be removed and added", &mut clauses);
+        assert_eq!(clauses[1], "bus guidance may be added");
+        clauses.clear();
+        split_conjunction("bus guidance was removed and was not added", &mut clauses);
+        assert_eq!(
+            clauses[1].split_whitespace().collect::<Vec<_>>(),
+            ["bus", "guidance", "was", "not", "added"]
+        );
+        assert!(!supports(
+            "Bus guidance may be added",
+            "Bus guidance may be removed and was added"
+        ));
+    }
+
+    #[test]
+    fn coordinated_actions_keep_their_own_negation() {
+        assert!(supports(
+            "Bus guidance was added if GPS is offline",
+            "If GPS is offline, bus guidance was removed and added"
+        ));
+        assert!(!supports(
+            "GPS was added if GPS is offline",
+            "If GPS is offline, bus guidance was removed and added"
+        ));
+        assert!(!supports(
+            "Bus guidance was not added",
+            "Bus guidance was not removed and was added"
+        ));
+        assert!(!supports(
+            "Bus guidance was not added",
+            "Bus guidance was not removed and added"
+        ));
+        assert!(supports(
+            "Bus guidance was not added",
+            "Bus guidance was removed and was not added"
+        ));
+        assert!(supports(
+            "Bus guidance was added",
+            "Bus guidance was removed and added"
+        ));
+        assert!(supports(
+            "Bus guidance is displayed if offline.",
+            "If offline, bus guidance is displayed."
+        ));
+        assert!(!supports(
+            "Bus guidance is displayed if online.",
+            "If offline, bus guidance is displayed."
+        ));
+    }
+    #[test]
+    fn conditions_cannot_supply_the_action_subject() {
+        assert!(!supports(
+            "GPS is added if offline",
+            "If GPS is offline, bus guidance is added"
+        ));
+        assert!(!supports(
+            "GPS is added if GPS is offline",
+            "If GPS is offline, bus guidance is added"
+        ));
+        assert!(supports(
+            "Bus guidance was added",
+            "Bus guidance was removed and added"
+        ));
+        assert!(!supports(
+            "Bus guidance was added",
+            "Bus guidance was removed and GPS updates were added"
+        ));
+    }
+    #[test]
+    fn preserves_shared_predicates_and_attached_conditions() {
+        for (claim, source) in [
+            (
+                "Bus guidance may be added",
+                "Bus guidance and GPS updates may be added",
+            ),
+            (
+                "GPS updates may be added",
+                "Bus guidance and GPS updates may be added",
+            ),
+            (
+                "Bus guidance is displayed if offline",
+                "If offline, bus guidance is displayed",
+            ),
+            (
+                "If offline, bus guidance is displayed",
+                "Bus guidance is displayed if offline",
+            ),
+        ] {
+            assert!(supports(claim, source), "{claim} / {source}");
+        }
+        for (claim, source) in [
+            (
+                "Bus guidance is added",
+                "Bus guidance and GPS updates may be added",
+            ),
+            (
+                "Bus guidance is displayed",
+                "If offline, bus guidance is displayed",
+            ),
+            (
+                "Bus guidance was added",
+                "Bus guidance was removed and GPS updates were added",
+            ),
+            (
+                "GPS updates are displayed if offline",
+                "If offline, bus guidance is displayed; GPS updates are displayed",
+            ),
+        ] {
+            assert!(!supports(claim, source), "{claim} / {source}");
+        }
+    }
+    #[test]
+    fn binds_negation_and_actions_to_their_subjects() {
+        for (claim, source) in [
+            (
+                "GPSは更新するが、バスは表示しない。",
+                "GPSは更新しないが、バスは表示する。",
+            ),
+            (
+                "バスの乗換案内を追加した。",
+                "バスの乗換案内を削除し、GPSの更新機能を追加した。",
+            ),
+            (
+                "GPS is updated but bus guidance is not displayed",
+                "GPS is not updated but bus guidance is displayed",
+            ),
+            (
+                "Bus guidance was added",
+                "Bus guidance was removed and GPS updates were added",
+            ),
+        ] {
+            assert!(!supports(claim, source), "{claim} / {source}");
+        }
+        assert!(supports(
+            "バスの乗換案内を追加した。",
+            "GPSの更新機能を削除し、バスの乗換案内を追加した。"
+        ));
+    }
     #[test]
     fn accepts_supported_rewording_without_exact_copy() {
         for (claim, source) in [

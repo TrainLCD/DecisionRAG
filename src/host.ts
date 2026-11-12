@@ -51,7 +51,8 @@ export function host(env: Env, options: {
     emit?: Emit;
     messages?: readonly Message<SyncJob>[];
 } = {}) {
-    const signal = options.signal ?? AbortSignal.timeout(180000);
+    const signal = options.signal ?? (AbortSignal.timeout(options.messages ? 720000 : 180000));
+    let jobIndex = 0;
     let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
     let decoder = new TextDecoder();
     const setStream = (body: ReadableStream<Uint8Array> | null) => {
@@ -61,8 +62,16 @@ export function host(env: Env, options: {
         decoder = new TextDecoder();
     };
     const invoke = async (op: string, input: any): Promise<unknown> => {
-        signal.throwIfAborted();
+        // Queue bookkeeping must still run after an upstream/request deadline.
+        if (!options.messages || !['db', 'batch', 'ack', 'retry', 'checkpoint', 'job_start'].includes(op)) signal.throwIfAborted();
         switch (op) {
+            case 'job_start': jobIndex = input; return null;
+            case 'checkpoint': {
+                const message = options.messages?.[jobIndex];
+                if (!message) throw new HostError(503, 'missing_sync_message');
+                await env.DB.prepare('UPDATE sync_jobs SET job=? WHERE id=?').bind(JSON.stringify(input), message.id).run();
+                return null;
+            }
             case 'request_text': return readText(options.request?.body ?? null, input, signal);
             case 'db': return (await env.DB.prepare(input.sql).bind(...input.params).all()).results;
             case 'batch': return (await env.DB.batch(input.map((s: Input) => env.DB.prepare(s.sql).bind(...s.params)))).map(r => r.results);
@@ -155,3 +164,4 @@ export function host(env: Env, options: {
             reader = undefined;
         } } };
 }
+

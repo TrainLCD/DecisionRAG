@@ -389,21 +389,20 @@ fn extracts(query: &str, evidence: &[Evidence]) -> Value {
         let mut spans: Vec<_> = sentences(&e.text)
             .filter(|s| s.chars().count() >= 8 && s.chars().count() <= 400)
             .collect();
-        spans.sort_by(|a, b| {
-            let rank = |s: &str| {
-                score(
-                    &fs,
-                    &Candidate {
-                        id: String::new(),
-                        description: s.into(),
-                        references: vec![],
-                    },
-                    true,
-                )
-                .score
-            };
-            rank(b).total_cmp(&rank(a))
-        });
+        let rank = |s: &str| {
+            score(
+                &fs,
+                &Candidate {
+                    id: String::new(),
+                    description: s.into(),
+                    references: vec![],
+                },
+                true,
+            )
+            .score
+        };
+        spans.retain(|span| rank(span) > 0.0);
+        spans.sort_by(|a, b| rank(b).total_cmp(&rank(a)));
         if let Some(span) = spans.first() {
             seen.insert(&e.source_id);
             summaries.push(json!({"source_id":e.source_id,"text":format!("資料の記載：『{}』", span),"citations":[e.citation],"method":"extractive"}));
@@ -537,6 +536,37 @@ mod tests {
     }
     fn candidate(id: &str, text: &str) -> Value {
         json!({"id":id,"description":text})
+    }
+    #[test]
+    fn verification_rejects_swapped_negations_and_borrowed_actions() {
+        for (claim, source) in [
+            (
+                "GPSは更新するが、バスは表示しない。",
+                "GPSは更新しないが、バスは表示する。",
+            ),
+            (
+                "バスの乗換案内を追加した。",
+                "バスの乗換案内を削除し、GPSの更新機能を追加した。",
+            ),
+        ] {
+            let input = json!({"op":"verify","evidence":[{"citation":"p1","text":source}],"claims":[{"text":claim,"citations":["p1"]}]});
+            let output: Value =
+                serde_json::from_slice(&process(input.to_string().as_bytes())).unwrap();
+            assert_eq!(output["claims"], json!([0.0]), "{claim}");
+        }
+    }
+    #[test]
+    fn extraction_skips_unrelated_spans_without_hiding_later_evidence() {
+        let input = json!({"op":"extract","query":"GPS","evidence":[
+            {"citation":"p1","source_id":"one","title":"GPS","text":"バスの乗換案内を追加しました。"}
+        ]});
+        let output: Value = serde_json::from_slice(&process(input.to_string().as_bytes())).unwrap();
+        assert_eq!(output["status"], "insufficient_evidence");
+        assert_eq!(output["ticket_summaries"], json!([]));
+        let mut input = input;
+        input["evidence"].as_array_mut().unwrap().push(json!({"citation":"p2","source_id":"one","title":"GPS","text":"GPSの更新が停止しました。"}));
+        let output: Value = serde_json::from_slice(&process(input.to_string().as_bytes())).unwrap();
+        assert_eq!(output["ticket_summaries"][0]["citations"], json!(["p2"]));
     }
     #[test]
     fn verification_keeps_numbers_with_their_subject_and_rejects_past_negation() {

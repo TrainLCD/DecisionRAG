@@ -117,7 +117,7 @@ pub async fn save_source(
     let mut statements = vec![
         statement(
             format!(
-                "INSERT INTO sources(id,repo,kind,title,url,body,metadata,updated_at) SELECT ?,?,?,?,?,?,?,? WHERE {clause} ON CONFLICT(id) DO UPDATE SET repo=excluded.repo,kind=excluded.kind,title=excluded.title,url=excluded.url,body=excluded.body,metadata=excluded.metadata,updated_at=excluded.updated_at"
+                "INSERT INTO sources(id,repo,kind,title,url,body,metadata,updated_at) SELECT ?,?,?,?,?,?,?,? WHERE {clause} ON CONFLICT(id) DO UPDATE SET repo=excluded.repo,kind=excluded.kind,title=excluded.title,url=excluded.url,body=excluded.body,metadata=excluded.metadata,updated_at=CASE WHEN sources.kind='doc' AND sources.body=excluded.body THEN sources.updated_at ELSE excluded.updated_at END"
             ),
             values,
         ),

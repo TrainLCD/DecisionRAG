@@ -86,19 +86,60 @@ pub async fn run(h: &impl Host, c: &Config, job: &Value) -> Result<()> {
             } else {
                 format!("&since={}", encode(s(job, "since")))
             };
-            let rows=gh::get(h,c,&format!("{prefix}/issues?state=all&sort=updated&direction=asc&per_page=100&page={page}{since}")).await?;
-            for issue in array(&rows)? {
-                enqueue(
-                    h,
-                    json!({"type":"issue","repo":repo,"number":issue["number"]}),
-                )
-                .await?;
+            // Keep the fetched page stable across retries, and persist progress only
+            // after each source has been saved. A failed page never advances since.
+            let rows = if job["items"].is_array() {
+                job["items"].clone()
+            } else {
+                gh::get(h,c,&format!("{prefix}/issues?state=all&sort=updated&direction=asc&per_page=100&page={page}{since}")).await?
+            };
+            let mut progress = job.clone();
+            progress["items"] = json!(
+                array(&rows)?
+                    .iter()
+                    .map(|i| json!({"number":i["number"]}))
+                    .collect::<Vec<_>>()
+            );
+            h.call("checkpoint", progress.clone()).await?;
+            let offset = job["offset"].as_u64().unwrap_or(0) as usize;
+            for (index, issue) in array(&rows)?.iter().enumerate().skip(offset) {
+                let item = json!({"type":"issue","repo":repo,"number":issue["number"]});
+                let failure_id = format!("issue-failure:{repo}#{}", issue["number"]);
+                match Box::pin(run(h, c, &item)).await {
+                    Ok(()) => {
+                        db(
+                            h,
+                            "DELETE FROM sync_jobs WHERE id=?",
+                            vec![json!(failure_id)],
+                        )
+                        .await?;
+                    }
+                    Err(error)
+                        if matches!(
+                            error.code.as_str(),
+                            "github_changed_files_limit_exceeded"
+                                | "github_pagination_budget_exceeded"
+                                | "source_size_budget_exceeded"
+                        ) =>
+                    {
+                        // Isolate item-specific limits, but do not mark an incomplete
+                        // scan as synchronized. The next scheduled scan retries it.
+                        db(h, "INSERT INTO sync_jobs(id,job,status,updated_at,error) VALUES(?,?,'failed',?,?) ON CONFLICT(id) DO UPDATE SET job=excluded.job,status='failed',updated_at=excluded.updated_at,error=excluded.error",
+                            vec![json!(failure_id), json!(item.to_string()), json!(iso(now())), json!(error.code)]).await?;
+                        progress["had_failures"] = json!(true);
+                    }
+                    Err(error) => return Err(error),
+                }
+                progress["offset"] = json!(index + 1);
+                h.call("checkpoint", progress.clone()).await?;
             }
             if array(&rows)?.len() == 100 {
-                let mut next = job.clone();
+                let mut next = progress.clone();
                 next["page"] = json!(page + 1);
+                next.as_object_mut().unwrap().remove("items");
+                next.as_object_mut().unwrap().remove("offset");
                 enqueue(h, next).await?;
-            } else {
+            } else if progress["had_failures"] != true {
                 db(h,"UPDATE repositories SET issues_dispatched_at=? WHERE repo=? AND (issues_dispatched_at IS NULL OR issues_dispatched_at<?)",vec![job["started"].clone(),json!(repo),job["started"].clone()]).await?;
             }
         }
@@ -175,7 +216,7 @@ pub async fn run(h: &impl Host, c: &Config, job: &Value) -> Result<()> {
                 .first()
                 .ok_or_else(|| Error::new(503, "repository_not_synced"))?;
             if kind == "releases" {
-                return release(h, c, repo).await;
+                return release(h, c, repo, job).await;
             }
             if kind == "docs" {
                 let commit = gh::get(
@@ -207,12 +248,16 @@ pub async fn run(h: &impl Host, c: &Config, job: &Value) -> Result<()> {
                     return Err(Error::new(422, "source_size_budget_exceeded"));
                 }
                 let sha = s(&commit, "sha");
-                db(
+                let activated = db(
                     h,
-                    "UPDATE repositories SET docs_commit=? WHERE repo=?",
-                    vec![json!(sha), json!(repo)],
-                )
-                .await?;
+                    "UPDATE repositories SET docs_commit=? WHERE repo=? AND docs_commit IS ? RETURNING repo",
+                    vec![json!(sha), json!(repo), row["docs_commit"].clone()],
+                ).await?;
+                if activated.is_empty() {
+                    // Another snapshot won while GitHub was being read. Refetch on
+                    // retry; never reactivate this stale snapshot.
+                    return Err(Error::new(409, "docs_snapshot_changed"));
+                }
                 for doc in &docs {
                     enqueue(h,json!({"type":"doc","repo":repo,"path":doc["path"],"sha":doc["sha"],"commit":sha})).await?;
                 }
@@ -234,6 +279,18 @@ pub async fn run(h: &impl Host, c: &Config, job: &Value) -> Result<()> {
                 }
             } else {
                 if row["docs_commit"] != job["commit"] {
+                    return Ok(());
+                }
+                let existing = db(
+                    h,
+                    "SELECT metadata FROM sources WHERE id=?",
+                    vec![json!(format!("{repo}:{}", s(job, "path")))],
+                )
+                .await?;
+                if let Some(old) = existing.first()
+                    && let Ok(metadata) = serde_json::from_str::<Value>(s(old, "metadata"))
+                    && metadata["blob_sha"] == job["sha"]
+                {
                     return Ok(());
                 }
                 let blob = gh::get(h, c, &format!("{prefix}/git/blobs/{}", s(job, "sha"))).await?;
@@ -268,10 +325,17 @@ async fn history(
     owner: &str,
     repo: &str,
     sha: &str,
+    job: &Value,
 ) -> Result<Vec<String>> {
-    let mut commits = HashSet::new();
-    let mut after = Value::Null;
-    for _ in 0..300 {
+    let state = &job["release_state"];
+    let mut commits: HashSet<String> = state["commits"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|s| s.as_str().map(str::to_owned))
+        .collect();
+    let mut after = state["after"].clone();
+    for page in state["page"].as_u64().unwrap_or(0)..300 {
         let data = gh::graph(
             h,
             c,
@@ -307,23 +371,37 @@ async fn history(
             return Err(Error::new(502, "invalid_github_release_cursor"));
         }
         after = next;
+        let mut progress = job.clone();
+        progress["release_state"]["commits"] = json!(commits.iter().collect::<Vec<_>>());
+        progress["release_state"]["after"] = after.clone();
+        progress["release_state"]["page"] = json!(page + 1);
+        h.call("checkpoint", progress).await?;
     }
     Err(Error::new(422, "release_history_budget_exceeded"))
 }
-async fn release(h: &impl Host, c: &Config, name: &str) -> Result<()> {
-    let checked = iso(now());
+async fn release(h: &impl Host, c: &Config, name: &str, job: &Value) -> Result<()> {
     let (owner, repo) = name.split_once('/').unwrap();
-    let data = gh::graph(h, c, LATEST, json!({"owner":owner,"repo":repo})).await?;
-    if data["repository"].is_null() {
-        return Err(Error::new(502, "github_release_repository_unavailable"));
-    }
-    let r = &data["repository"]["latestRelease"];
-    let published =
-        if r["isDraft"] == false && r["isPrerelease"] == false && !s(r, "publishedAt").is_empty() {
+    let mut progress = job.clone();
+    if !progress["release_state"].is_object() {
+        let checked = iso(now());
+        let data = gh::graph(h, c, LATEST, json!({"owner":owner,"repo":repo})).await?;
+        if data["repository"].is_null() {
+            return Err(Error::new(502, "github_release_repository_unavailable"));
+        }
+        let r = &data["repository"]["latestRelease"];
+        let published = if r["isDraft"] == false
+            && r["isPrerelease"] == false
+            && !s(r, "publishedAt").is_empty()
+        {
             r.clone()
         } else {
             Value::Null
         };
+        progress["release_state"] = json!({"published":published,"checked":checked});
+        h.call("checkpoint", progress.clone()).await?;
+    }
+    let checked = s(&progress["release_state"], "checked");
+    let published = &progress["release_state"]["published"];
     let sha = &published["tagCommit"]["oid"];
     if !sha.is_null() && !commit(sha.as_str().unwrap_or("")) {
         return Err(Error::new(502, "invalid_github_release_commit"));
@@ -340,7 +418,7 @@ async fn release(h: &impl Host, c: &Config, name: &str) -> Result<()> {
         return Ok(());
     }
     let commits = if let Some(sha) = sha.as_str() {
-        history(h, c, owner, repo, sha).await?
+        history(h, c, owner, repo, sha, &progress).await?
     } else {
         vec![]
     };
