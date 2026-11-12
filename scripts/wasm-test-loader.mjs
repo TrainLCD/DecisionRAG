@@ -3,7 +3,9 @@ import { pathToFileURL } from 'node:url';
 // Production imports a Wasm module via Wrangler. Node tests load exactly the
 // same compiled bytes, rather than substituting a JavaScript implementation.
 export async function resolve(specifier, context, next) {
-  if (specifier.includes('/generated/')) return {url:pathToFileURL(process.cwd()+'/generated/'+specifier.split('/generated/')[1]).href,shortCircuit:true};
+  const generated = pathToFileURL(process.cwd()+'/dist-test/generated/').href;
+  const resolved = context.parentURL && specifier.startsWith('.') ? new URL(specifier, context.parentURL).href : '';
+  if (resolved.startsWith(generated)) return {url:pathToFileURL(process.cwd()+'/generated/'+resolved.slice(generated.length)).href,shortCircuit:true};
   return next(specifier,context);
 }
 export async function load(url,context,next) {

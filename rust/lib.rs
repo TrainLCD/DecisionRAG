@@ -308,14 +308,16 @@ fn verify(evidence: &[Evidence], claims: &[Claim]) -> Value {
                 && sources
                     .iter()
                     .any(|source| verification::supports(&c.text, source));
+            let context = sources.join("\n");
+            let related = verification::overlap(&c.text, &context) >= 0.35;
+            let nearest = sources.iter().max_by(|a, b| {
+                verification::overlap(&c.text, a).total_cmp(&verification::overlap(&c.text, b))
+            });
             let contradicted = !exact
                 && !paraphrase
-                && sources
-                    .iter()
-                    .any(|source| verification::contradicts(&c.text, source));
-            let related = sources
-                .iter()
-                .any(|source| verification::overlap(&c.text, source) >= 0.35);
+                && related
+                && (nearest.is_some_and(|source| verification::contradicts(&c.text, source))
+                    || !verification::facts_compatible(&normalize(&c.text), &normalize(&context)));
             reasons.push(if exact {
                 "exact_source_span"
             } else if paraphrase {
@@ -497,6 +499,28 @@ mod tests {
     }
     fn candidate(id: &str, text: &str) -> Value {
         json!({"id":id,"description":text})
+    }
+    #[test]
+    fn gtfs_multi_paragraph_answer_is_not_rejected_as_a_contradiction() {
+        let captured: Value =
+            serde_json::from_str(include_str!("../test/fixtures/gtfs-answer-regression.json"))
+                .unwrap();
+        let claims: Vec<_> = captured["draft"]["answer"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|text| json!({"text":text,"citations":["p1","p2","p3"]}))
+            .collect();
+        let result = run(json!({"op":"verify","evidence":captured["evidence"],"claims":claims}));
+        assert_eq!(
+            result["reasons"],
+            json!([
+                "semantic_support_unknown",
+                "semantic_support_unknown",
+                "semantic_support_unknown"
+            ])
+        );
+        assert_eq!(result["semantic_status"], "unknown");
     }
     #[test]
     fn highlights_share_scoring_aliases_and_boundaries() {

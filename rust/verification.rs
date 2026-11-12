@@ -44,7 +44,7 @@ fn units(text: &str) -> BTreeSet<String> {
     result
 }
 
-fn compatible(claim: &str, source: &str) -> bool {
+fn qualifiers_compatible(claim: &str, source: &str) -> bool {
     let claim = normalize(claim);
     let source = normalize(source);
     // Preserve negation, conditions and uncertainty even when most nouns agree.
@@ -95,10 +95,14 @@ fn compatible(claim: &str, source: &str) -> bool {
             return false;
         }
     }
-    facts_compatible(&claim, &source)
+    true
 }
 
-fn facts_compatible(claim: &str, source: &str) -> bool {
+fn compatible(claim: &str, source: &str) -> bool {
+    qualifiers_compatible(claim, source) && facts_compatible(&normalize(claim), &normalize(source))
+}
+
+pub(super) fn facts_compatible(claim: &str, source: &str) -> bool {
     // Topic similarity alone must not invent causes, releases or completed work.
     for group in [
         &["原因", "ため", "によって", "because", "caused", "due to"][..],
@@ -147,9 +151,10 @@ pub(super) fn supports(claim: &str, source: &str) -> bool {
 }
 
 pub(super) fn contradicts(claim: &str, source: &str) -> bool {
-    (overlap(claim, source) >= 0.75 && !compatible(claim, source))
-        || (overlap(claim, source) >= 0.35
-            && !facts_compatible(&normalize(claim), &normalize(source)))
+    // Missing facts in a single sentence are not contradictions: the answer
+    // may summarize several cited paragraphs. Check factual omissions against
+    // the entire cited context in verify(), not independently per sentence.
+    overlap(claim, source) >= 0.75 && !qualifiers_compatible(claim, source)
 }
 
 #[cfg(test)]
