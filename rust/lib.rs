@@ -128,7 +128,30 @@ fn matching(f: &Feature, text: &str) -> f64 {
 /// Literal evidence for the same query features used by the local scorer.
 /// Return normalized terms, never markup; consumers highlight visible text only.
 pub fn highlight_terms(query: &str, text: &str) -> Vec<String> {
-    let text = normalize(text);
+    // Match the rendered text; inline formatting must not split a query term.
+    // The browser maps these terms back to sanitized DOM text nodes.
+    use pulldown_cmark::{Event, Options, Parser, TagEnd};
+    let mut visible = String::new();
+    for event in Parser::new_ext(
+        text,
+        Options::ENABLE_TABLES | Options::ENABLE_STRIKETHROUGH | Options::ENABLE_TASKLISTS,
+    ) {
+        match event {
+            Event::Text(value) | Event::Code(value) => visible.push_str(&value),
+            Event::SoftBreak => visible.push(' '),
+            Event::HardBreak | Event::Rule => visible.push('\n'),
+            Event::End(
+                TagEnd::Emphasis
+                | TagEnd::Strong
+                | TagEnd::Strikethrough
+                | TagEnd::Link
+                | TagEnd::Image,
+            ) => {}
+            Event::End(_) => visible.push('\n'),
+            _ => {}
+        }
+    }
+    let text = normalize(&visible);
     let mut terms = BTreeSet::new();
     for feature in features(query) {
         if matching(&feature, &text) == 0.0 {
@@ -570,6 +593,20 @@ mod tests {
             ])
         );
         assert_eq!(result["semantic_status"], "unknown");
+    }
+    #[test]
+    fn highlights_match_rendered_markdown_without_crossing_blocks() {
+        for text in [
+            "**G**PS",
+            "位置**更新**",
+            "[GPS](https://example.test)",
+            "`GPS`",
+        ] {
+            assert!(!highlight_terms("GPS", text).is_empty(), "{text}");
+        }
+        assert!(highlight_terms("GPS", "G\n\nPS").is_empty());
+        assert!(highlight_terms("GPS", "[unrelated](https://example.test/GPS)").is_empty());
+        assert_eq!(highlight_terms("GPS", "**Ｇ**ＰＳ"), vec!["gps"]);
     }
     #[test]
     fn highlights_share_scoring_aliases_and_boundaries() {
