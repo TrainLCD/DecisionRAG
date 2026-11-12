@@ -19,8 +19,15 @@ pub fn preview(input: &str) -> Value {
     let mut i = 0;
     let mut section = 0;
     let mut parts = [Vec::new(), Vec::new()];
+    let mut sources: Vec<Value> = Vec::new();
+    let mut source = Value::Null;
+    let mut summary_start = 0;
     while i < bytes.len() {
         if bytes[i] != b'"' {
+            if bytes[i] == b'{' {
+                source = Value::Null;
+                summary_start = parts[1].len();
+            }
             i += 1;
             continue;
         }
@@ -54,7 +61,7 @@ pub fn preview(input: &str) -> Value {
         if key == "summaries" {
             section = 1;
         }
-        if key != "text" {
+        if key != "text" && !(section == 1 && key == "source_id") {
             continue;
         }
         while i < bytes.len() && bytes[i].is_ascii_whitespace() {
@@ -85,7 +92,21 @@ pub fn preview(input: &str) -> Value {
             }
         }
         if let Ok(value) = serde_json::from_str::<String>(&format!("{}\"", &input[start..end])) {
-            parts[section].push(value);
+            if key == "source_id" {
+                // Only a complete ID can identify a retrieved source. Field order
+                // is not guaranteed, so also fill IDs for this object's text.
+                if bytes.get(i) == Some(&b'"') {
+                    source = json!(value);
+                    for id in &mut sources[summary_start..] {
+                        *id = source.clone();
+                    }
+                }
+            } else {
+                parts[section].push(value);
+                if section == 1 {
+                    sources.push(source.clone());
+                }
+            }
         }
         if bytes.get(i) == Some(&b'"') {
             i += 1;
@@ -95,7 +116,7 @@ pub fn preview(input: &str) -> Value {
         .iter()
         .map(|items| items.iter().map(|text| crate::api::html(text)).collect())
         .collect();
-    json!({"answer":parts[0],"summaries":parts[1],"answer_html":markup[0],"summaries_html":markup[1]})
+    json!({"answer":parts[0],"summaries":parts[1],"answer_html":markup[0],"summaries_html":markup[1],"summary_source_ids":sources})
 }
 async fn collect(h: &impl Host) -> Result<Value> {
     let mut pending = String::new();
@@ -384,4 +405,46 @@ pub async fn answer(
     Ok(
         json!({"status":"summarized","answer":if text.is_empty(){Value::Null}else{json!(text)},"ticket_summaries":summaries,"citations":citations,"verification":verification}),
     )
+}
+
+#[cfg(test)]
+mod preview_link_tests {
+    use super::*;
+
+    #[test]
+    fn summary_source_ids_survive_every_stream_prefix() {
+        for input in [
+            r#"{"claims":[],"summaries":[{"source_id":"issue-1","text":"first"},{"source_id":"issue-2","text":"second"}]}"#,
+            r#"{"claims":[],"summaries":[{"text":"first","source_id":"issue-1"},{"text":"second","source_id":"issue-2"}]}"#,
+        ] {
+            for end in 0..=input.len() {
+                let draft = preview(&input[..end]);
+                let texts = draft["summaries"].as_array().unwrap();
+                let ids = draft["summary_source_ids"].as_array().unwrap();
+                assert_eq!(texts.len(), ids.len());
+                for (index, id) in ids.iter().enumerate() {
+                    if !id.is_null() {
+                        assert_eq!(id, &json!(format!("issue-{}", index + 1)));
+                    }
+                }
+            }
+            assert_eq!(
+                preview(input)["summary_source_ids"],
+                json!(["issue-1", "issue-2"])
+            );
+        }
+    }
+
+    #[test]
+    fn missing_or_incomplete_source_never_inherits_previous_summary() {
+        let draft = preview(
+            r#"{"summaries":[{"source_id":"issue-1","text":"first"},{"text":"second"},{"source_id":"issue-","text":"third"}]}"#,
+        );
+        assert_eq!(
+            draft["summary_source_ids"],
+            json!(["issue-1", null, "issue-"])
+        );
+        let draft = preview(r#"{"summaries":[{"text":"first","source_id":"issue-"#);
+        assert_eq!(draft["summary_source_ids"], json!([null]));
+    }
 }
