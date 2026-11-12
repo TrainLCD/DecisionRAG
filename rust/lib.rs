@@ -1,5 +1,6 @@
 //! Local deterministic decisions. Scores are rule scores, not calibrated probabilities.
 mod rules;
+mod verification;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::collections::{BTreeSet, HashMap, HashSet};
@@ -227,6 +228,8 @@ struct Evidence {
     source_id: String,
     #[serde(default)]
     text: String,
+    #[serde(default)]
+    title: String,
 }
 #[derive(Deserialize)]
 struct Claim {
@@ -289,21 +292,51 @@ fn verify(evidence: &[Evidence], claims: &[Claim]) -> Value {
                 reasons.push("invalid_citation");
                 return 0.0;
             }
-            // An exact quotation establishes attribution only, not truth, causal
-            // inference, release status or completeness. Report this separately.
-            let supported = c
+            let exact = c
                 .citations
                 .iter()
                 .any(|id| exact_claim(&c.text, by_id[id.as_str()]));
-            reasons.push(if supported {
+            let sources: Vec<_> = c
+                .citations
+                .iter()
+                .flat_map(|id| {
+                    let e = by_id[id.as_str()];
+                    sentences(&e.text).chain(std::iter::once(e.title.as_str()))
+                })
+                .collect();
+            let paraphrase = !exact
+                && sources
+                    .iter()
+                    .any(|source| verification::supports(&c.text, source));
+            let contradicted = !exact
+                && !paraphrase
+                && sources
+                    .iter()
+                    .any(|source| verification::contradicts(&c.text, source));
+            let related = sources
+                .iter()
+                .any(|source| verification::overlap(&c.text, source) >= 0.35);
+            reasons.push(if exact {
                 "exact_source_span"
+            } else if paraphrase {
+                "local_paraphrase_rules"
+            } else if contradicted {
+                "local_rule_conflict"
+            } else if related {
+                "semantic_support_unknown"
             } else {
-                "paraphrase_not_proven"
+                "insufficient_local_support"
             });
-            if supported { 1.0 } else { 0.0 }
+            if exact {
+                1.0
+            } else if paraphrase {
+                0.9
+            } else {
+                0.0
+            }
         })
         .collect();
-    json!({"claims":values,"complete":0.0,"conflict":0.0,"conflict_status":"unknown","complete_status":"unknown","method":"source_attribution_only","reasons":reasons})
+    json!({"claims":values,"complete":0.0,"conflict":0.0,"conflict_status":"unknown","complete_status":"unknown","method":"local_support_rules","semantic_status":"unknown","reasons":reasons})
 }
 fn extracts(query: &str, evidence: &[Evidence]) -> Value {
     let fs = features(query);

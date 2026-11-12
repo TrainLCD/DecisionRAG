@@ -216,3 +216,19 @@ test('plain text fallback highlights safely; absent terms leave content unchange
     assert.equal(bodies[1].querySelector('mark'), null);
   } finally { c.close(); }
 });
+
+for (const transport of ['json', 'sse']) {
+  test(`${transport}: final paraphrased answer remains visible before ticket summaries`, async () => {
+    const payload = { ...result(1), status: 'summarized', answer: 'GPS位置情報の更新を修正しています。 [p1]', ticket_summaries: [{ source_id: 'source-0', text: '位置情報の更新処理を修正。', citations: ['p1'] }], verification: { semantic_status: 'unknown' } };
+    const c = client(() => transport === 'json' ? Response.json(payload) : new Response(`event: sources\ndata: ${JSON.stringify(payload)}\n\nevent: draft\ndata: ${JSON.stringify({ answer: ['GPS位置情報の更新を修正しています。'], summaries: [] })}\n\nevent: result\ndata: ${JSON.stringify(payload)}\n\n`, { headers: { 'Content-Type': 'text/event-stream' } }));
+    try {
+      c.submit(true);
+      await until(() => !c.$('search-button').disabled);
+      const panel = c.$('answer-panel');
+      assert.match(panel.textContent, /質問への回答GPS位置情報の更新を修正しています/);
+      assert.doesNotMatch(panel.textContent, /資料から質問への回答を確認できませんでした/);
+      assert.ok(panel.textContent.indexOf('GPS位置情報') < panel.textContent.indexOf('各チケットの要約'));
+      assert.equal(panel.querySelector('a').getAttribute('href'), '#evidence-p1');
+    } finally { c.close(); }
+  });
+}
