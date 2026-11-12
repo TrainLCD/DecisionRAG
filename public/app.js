@@ -638,7 +638,7 @@ function renderEvidencePage() {
         details.append("GitHubリリースへの収録未確認");
       }
     }
-    const body = (item.text ?? "").trim();
+    const body = (item.display_text ?? item.text ?? "").trim();
     const empty = !body || /^\((?:no body|empty document)\)$/i.test(body);
     const excerpt = element("div", "evidence-text");
     const passage = markdownContent(empty ? "内容なし" : body, empty ? undefined : item.text_html, "evidence-excerpt", url);
@@ -839,5 +839,6 @@ $("sync-button").addEventListener("click", async () => {
 });
 controls();
 void connect(readSavedToken(), true);
+
 
 

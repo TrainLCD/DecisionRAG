@@ -211,7 +211,9 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
     }
     for p in &mut evidence {
         p["highlight_terms"] = json!(decision_rag_core::highlight_terms(query, s(p, "text")));
-        let markup = html(s(p, "text"));
+        let display_text = crate::display::evidence_text(s(p, "text"));
+        let markup = html(&display_text);
+        p["display_text"] = json!(display_text);
         if !markup.is_empty() {
             p["text_html"] = json!(markup);
         }
@@ -419,3 +421,4 @@ pub async fn event(h: &impl Host, c: &Config, input: Value) -> Result<()> {
     .await?;
     Ok(())
 }
+

@@ -1,6 +1,7 @@
 pub mod answer;
 pub mod api;
 pub mod cursor;
+pub mod display;
 pub mod github;
 pub mod runtime;
 pub mod storage;
@@ -90,3 +91,4 @@ mod bindings {
         result.map_err(|e| JsValue::from_str(&e.code))
     }
 }
+
