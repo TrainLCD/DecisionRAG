@@ -13,13 +13,38 @@ fn schema(ids: &[Value]) -> Value {
     json!({"type":"object","additionalProperties":false,"required":["claims"],"properties":{
  "claims":{"type":"array","maxItems":3,"items":{"type":"object","additionalProperties":false,"required":["text","citations"],"properties":{"text":text,"citations":citations}}}}})
 }
-pub fn preview(input: &str) -> Value {
+pub fn preview(input: &str, valid: &HashSet<&str>) -> Value {
     let bytes = input.as_bytes();
     let mut i = 0;
-    let mut section = 0;
+    let mut section = 1;
+    let mut depth = 0usize;
+    let mut arrays = 0usize;
+    let mut claim_start = None;
+    let mut completed = Vec::new();
     let mut parts = Vec::new();
     while i < bytes.len() {
         if bytes[i] != b'"' {
+            match bytes[i] {
+                b'{' => {
+                    depth += 1;
+                    if depth == 2 && arrays == 1 && section == 0 {
+                        claim_start = Some((i, parts.len()));
+                    }
+                }
+                b'}' => {
+                    if depth == 2
+                        && let Some((start, index)) = claim_start.take()
+                        && let Ok(value) = serde_json::from_str::<Value>(&input[start..=i])
+                        && let Some(claim) = read_claim(&value, valid)
+                    {
+                        completed.push((index, claim));
+                    }
+                    depth = depth.saturating_sub(1);
+                }
+                b'[' => arrays += 1,
+                b']' => arrays = arrays.saturating_sub(1),
+                _ => {}
+            }
             i += 1;
             continue;
         }
@@ -47,13 +72,13 @@ pub fn preview(input: &str) -> Value {
             continue;
         }
         i += 1;
-        if key == "claims" {
+        if depth == 1 && key == "claims" {
             section = 0;
         }
-        if key == "summaries" {
+        if depth == 1 && key != "claims" {
             section = 1;
         }
-        if key != "text" || section != 0 {
+        if key != "text" || section != 0 || depth != 2 || arrays != 1 {
             continue;
         }
         while i < bytes.len() && bytes[i].is_ascii_whitespace() {
@@ -90,10 +115,18 @@ pub fn preview(input: &str) -> Value {
             i += 1;
         }
     }
+    // Only complete claim objects have an unambiguous text/citation pairing.
+    // Keep partial prose streaming, but never guess an unfinished citation ID.
+    for (index, claim) in completed {
+        if let Some(text) = parts.get_mut(index) {
+            *text = format_claim(&claim);
+        }
+    }
     let markup: Vec<_> = parts.iter().map(|text| crate::api::html(text)).collect();
     json!({"answer":parts,"answer_html":markup})
 }
-async fn collect(h: &impl Host) -> Result<Value> {
+async fn collect(h: &impl Host, ids: &[Value]) -> Result<Value> {
+    let valid: HashSet<_> = ids.iter().filter_map(Value::as_str).collect();
     let mut pending = String::new();
     let mut lines = Vec::new();
     let mut content = String::new();
@@ -151,7 +184,10 @@ async fn collect(h: &impl Host) -> Result<Value> {
                 last = now();
                 published = content.len();
                 let _ = h
-                    .call("emit", json!({"event":"draft","data":preview(&content)}))
+                    .call(
+                        "emit",
+                        json!({"event":"draft","data":preview(&content, &valid)}),
+                    )
                     .await;
             }
             if done {
@@ -199,6 +235,19 @@ fn read_claim(v: &Value, valid: &HashSet<&str>) -> Option<Value> {
         .cloned()
         .collect();
     Some(json!({"text":text,"citations":ids}))
+}
+fn format_claim(claim: &Value) -> String {
+    format!(
+        "{} {}",
+        s(claim, "text"),
+        claim["citations"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|id| format!("[{}]", id.as_str().unwrap()))
+            .collect::<Vec<_>>()
+            .join(" ")
+    )
 }
 pub async fn answer(
     h: &impl Host,
@@ -248,7 +297,7 @@ pub async fn answer(
    if let Some(base)=base.as_ref(){let response=h.call("fetch_stream",json!({"url":base,"headers":{"Authorization":format!("Bearer {}",c.answer_api_key),"Content-Type":"application/json"},"body":input})).await?;
     let status=response["status"].as_u64().unwrap_or(502);if !(200..300).contains(&status){return Err(Error::new(502,format!("upstream_http_{status}")));}
    }else{h.call("ai_stream",json!({"model":MODEL,"input":input})).await?;}
-   let result=collect(h).await;let _=h.call("stream_cancel",Value::Null).await;result
+   let result=collect(h, &ids).await;let _=h.call("stream_cancel",Value::Null).await;result
   }else if let Some(base)=base.as_ref(){github::parse_response(&github::fetch(h,base,"POST",json!({"Authorization":format!("Bearer {}",c.answer_api_key),"Content-Type":"application/json"}),input,2_000_000).await?)}
   else{h.call("ai",json!({"model":MODEL,"input":input})).await}
  }.await;
@@ -301,19 +350,7 @@ pub async fn answer(
     }
     let text = verified
         .iter()
-        .map(|v| {
-            format!(
-                "{} {}",
-                s(v, "text"),
-                v["citations"]
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .map(|id| format!("[{}]", id.as_str().unwrap()))
-                    .collect::<Vec<_>>()
-                    .join(" ")
-            )
-        })
+        .map(format_claim)
         .collect::<Vec<_>>()
         .join("\n");
     let mut seen = HashSet::new();
@@ -338,10 +375,49 @@ mod tests {
         assert!(schema["properties"]["summaries"].is_null());
         let input = r#"{"claims":[{"text":"answer"}],"summaries":[{"text":"removed"}]}"#;
         for end in 0..=input.len() {
-            let draft = preview(&input[..end]);
+            let draft = preview(&input[..end], &HashSet::new());
             assert!(draft["summaries"].is_null());
             assert!(!draft.to_string().contains("removed"));
         }
-        assert_eq!(preview(input)["answer"], json!(["answer"]));
+        assert_eq!(preview(input, &HashSet::new())["answer"], json!(["answer"]));
+    }
+    #[test]
+    fn citations_stream_per_complete_claim_in_either_field_order() {
+        let valid = HashSet::from(["p1", "p10"]);
+        for input in [
+            r#"{"claims":[{"text":"回答😀","citations":["p10","p10"]},{"text":"次の回答","citations":["p1"]}]}"#,
+            r#"{"claims":[{"citations":["p10","p10"],"text":"回答😀"},{"citations":["p1"],"text":"次の回答"}]}"#,
+        ] {
+            let first_end = input.find("},").unwrap() + 1;
+            for end in (0..=input.len()).filter(|i| input.is_char_boundary(*i)) {
+                let draft = preview(&input[..end], &valid);
+                let texts = draft["answer"].as_array().unwrap();
+                if end < first_end {
+                    assert!(texts.iter().all(|t| !t.as_str().unwrap().contains("[p")));
+                } else {
+                    assert_eq!(texts[0], "回答😀 [p10]");
+                    assert!(draft["answer_html"][0].as_str().unwrap().contains("[p10]"));
+                }
+            }
+            assert_eq!(
+                preview(input, &valid)["answer"],
+                json!(["回答😀 [p10]", "次の回答 [p1]"])
+            );
+        }
+    }
+
+    #[test]
+    fn unknown_ids_and_other_objects_do_not_supply_draft_citations() {
+        let valid = HashSet::from(["p1"]);
+        let input = r#"{"other":[{"text":"ignored","citations":["p1"]}],"claims":[{"text":"first","citations":["p999"]},{"text":"second","citations":["p1"]}],"summaries":[{"text":"removed","citations":["p1"]}]}"#;
+        assert_eq!(
+            preview(input, &valid)["answer"],
+            json!(["first", "second [p1]"])
+        );
+        let partial = r#"{"claims":[{"text":"literal \"citations\": [p10]","citations":["p1"#;
+        assert_eq!(
+            preview(partial, &valid)["answer"],
+            json!(["literal \"citations\": [p10]"])
+        );
     }
 }

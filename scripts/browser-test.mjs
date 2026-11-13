@@ -41,6 +41,18 @@ try{
  assert.ok(await answerPanel.locator('code').count()>0,'Final Markdown code must be rendered');
  assert.ok(await answerPanel.locator('a[href^="#evidence-"]').count()>0,'Citations must remain links');
  await page.screenshot({path:'test-results/gtfs-answer-markdown.png',fullPage:true});
+ // Inspect the actual first-claim draft before later claims or the final result.
+ const streamedEvents=readFileSync('test-results/gtfs-answer-stream.sse','utf8').trim().split('\n\n').map(frame=>({event:frame.split('\n')[0].slice(7),data:JSON.parse(frame.split('\ndata: ')[1])}));
+ const sourcesEvent=streamedEvents.find(e=>e.event==='sources');
+ const draftEvent=streamedEvents.find(e=>e.event==='draft');
+ await page.evaluate(({sourcesEvent,draftEvent})=>{
+   renderAnswerProgress('sources',sourcesEvent.data,'streaming citations');
+   renderAnswerProgress('draft',draftEvent.data,'streaming citations');
+ },{sourcesEvent,draftEvent});
+ assert.match(await answerPanel.textContent(),/生成中/);
+ assert.ok(await answerPanel.locator('a[href^="#evidence-"]').count()>0,'Real Rust draft must contain citation links before completion');
+ assert.ok(!(await answerPanel.textContent()).includes(expectedAnswer[1].replaceAll('`','')));
+ await page.screenshot({path:'test-results/streaming-citation-pills.png',fullPage:true});
  // Legacy summary fields must never reappear in the answer panel.
  await page.evaluate(result => {
    renderAnswerProgress('sources', result, 'draft links');
