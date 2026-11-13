@@ -1,7 +1,7 @@
-// Build revision: 4d3cbcdbd870084419f63c4590f51f536738db8346eff9057ce3c0a1fb8cae78
+// Build revision: 825d58fdcd54db535796c2c22544a8e3035eff723cf6cff330c5929990107e48
 "use strict";
 // Bump this version whenever either offline asset changes.
-const CACHE = "decisionrag-offline-v1";
+const CACHE = "decisionrag-offline-v2";
 const OFFLINE_ASSETS = ["/offline.html", "/offline.css"];
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(OFFLINE_ASSETS)));

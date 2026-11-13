@@ -25,7 +25,7 @@ test('real Rust/WASM returns every matching passage with zero Decision calls', a
   } finally {restore();sqlite.close();}
 });
 
-test('answer SSE preserves sources/draft/result and falls back to attributed excerpts', async()=>{
+test('answer SSE preserves sources/draft/result and returns evidence without ticket summaries when verification rejects the answer', async()=>{
   const {env,sqlite}=fixture();
   sqlite.exec("INSERT INTO repositories(repo,description,default_branch) VALUES('TrainLCD/MobileApp','App','main')");
   await saveSource(env,{id:'one',repo:'TrainLCD/MobileApp',kind:'issue',title:'GPS位置情報',body:'バックグラウンドでは位置を更新しない。',url:'https://example.test',metadata:{},updated_at:'today'});
@@ -41,8 +41,9 @@ test('answer SSE preserves sources/draft/result and falls back to attributed exc
     const stream=await response.text();
     assert.ok(stream.indexOf('event: sources')<stream.indexOf('event: draft'));assert.ok(stream.indexOf('event: draft')<stream.indexOf('event: result'));
     const result=JSON.parse(stream.split('event: result\ndata: ')[1]!.trim());
-    assert.equal(result.status,'summarized');assert.equal(result.answer,null);
-    assert.equal(result.ticket_summaries[0].text,'資料の記載：『バックグラウンドでは位置を更新しない。』');
+    assert.equal(result.status,'generation_unavailable');assert.equal(result.answer,null);
+    assert.equal(result.ticket_summaries,undefined);
+    assert.equal(result.evidence.length,1);
     assert.deepEqual(calls,['@cf/google/gemma-4-26b-a4b-it']);
   }finally{sqlite.close();}
 });
