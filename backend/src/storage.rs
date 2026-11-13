@@ -197,6 +197,8 @@ pub async fn plan(
     traces: &mut Vec<Value>,
 ) -> Result<Vec<String>> {
     let start = now();
+    let measured = TimedDbHost::new(h);
+    let h = &measured;
     let mut after = String::new();
     let mut candidates = Vec::new();
     let mut scored = Vec::new();
@@ -266,11 +268,14 @@ pub async fn plan(
             return Err(Error::new(422, "passage_screening_budget_exceeded"));
         }
     }
-    traces.push(trace(
-        "document_screening",
-        scored.len(),
-        ids.iter().take(12).map(|s| json!(s)).collect(),
-        start,
+    traces.push(with_storage_timing(
+        trace(
+            "document_screening",
+            scored.len(),
+            ids.iter().take(12).map(|s| json!(s)).collect(),
+            start,
+        ),
+        measured.storage_ms(),
     ));
     Ok(ids)
 }

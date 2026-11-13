@@ -197,3 +197,59 @@ test('Rust counts selected passages before reading bodies and never truncates a 
         assert.equal(bodyReads, 1);
     } finally { f.sqlite.close(); }
 });
+
+// Advance a controlled clock only when a D1 operation completes, as Workers do
+// between I/O events. This makes DB attribution exact without timing tolerances.
+test('Rust attributes all retrieval D1 calls to storage, including multi-batch selection and cursors', async () => {
+    const f = await setup(541);
+    const originalNow = Date.now;
+    const prepare = f.env.DB.prepare.bind(f.env.DB);
+    let clock = originalNow();
+    let queries: string[] = [];
+    f.env.DB.prepare = (sql: string) => {
+        const statement = prepare(sql);
+        const all = statement.all.bind(statement);
+        statement.all = (async () => {
+            const result = await all();
+            queries.push(sql);
+            clock += 40;
+            return result;
+        }) as typeof statement.all;
+        return statement;
+    };
+    Date.now = () => clock;
+    try {
+        let cursor: string | undefined;
+        for (const query of ['GPS', 'GPS', 'zzzxnomatch9000']) {
+            queries = [];
+            const response = await f.request({ query, paginated: true,
+                ...(query === 'GPS' && cursor ? { cursor } : {}) });
+            assert.equal(response.status, 200);
+            const data: any = await response.json();
+            assert.equal(data.timings.storage_ms, queries.length * 40);
+            assert.equal(data.timings.model_ms, 0);
+            assert.equal(data.timings.retrieval_ms, data.timings.storage_ms);
+            for (const step of data.trace.filter((s: any) => 'storage_ms' in s)) {
+                assert.equal(step.local_ms, 0);
+                assert.equal(step.elapsed_ms, step.storage_ms);
+            }
+            const selection = data.trace.find((s: any) => s.stage === 'document_screening');
+            if (query === 'GPS' && !cursor) {
+                assert.equal(data.hit_count, 20);
+                assert.equal(selection.candidates, 541);
+                assert.equal(queries.filter(sql => sql.includes('AS introduction')).length, 2);
+                assert.equal(selection.storage_ms, 120); // two candidate pages + passage count
+            } else if (query === 'GPS') {
+                assert.equal(selection, undefined);
+                assert.equal(data.hit_count, 20);
+            } else {
+                assert.equal(data.hit_count, 0);
+                assert.equal(selection.storage_ms, 120); // the existing shortlist still checks passage count
+            }
+            cursor = data.pagination.next_cursor;
+        }
+    } finally {
+        Date.now = originalNow;
+        f.sqlite.close();
+    }
+});

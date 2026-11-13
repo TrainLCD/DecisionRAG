@@ -171,18 +171,22 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
     } else {
         0.
     };
-    let storage_start = now();
+    let measured = TimedDbHost::new(h);
+    let h = &measured;
     let mut traces = Vec::new();
     let vocabulary_start = now();
     let vocabulary = crate::vocabulary::load(h, query, scope.as_ref()).await?;
-    traces.push(trace(
-        "vocabulary_expansion",
-        vocabulary.len(),
-        vocabulary
-            .iter()
-            .map(|p| json!([p["term"], p["alias"]]))
-            .collect(),
-        vocabulary_start,
+    traces.push(with_storage_timing(
+        trace(
+            "vocabulary_expansion",
+            vocabulary.len(),
+            vocabulary
+                .iter()
+                .map(|p| json!([p["term"], p["alias"]]))
+                .collect(),
+            vocabulary_start,
+        ),
+        measured.storage_ms(),
     ));
     let ids = if let Some(previous) = &previous {
         array(&previous["ids"])?
@@ -212,12 +216,7 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
     if previous.as_ref().is_some_and(|p| p["revision"] != revision) {
         return Err(Error::new(409, "search_results_changed"));
     }
-    let storage_ms = now()
-        - storage_start
-        - traces
-            .iter()
-            .map(|t| t["elapsed_ms"].as_f64().unwrap_or(0.))
-            .sum::<f64>();
+    let storage_ms = measured.storage_ms();
     let offset = previous
         .as_ref()
         .and_then(|p| p["offset"].as_u64())
@@ -266,7 +265,7 @@ fn finish(mut state: Value, result: Value) -> Value {
         if t["stage"] == "generate_answer" {
             generation_ms += elapsed;
         } else {
-            model_ms += elapsed;
+            model_ms += t["local_ms"].as_f64().unwrap_or(elapsed);
         }
     }
     state["timings"]["model_ms"] = json!(model_ms);
