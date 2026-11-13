@@ -34,7 +34,9 @@ try{
  await page.locator('#query').fill('gtfs導入の際の課題と議論');await page.locator('#search-button').click();
  await page.waitForFunction(()=>document.querySelector('#results').getAttribute('aria-busy')==='false');
  const answerPanel=page.locator('#answer-panel');
- assert.match(await answerPanel.textContent(),/バスデータの特性/);
+ const expectedAnswer=JSON.parse(readFileSync('test/fixtures/gtfs-answer-regression.json','utf8')).followup_draft.answer;
+ for(const claim of expectedAnswer) assert.ok((await answerPanel.textContent()).includes(claim.replaceAll('`','')),claim);
+ assert.doesNotMatch(await answerPanel.textContent(),/各チケットの要約/);
  assert.doesNotMatch(await answerPanel.textContent(),/回答を確認できませんでした|資料の記載：|FNC-1a|生成中/);
  assert.ok(await answerPanel.locator('code').count()>0,'Final Markdown code must be rendered');
  assert.ok(await answerPanel.locator('a[href^="#evidence-"]').count()>0,'Citations must remain links');
