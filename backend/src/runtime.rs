@@ -26,6 +26,42 @@ impl Error {
 pub trait Host {
     async fn call(&self, op: &str, value: Value) -> Result<Value>;
 }
+/// Request-local measurement of D1 host calls, including binding/serialization overhead.
+/// Calls in retrieval are sequential; this is elapsed wall time, not D1 server CPU time.
+pub struct TimedDbHost<'a, H> {
+    inner: &'a H,
+    storage_ms: std::cell::Cell<f64>,
+}
+impl<'a, H: Host> TimedDbHost<'a, H> {
+    pub fn new(inner: &'a H) -> Self {
+        Self {
+            inner,
+            storage_ms: std::cell::Cell::new(0.),
+        }
+    }
+    pub fn storage_ms(&self) -> f64 {
+        self.storage_ms.get()
+    }
+}
+impl<H: Host> Host for TimedDbHost<'_, H> {
+    async fn call(&self, op: &str, value: Value) -> Result<Value> {
+        let start = now();
+        let result = self.inner.call(op, value).await;
+        if matches!(op, "db" | "batch") {
+            self.storage_ms
+                .set(self.storage_ms.get() + (now() - start).max(0.));
+        }
+        result
+    }
+}
+/// Preserve the stage total while separating D1 from local elapsed time.
+pub fn with_storage_timing(mut step: Value, storage_ms: f64) -> Value {
+    let elapsed = step["elapsed_ms"].as_f64().unwrap_or(0.).max(0.);
+    let storage = storage_ms.max(0.).min(elapsed);
+    step["storage_ms"] = json!(storage);
+    step["local_ms"] = json!((elapsed - storage).max(0.));
+    step
+}
 #[derive(Clone, Deserialize, Serialize, Default)]
 #[serde(default)]
 pub struct Config {

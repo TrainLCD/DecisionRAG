@@ -127,9 +127,9 @@ for (const transport of ['json', 'sse']) {
   test(`${transport} timing breakdown renders local decisions and the actual stage metrics`, async () => {
     let data = {
       ...result(1), status: 'summarized',
-      timings: { scope_ms: 813, storage_ms: 122, model_ms: 784, generation_ms: 11130 },
+      timings: { scope_ms: 813, storage_ms: 822, model_ms: 84, generation_ms: 11130 },
       trace: [
-        { stage: 'document_screening', candidates: 3342, calls: 0, elapsed_ms: 784, model: ['rust-rules-v1'] },
+        { stage: 'document_screening', candidates: 3342, calls: 0, elapsed_ms: 784, storage_ms: 700, local_ms: 84, model: ['rust-rules-v1'] },
         { stage: 'passage_scoring', candidates: 472, calls: 0, elapsed_ms: 0, model: ['rust-rules-v1'] },
         { stage: 'generate_answer', candidates: 20, calls: 1, elapsed_ms: 11130, model: ['@cf/google/gemma-4-26b-a4b-it'] },
         { stage: 'verify_answer', candidates: 4, calls: 0, elapsed_ms: 0, model: ['rust-rules-v1'] },
@@ -146,8 +146,8 @@ for (const transport of ['json', 'sse']) {
       await until(() => !c.$('search-button').disabled);
       assert.equal(c.$('trace-panel').hidden, false);
       assert.deepEqual(rows(), [
-        ['所要時間の内訳', '公開範囲の確認 813 ms / DB取得 122 ms / ローカル判定 784 ms / 要約生成 11,130 ms'],
-        ['文書の選択', '候補 3,342 · API 0 回 · 784 ms · rust-rules-v1'],
+        ['所要時間の内訳', '公開範囲の確認 813 ms / DB取得 822 ms / ローカル判定 84 ms / 要約生成 11,130 ms'],
+        ['文書の選択', '候補 3,342 · API 0 回 · 784 ms（DB取得 700 ms / ローカル処理 84 ms） · rust-rules-v1'],
         ['本文の評価', '候補 472 · API 0 回 · 0 ms · rust-rules-v1'],
         ['要約の生成', '候補 20 · API 1 回 · 11,130 ms · @cf/google/gemma-4-26b-a4b-it'],
         ['回答の検証', '候補 4 · API 0 回 · 0 ms · rust-rules-v1'],
