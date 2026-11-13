@@ -274,13 +274,6 @@ fn finish(mut state: Value, result: Value) -> Value {
     if let Some(text) = out["answer"].as_str() {
         out["answer_html"] = json!(html(text));
     }
-    if let Some(summaries) = out["ticket_summaries"].as_array_mut() {
-        for summary in summaries {
-            if let Some(text) = summary["text"].as_str() {
-                summary["text_html"] = json!(html(text));
-            }
-        }
-    }
     for key in ["evidence", "hit_count", "trace", "timings"] {
         out[key] = state[key].clone();
     }

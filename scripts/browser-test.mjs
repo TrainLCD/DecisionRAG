@@ -34,29 +34,25 @@ try{
  await page.locator('#query').fill('gtfs導入の際の課題と議論');await page.locator('#search-button').click();
  await page.waitForFunction(()=>document.querySelector('#results').getAttribute('aria-busy')==='false');
  const answerPanel=page.locator('#answer-panel');
- assert.match(await answerPanel.textContent(),/バスデータの特性/);
+ const expectedAnswer=JSON.parse(readFileSync('test/fixtures/gtfs-answer-regression.json','utf8')).followup_draft.answer;
+ for(const claim of expectedAnswer) assert.ok((await answerPanel.textContent()).includes(claim.replaceAll('`','')),claim);
+ assert.doesNotMatch(await answerPanel.textContent(),/各チケットの要約/);
  assert.doesNotMatch(await answerPanel.textContent(),/回答を確認できませんでした|資料の記載：|FNC-1a|生成中/);
  assert.ok(await answerPanel.locator('code').count()>0,'Final Markdown code must be rendered');
  assert.ok(await answerPanel.locator('a[href^="#evidence-"]').count()>0,'Citations must remain links');
- await page.screenshot({path:'test-results/gtfs-summary-markdown.png',fullPage:true});
- // Draft summaries use source IDs, not result order, and work before completion.
+ await page.screenshot({path:'test-results/gtfs-answer-markdown.png',fullPage:true});
+ // Legacy summary fields must never reappear in the answer panel.
  await page.evaluate(result => {
    renderAnswerProgress('sources', result, 'draft links');
-   const source = result.evidence[10];
    renderAnswerProgress('draft', {
-     summaries: ['**生成途中**', 'unknown'],
-     summaries_html: ['<p><strong>生成途中</strong></p>', '<p>unknown</p>'],
-     summary_source_ids: [source.source_id, 'missing-source'],
+     answer: ['**生成途中** [p1]'],
+     answer_html: ['<p><strong>生成途中</strong> [p1]</p>'],
+     summaries: ['removed ticket summary'],
    }, 'draft links');
  }, result);
- const draftSource=result.evidence.find(entry=>entry.source_id===result.evidence[10].source_id);
- assert.equal(await answerPanel.locator('h4 a').count(),1);
- assert.equal(await answerPanel.locator('h4 a').textContent(),draftSource.title);
- assert.equal(await answerPanel.locator('h4 a').getAttribute('href'),'#evidence-'+draftSource.citation);
  assert.equal(await answerPanel.locator('strong').textContent(),'生成途中');
- await answerPanel.locator('h4 a').click();
- assert.ok(await page.locator('[id="evidence-'+draftSource.citation+'"]').count()>0);
- assert.equal(searches,3,'Draft links must not search or regenerate');
+ assert.doesNotMatch(await answerPanel.textContent(), /removed ticket summary|各チケットの要約/);
+ assert.equal(searches,3,'Draft rendering must not search or regenerate');
  await page.evaluate(result=>renderResult(result,'answer','draft links'),result);
  assert.deepEqual(errors,[]);await writeFile('test-results/browser.json',JSON.stringify({backend:'Rust/WASM',hits:result.hit_count,per_page:10,pagination_requests:0,errors},null,2));console.log('Browser passed: real Rust/WASM, SSE, totals, 10 per page, no regeneration, empty result.');
 }catch(error){await mkdir('test-results',{recursive:true});await page?.screenshot({path:'test-results/failure.png',fullPage:true}).catch(()=>{});throw error;}finally{await browser?.close();server.kill();}

@@ -73,11 +73,7 @@ for (const stream of [false, true]) {
         }
       } else result = await response.json();
       for (const text of draft.answer) assert.ok(result.answer?.includes(text), JSON.stringify(result.verification));
-      assert.equal(result.ticket_summaries.length, 1);
-      assert.ok(result.ticket_summaries[0].text.includes(draft.summaries[1]), JSON.stringify(result.verification));
-      assert.ok(result.ticket_summaries[0].text.includes(draft.summaries[2]));
-      if (variant === 'followup_draft') assert.ok(!result.ticket_summaries[0].text.includes('FNC-1a'));
-      else assert.ok(result.ticket_summaries[0].text.includes(draft.summaries[0]));
+      assert.equal(result.ticket_summaries, undefined);
       assert.equal(result.verification.semantic_status, 'unknown');
     } finally { dom?.window.close(); f.sqlite.close(); }
   });

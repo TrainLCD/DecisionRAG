@@ -3,31 +3,23 @@ use regex::Regex;
 use serde_json::{Value, json};
 use std::{collections::HashSet, sync::LazyLock};
 const MODEL: &str = "@cf/google/gemma-4-26b-a4b-it";
-fn fallback(query: &str, evidence: &[Value]) -> Result<Value> {
-    decision(json!({"op":"extract","query":query,"evidence":evidence}))
+fn fallback() -> Result<Value> {
+    Ok(json!({"status":"generation_unavailable","answer":null,"citations":[]}))
 }
 fn schema(ids: &[Value]) -> Value {
     let text = json!({"type":"string"});
     let citations =
         json!({"type":"array","minItems":1,"maxItems":3,"items":{"type":"string","enum":ids}});
-    json!({"type":"object","additionalProperties":false,"required":["claims","summaries"],"properties":{
- "claims":{"type":"array","maxItems":3,"items":{"type":"object","additionalProperties":false,"required":["text","citations"],"properties":{"text":text,"citations":citations}}},
- "summaries":{"type":"array","maxItems":20,"items":{"type":"object","additionalProperties":false,"required":["source_id","text","citations"],"properties":{"source_id":{"type":"string"},"text":text,"citations":citations}}}}})
+    json!({"type":"object","additionalProperties":false,"required":["claims"],"properties":{
+ "claims":{"type":"array","maxItems":3,"items":{"type":"object","additionalProperties":false,"required":["text","citations"],"properties":{"text":text,"citations":citations}}}}})
 }
 pub fn preview(input: &str) -> Value {
     let bytes = input.as_bytes();
     let mut i = 0;
     let mut section = 0;
-    let mut parts = [Vec::new(), Vec::new()];
-    let mut sources: Vec<Value> = Vec::new();
-    let mut source = Value::Null;
-    let mut summary_start = 0;
+    let mut parts = Vec::new();
     while i < bytes.len() {
         if bytes[i] != b'"' {
-            if bytes[i] == b'{' {
-                source = Value::Null;
-                summary_start = parts[1].len();
-            }
             i += 1;
             continue;
         }
@@ -61,7 +53,7 @@ pub fn preview(input: &str) -> Value {
         if key == "summaries" {
             section = 1;
         }
-        if key != "text" && !(section == 1 && key == "source_id") {
+        if key != "text" || section != 0 {
             continue;
         }
         while i < bytes.len() && bytes[i].is_ascii_whitespace() {
@@ -92,31 +84,14 @@ pub fn preview(input: &str) -> Value {
             }
         }
         if let Ok(value) = serde_json::from_str::<String>(&format!("{}\"", &input[start..end])) {
-            if key == "source_id" {
-                // Only a complete ID can identify a retrieved source. Field order
-                // is not guaranteed, so also fill IDs for this object's text.
-                if bytes.get(i) == Some(&b'"') {
-                    source = json!(value);
-                    for id in &mut sources[summary_start..] {
-                        *id = source.clone();
-                    }
-                }
-            } else {
-                parts[section].push(value);
-                if section == 1 {
-                    sources.push(source.clone());
-                }
-            }
+            parts.push(value);
         }
         if bytes.get(i) == Some(&b'"') {
             i += 1;
         }
     }
-    let markup: Vec<Vec<_>> = parts
-        .iter()
-        .map(|items| items.iter().map(|text| crate::api::html(text)).collect())
-        .collect();
-    json!({"answer":parts[0],"summaries":parts[1],"answer_html":markup[0],"summaries_html":markup[1],"summary_source_ids":sources})
+    let markup: Vec<_> = parts.iter().map(|text| crate::api::html(text)).collect();
+    json!({"answer":parts,"answer_html":markup})
 }
 async fn collect(h: &impl Host) -> Result<Value> {
     let mut pending = String::new();
@@ -239,7 +214,7 @@ pub async fn answer(
     let context:Vec<_>=all.iter().take(20).map(|p|json!({"citation":p["citation"],"source_id":p["source_id"],"repo":p["repo"],"title":p["title"],"text":p["text"],"kind":p["kind"],"metadata":p["metadata"]})).collect();
     let external = !c.answer_api_key.is_empty() && !c.answer_model.is_empty();
     if !external && !c.ai {
-        return fallback(query, &context);
+        return fallback();
     }
     let ids: Vec<_> = context.iter().map(|p| p["citation"].clone()).collect();
     let messages = json!([{"role":"system","content":include_str!("instructions.txt")},{"role":"user","content":format!("{}\n\n{}",json!({"query":query,"evidence":context}),include_str!("writingGuide.txt"))}]);
@@ -285,52 +260,25 @@ pub async fn answer(
             if external {
                 return Err(e);
             }
-            return fallback(query, &context);
+            return fallback();
         }
     };
     let draft = serde_json::from_str::<Value>(s(&generation["choices"][0]["message"], "content"))
         .unwrap_or(Value::Null);
-    if draft["claims"].as_array().is_none_or(|v| v.len() > 3)
-        || (!draft["summaries"].is_null()
-            && draft["summaries"].as_array().is_none_or(|v| v.len() > 20))
-    {
+    if draft["claims"].as_array().is_none_or(|v| v.len() > 3) {
         if external {
             return Err(Error::new(502, "invalid_generation_response"));
         }
-        return fallback(query, &context);
+        return fallback();
     }
     let valid: HashSet<_> = ids.iter().filter_map(Value::as_str).collect();
     let claims: Vec<_> = array(&draft["claims"])?
         .iter()
         .filter_map(|v| read_claim(v, &valid))
         .collect();
-    let mut summaries = Vec::new();
-    for value in draft["summaries"].as_array().into_iter().flatten() {
-        let Some(mut claim) = read_claim(value, &valid) else {
-            continue;
-        };
-        let Some(source) = value["source_id"].as_str() else {
-            continue;
-        };
-        if !array(&claim["citations"])?.iter().all(|id| {
-            context
-                .iter()
-                .any(|p| p["citation"] == *id && p["source_id"] == source)
-        }) {
-            continue;
-        }
-        claim["source_id"] = json!(source);
-        summaries.push(claim);
-    }
     let verify_start = now();
-    let all_claims = [claims.clone(), summaries.clone()].concat();
-    let verification = decision(json!({"op":"verify","evidence":context,"claims":all_claims}))?;
-    traces.push(trace(
-        "verify_answer",
-        all_claims.len(),
-        vec![],
-        verify_start,
-    ));
+    let verification = decision(json!({"op":"verify","evidence":context,"claims":claims}))?;
+    traces.push(trace("verify_answer", claims.len(), vec![], verify_start));
     let threshold = bounded(c.support_threshold.as_deref(), 0.85, 0., 1.)?;
     bounded(c.conflict_threshold.as_deref(), 0.7, 0., 1.)?;
     let supported = |i: usize| {
@@ -348,34 +296,8 @@ pub async fn answer(
         .filter(|(i, _)| supported(*i))
         .map(|(_, v)| v.clone())
         .collect();
-    // Validate every candidate before grouping by source. An invalid first
-    // summary must not suppress later valid summaries of the same document.
-    let mut grouped: Vec<Value> = Vec::new();
-    for (index, summary) in summaries.iter().enumerate() {
-        if !supported(claims.len() + index) {
-            continue;
-        }
-        if let Some(existing) = grouped
-            .iter_mut()
-            .find(|v| v["source_id"] == summary["source_id"])
-        {
-            if s(existing, "text") != s(summary, "text") {
-                existing["text"] =
-                    json!(format!("{}\n\n{}", s(existing, "text"), s(summary, "text")));
-            }
-            for id in summary["citations"].as_array().unwrap() {
-                let ids = existing["citations"].as_array_mut().unwrap();
-                if !ids.contains(id) {
-                    ids.push(id.clone());
-                }
-            }
-        } else {
-            grouped.push(summary.clone());
-        }
-    }
-    let summaries = grouped;
-    if verified.is_empty() && summaries.is_empty() {
-        return fallback(query, &context);
+    if verified.is_empty() {
+        return fallback();
     }
     let text = verified
         .iter()
@@ -397,54 +319,29 @@ pub async fn answer(
     let mut seen = HashSet::new();
     let citations: Vec<_> = verified
         .iter()
-        .chain(&summaries)
         .flat_map(|v| v["citations"].as_array().unwrap())
         .filter(|v| seen.insert(v.as_str().unwrap()))
         .cloned()
         .collect();
     Ok(
-        json!({"status":"summarized","answer":if text.is_empty(){Value::Null}else{json!(text)},"ticket_summaries":summaries,"citations":citations,"verification":verification}),
+        json!({"status":"summarized","answer":if text.is_empty(){Value::Null}else{json!(text)},"citations":citations,"verification":verification}),
     )
 }
 
 #[cfg(test)]
-mod preview_link_tests {
+mod tests {
     use super::*;
-
     #[test]
-    fn summary_source_ids_survive_every_stream_prefix() {
-        for input in [
-            r#"{"claims":[],"summaries":[{"source_id":"issue-1","text":"first"},{"source_id":"issue-2","text":"second"}]}"#,
-            r#"{"claims":[],"summaries":[{"text":"first","source_id":"issue-1"},{"text":"second","source_id":"issue-2"}]}"#,
-        ] {
-            for end in 0..=input.len() {
-                let draft = preview(&input[..end]);
-                let texts = draft["summaries"].as_array().unwrap();
-                let ids = draft["summary_source_ids"].as_array().unwrap();
-                assert_eq!(texts.len(), ids.len());
-                for (index, id) in ids.iter().enumerate() {
-                    if !id.is_null() {
-                        assert_eq!(id, &json!(format!("issue-{}", index + 1)));
-                    }
-                }
-            }
-            assert_eq!(
-                preview(input)["summary_source_ids"],
-                json!(["issue-1", "issue-2"])
-            );
+    fn only_answers_are_requested_and_streamed() {
+        let schema = schema(&[json!("p1")]);
+        assert_eq!(schema["required"], json!(["claims"]));
+        assert!(schema["properties"]["summaries"].is_null());
+        let input = r#"{"claims":[{"text":"answer"}],"summaries":[{"text":"removed"}]}"#;
+        for end in 0..=input.len() {
+            let draft = preview(&input[..end]);
+            assert!(draft["summaries"].is_null());
+            assert!(!draft.to_string().contains("removed"));
         }
-    }
-
-    #[test]
-    fn missing_or_incomplete_source_never_inherits_previous_summary() {
-        let draft = preview(
-            r#"{"summaries":[{"source_id":"issue-1","text":"first"},{"text":"second"},{"source_id":"issue-","text":"third"}]}"#,
-        );
-        assert_eq!(
-            draft["summary_source_ids"],
-            json!(["issue-1", null, "issue-"])
-        );
-        let draft = preview(r#"{"summaries":[{"text":"first","source_id":"issue-"#);
-        assert_eq!(draft["summary_source_ids"], json!([null]));
+        assert_eq!(preview(input)["answer"], json!(["answer"]));
     }
 }

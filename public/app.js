@@ -39,7 +39,7 @@ const statuses = {
     "質問を変えるか、同期状況を確認してください。",
   ],
   answered: ["検証済みの回答", ""],
-  summarized: ["確認できた内容の要約", ""],
+  summarized: ["確認できた内容", ""],
   evidence_ready: [
     "回答に使える根拠があります",
     "回答生成モデルは未設定です。以下の根拠を確認してください。",
@@ -56,7 +56,7 @@ const statuses = {
     "回答が資料の内容に沿っているか確認できませんでした",
     "検索で見つかった関連資料は、下の一覧からご覧いただけます。",
   ],
-  generation_unavailable: ["要約を生成できませんでした", "検索で見つかった資料を表示します。"],
+  generation_unavailable: ["回答を生成できませんでした", "検索で見つかった資料を表示します。"],
 };
 const errors = {
   unauthorized: "認証に失敗しました。API_TOKENを確認して接続し直してください。",
@@ -355,7 +355,7 @@ async function readAnswerStream(response, onEvent) {
     if (value === "") {
       if (lines.length) {
         const data = JSON.parse(lines.join("\n"));
-        if (event === "error") throw new Error(errors[data.error] || "要約の生成に失敗しました。もう一度お試しください。");
+        if (event === "error") throw new Error(errors[data.error] || "回答の生成に失敗しました。もう一度お試しください。");
         if (event === "result") result = data;
         else if (result === undefined) onEvent(event, data);
       }
@@ -397,17 +397,6 @@ function renderAnswerProgress(event, data, query) {
     panel.hidden = false;
     panel.replaceChildren(element("p", "muted", "生成中"), element("h3", "", "質問への回答"));
     for (const [index, text] of (data.answer || []).entries()) panel.append(linkAnswerCitations(markdownContent(text, data.answer_html?.[index])));
-    if (data.summaries?.length) {
-      panel.append(element("h3", "", "各チケットの要約"));
-      for (const [index, text] of data.summaries.entries()) {
-        const sourceId = data.summary_source_ids?.[index];
-        const source = typeof sourceId === "string"
-          ? resultEvidence.find(entry => entry.source_id === sourceId)
-          : undefined;
-        if (source) panel.append(linkAnswerCitations(element("h4", "", "[" + source.citation + "]")));
-        panel.append(linkAnswerCitations(markdownContent(text, data.summaries_html?.[index], "", safeSourceUrl(source?.url))));
-      }
-    }
     notice("回答を生成・検証しています…", "loading");
   }
 }
@@ -526,16 +515,7 @@ function renderResult(data, mode, query) {
     panel.append(element("h3", "", hasAnswer ? "質問への回答" : label[0]));
     panel.append(hasAnswer && typeof data.answer === "string"
       ? linkAnswerCitations(markdownContent(data.answer, data.answer_html))
-      : element("p", "", hasAnswer ? "資料から質問への回答を確認できませんでした。確認できた内容を以下に示します。" : label[1]));
-    if (hasAnswer && Array.isArray(data.ticket_summaries) && data.ticket_summaries.length) {
-      panel.append(element("h3", "", "各チケットの要約"));
-      for (const item of data.ticket_summaries) {
-        const source = evidence.find(entry => entry.source_id === item.source_id);
-        if (!source || typeof item.text !== "string") continue;
-        panel.append(linkAnswerCitations(element("h4", "", "[" + source.citation + "]")));
-        panel.append(linkAnswerCitations(markdownContent(item.text, item.text_html, "", safeSourceUrl(source.url))));
-      }
-    }
+      : element("p", "", hasAnswer ? "資料から質問への回答を確認できませんでした。検索結果の本文をご確認ください。" : label[1]));
   }
   renderEvidencePage();
   const trace = Array.isArray(data.trace) ? data.trace : [];
@@ -545,12 +525,12 @@ function renderResult(data, mode, query) {
     const { scope_ms, storage_ms, model_ms, generation_ms } = data.timings;
     const parts = ["DB取得 " + number(storage_ms) + " ms", "ローカル判定 " + number(model_ms) + " ms"];
     if (scope_ms) parts.unshift("公開範囲の確認 " + number(scope_ms) + " ms");
-    if (generation_ms) parts.push("要約生成 " + number(generation_ms) + " ms");
+    if (generation_ms) parts.push("回答生成 " + number(generation_ms) + " ms");
     row.append(element("span", "", parts.join(" / ")));
     $("trace-list").append(row);
   }
   for (const step of trace) {
-    const stageNames = { vocabulary_expansion: "検索語の展開", page_screening: "関連する資料グループの選択", branch_screening: "検索する分野の選択", document_screening: "文書の選択", passage_scoring: "本文の評価", passage_ranking: "本文の評価と表示順の決定", shared_shortlist: "本文の再評価", choice_rerank: "表示順の決定", assess_evidence: "回答できるかの確認", generate_answer: "要約の生成", verify_answer: "回答の検証" };
+    const stageNames = { vocabulary_expansion: "検索語の展開", page_screening: "関連する資料グループの選択", branch_screening: "検索する分野の選択", document_screening: "文書の選択", passage_scoring: "本文の評価", passage_ranking: "本文の評価と表示順の決定", shared_shortlist: "本文の再評価", choice_rerank: "表示順の決定", assess_evidence: "回答できるかの確認", generate_answer: "回答の生成", verify_answer: "回答の検証" };
     const row = element("div", "trace-row", stageNames[step.stage] || step.stage);
     row.append(
       element(
