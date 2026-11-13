@@ -50,7 +50,7 @@ try{
    renderAnswerProgress('draft',draftEvent.data,'streaming citations');
  },{sourcesEvent,draftEvent});
  assert.match(await answerPanel.textContent(),/生成中/);
- assert.ok(await answerPanel.locator('a[href^="#evidence-"]').count()>0,'Real Rust draft must contain citation links before completion');
+ assert.equal(await answerPanel.locator('a[href^="#evidence-"]').count(),1,'Adjacent citations from the same source form one pill');
  assert.ok(!(await answerPanel.textContent()).includes(expectedAnswer[1].replaceAll('`','')));
  await page.screenshot({path:'test-results/streaming-citation-pills.png',fullPage:true});
  // Legacy summary fields must never reappear in the answer panel.
@@ -59,6 +59,7 @@ try{
    renderAnswerProgress('draft', {
      answer: ['**生成途中** [p1]'],
      answer_html: ['<p><strong>生成途中</strong> [p1]</p>'],
+     answer_citations: [['p1']],
      summaries: ['removed ticket summary'],
    }, 'draft links');
  }, result);

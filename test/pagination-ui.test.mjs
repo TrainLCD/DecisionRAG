@@ -252,7 +252,7 @@ test('streaming and final answers use sanitized Markdown with safe citation link
     c.submit(true);
     await until(() => !!controller);
     emit('sources', result(1));
-    emit('draft', { answer: [text], answer_html: [markup], summaries: ['removed'] });
+    emit('draft', { answer: [text], answer_html: [markup], answer_citations: [['p1']], summaries: ['removed'] });
     await until(() => !!c.$('answer-panel').querySelector('h2'));
     check();
     emit('result', { ...result(1), status: 'summarized', answer: text, answer_html: markup, ticket_summaries: [{ source_id: 'source-0', text, text_html: markup }] });
@@ -318,5 +318,54 @@ test('display-only payload filtering preserves cards, totals and Markdown', asyn
     c.navs()[0].querySelector('[data-page-step="-1"]').click();
     assert.doesNotMatch(c.$('evidence-list').textContent, /DwQgt/);
     assert.equal(c.requests.length, 1);
+  } finally { c.close(); }
+});
+
+for (const phase of ['draft', 'result']) {
+  test(`${phase}: adjacent citations share one source pill without hiding distinct sources or later mentions`, async () => {
+    const data = result(12);
+    for (const i of [1, 2]) Object.assign(data.evidence[i], { source_id: data.evidence[0].source_id, title: data.evidence[0].title });
+    data.evidence[10].title = data.evidence[0].title;
+    const text = '回答 [p1] [p2] [p3] [p11]。別の説明 [p2]';
+    let controller;
+    const c = client(() => phase === 'result' ? Response.json({ ...data, status: 'summarized', answer: text }) : new Response(new ReadableStream({ start(value) { controller = value; } }), { headers: { 'Content-Type': 'text/event-stream' } }));
+    const emit = (event, data) => controller.enqueue(new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+    try {
+      c.submit(true);
+      if (phase === 'draft') {
+        await until(() => !!controller);
+        emit('sources', data);
+        emit('draft', { answer: [text], answer_citations: [['p1', 'p2', 'p3', 'p11']] });
+      }
+      await until(() => !!c.$('answer-panel').querySelector('a'));
+      const links = [...c.$('answer-panel').querySelectorAll('a')];
+      assert.deepEqual(links.map(a => a.getAttribute('href')), ['#evidence-p1', '#evidence-p11', '#evidence-p2']);
+      links[1].click();
+      assert.ok(c.$('evidence-p11'));
+      assert.equal(c.requests.length, 1);
+      if (phase === 'draft') { emit('result', { ...data, status: 'summarized', answer: text }); controller.close(); }
+      await until(() => !c.$('search-button').disabled);
+    } finally { c.close(); }
+  });
+}
+
+test('draft inline citation waits for the corresponding complete claim citation list', async () => {
+  let controller;
+  const c = client(() => new Response(new ReadableStream({ start(value) { controller = value; } }), { headers: { 'Content-Type': 'text/event-stream' } }));
+  const emit = (event, data) => controller.enqueue(new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+  try {
+    c.submit(true);
+    await until(() => !!controller);
+    emit('sources', result(10));
+    emit('draft', { answer: ['回答 [p1]'], answer_html: ['<p>回答 [p1]</p>'], answer_citations: [[]] });
+    await until(() => c.$('answer-panel').textContent.includes('[p1]'));
+    assert.equal(c.$('answer-panel').querySelectorAll('a').length, 0);
+    emit('draft', { answer: ['回答 [p10]'], answer_citations: [['p10']] });
+    await until(() => !!c.$('answer-panel').querySelector('a'));
+    assert.equal(c.$('answer-panel').querySelector('a').getAttribute('href'), '#evidence-p10');
+    emit('error', { error: 'generation_unavailable' });
+    controller.close();
+    await until(() => !c.$('search-button').disabled);
+    assert.equal(c.$('answer-panel').querySelectorAll('a').length, 0);
   } finally { c.close(); }
 });

@@ -117,13 +117,15 @@ pub fn preview(input: &str, valid: &HashSet<&str>) -> Value {
     }
     // Only complete claim objects have an unambiguous text/citation pairing.
     // Keep partial prose streaming, but never guess an unfinished citation ID.
+    let mut citations = vec![json!([]); parts.len()];
     for (index, claim) in completed {
         if let Some(text) = parts.get_mut(index) {
             *text = format_claim(&claim);
+            citations[index] = claim["citations"].clone();
         }
     }
     let markup: Vec<_> = parts.iter().map(|text| crate::api::html(text)).collect();
-    json!({"answer":parts,"answer_html":markup})
+    json!({"answer":parts,"answer_html":markup,"answer_citations":citations})
 }
 async fn collect(h: &impl Host, ids: &[Value]) -> Result<Value> {
     let valid: HashSet<_> = ids.iter().filter_map(Value::as_str).collect();
@@ -418,6 +420,19 @@ mod tests {
         assert_eq!(
             preview(partial, &valid)["answer"],
             json!(["literal \"citations\": [p10]"])
+        );
+    }
+    #[test]
+    fn inline_citations_are_not_authorized_before_claim_completion() {
+        let valid = HashSet::from(["p1", "p10"]);
+        let input = r#"{"claims":[{"text":"回答 [p1]","citations":["p10"#;
+        assert_eq!(preview(input, &valid)["answer_citations"], json!([[]]));
+        let mismatch = format!("{input}\"]}}]}}");
+        assert_eq!(preview(&mismatch, &valid)["answer_citations"], json!([[]]));
+        let complete = r#"{"claims":[{"text":"回答 [p1]","citations":["p1"]}]}"#;
+        assert_eq!(
+            preview(complete, &valid)["answer_citations"],
+            json!([["p1"]])
         );
     }
 }
