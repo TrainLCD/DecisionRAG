@@ -396,7 +396,7 @@ function renderAnswerProgress(event, data, query) {
     const panel = $("answer-panel");
     panel.hidden = false;
     panel.replaceChildren(element("p", "muted", "生成中"), element("h3", "", "質問への回答"));
-    for (const [index, text] of (data.answer || []).entries()) panel.append(linkAnswerCitations(markdownContent(text, data.answer_html?.[index])));
+    for (const [index, text] of (data.answer || []).entries()) panel.append(linkAnswerCitations(markdownContent(text, data.answer_html?.[index]), data.answer_citations?.[index] || []));
     notice("回答を生成・検証しています…", "loading");
   }
 }
@@ -455,7 +455,8 @@ function showEvidence(index) {
   card.scrollIntoView({ block: "start" });
 }
 /** Link citations to their evidence cards, including cards on other pages. */
-function linkAnswerCitations(content) {
+function linkAnswerCitations(content, allowedCitations) {
+  const allowed = allowedCitations === undefined ? null : new Set(allowedCitations);
   const citationIndices = new Map(resultEvidence.map((item, index) => [item.citation, index]));
   const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
   const textNodes = [];
@@ -467,10 +468,19 @@ function linkAnswerCitations(content) {
     const parts = document.createDocumentFragment();
     const text = node.textContent;
     let offset = 0;
+    let previousSource;
     for (const match of text.matchAll(/\[([A-Za-z0-9_-]+)\]/g)) {
       const index = citationIndices.get(match[1]);
-      if (index === undefined) continue;
-      const title = resultEvidence[index].title?.trim() || "根拠資料";
+      if (index === undefined || (allowed && !allowed.has(match[1]))) continue;
+      const item = resultEvidence[index];
+      const source = item.source_id || item.url || item.citation;
+      const between = text.slice(offset, match.index);
+      if (previousSource === source && /^\s*$/.test(between)) {
+        offset = match.index + match[0].length;
+        continue;
+      }
+      previousSource = source;
+      const title = item.title?.trim() || "根拠資料";
       const link = element("a", "", title);
       link.href = "#" + evidenceId(match[1]);
       link.addEventListener("click", (event) => {
