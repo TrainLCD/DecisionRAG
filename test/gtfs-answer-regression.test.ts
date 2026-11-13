@@ -27,7 +27,10 @@ for (const stream of [false, true]) {
         if (!stream) return { choices: [{ message: { content } }] };
         const firstClaimEnd = '{"claims":['.length + JSON.stringify({ text: draft.answer[0], citations }).length;
         return new ReadableStream({ start(controller) {
-          controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: { content: content.slice(0, firstClaimEnd) } }] })}\n\n`));
+          const textEnd = '{"claims":[{"text":'.length + JSON.stringify(draft.answer[0]).length;
+          for (const part of [content.slice(0, textEnd), content.slice(textEnd, firstClaimEnd)]) {
+            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: { content: part } }] })}\n\n`));
+          }
           finishGeneration = () => {
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: { content: content.slice(firstClaimEnd) } }] })}\n\n`));
             controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
@@ -59,7 +62,8 @@ for (const stream of [false, true]) {
         $('search-form').dispatchEvent(new window.Event('submit', { cancelable: true }));
         await until(() => $('answer-panel').textContent.includes('専用のテーブル'));
         assert.match($('answer-panel').textContent, /生成中/);
-        assert.ok($('answer-panel').querySelector('a[href^="#evidence-"]'), 'Citations appear before DONE and final result');
+        await until(() => !!$('answer-panel').querySelector('a[href^="#evidence-"]'));
+        assert.ok($('answer-panel').querySelector('a[href^="#evidence-"]'), 'Citations appear before DONE even immediately after the text event');
         assert.ok(!$('answer-panel').textContent.includes(draft.answer[1].replaceAll('`', '')), 'Later claims have not arrived yet');
         finishGeneration!();
         await until(() => !$('search-button').disabled);

@@ -44,7 +44,7 @@ try{
  // Inspect the actual first-claim draft before later claims or the final result.
  const streamedEvents=readFileSync('test-results/gtfs-answer-stream.sse','utf8').trim().split('\n\n').map(frame=>({event:frame.split('\n')[0].slice(7),data:JSON.parse(frame.split('\ndata: ')[1])}));
  const sourcesEvent=streamedEvents.find(e=>e.event==='sources');
- const draftEvent=streamedEvents.find(e=>e.event==='draft');
+ const draftEvent=streamedEvents.find(e=>e.event==='draft' && e.data.answer_citations?.some(ids=>ids.length));
  await page.evaluate(({sourcesEvent,draftEvent})=>{
    renderAnswerProgress('sources',sourcesEvent.data,'streaming citations');
    renderAnswerProgress('draft',draftEvent.data,'streaming citations');

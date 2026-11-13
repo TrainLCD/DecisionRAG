@@ -136,6 +136,7 @@ async fn collect(h: &impl Host, ids: &[Value]) -> Result<Value> {
     let mut size = 0;
     let mut last = -1000.;
     let mut published = 0;
+    let mut published_citations = json!([]);
     let mut model = Value::Null;
     let mut usage = Value::Null;
     loop {
@@ -182,15 +183,16 @@ async fn collect(h: &impl Host, ids: &[Value]) -> Result<Value> {
                     content.push_str(delta);
                 }
             }
-            if content.len() != published && (done || now() - last >= 100.) {
-                last = now();
-                published = content.len();
-                let _ = h
-                    .call(
-                        "emit",
-                        json!({"event":"draft","data":preview(&content, &valid)}),
-                    )
-                    .await;
+            let due = done || now() - last >= 100.;
+            if content.len() != published && (due || content[published..].contains('}')) {
+                let draft = preview(&content, &valid);
+                // Completed citations must not wait for another model token or DONE.
+                if due || draft["answer_citations"] != published_citations {
+                    last = now();
+                    published = content.len();
+                    published_citations = draft["answer_citations"].clone();
+                    let _ = h.call("emit", json!({"event":"draft","data":draft})).await;
+                }
             }
             if done {
                 break;
