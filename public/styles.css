@@ -168,6 +168,28 @@ svg { width: 1.25rem; height: 1.25rem; flex: none; }
 }
 .answer-panel h3 { margin-bottom: 0.5rem; }
 .markdown-body { line-height: 1.8; overflow-wrap: anywhere; }
+.answer-panel .markdown-body a {
+  display: inline-block;
+  max-width: 100%;
+  margin-inline: 0.125em;
+  padding: 0.125em 0.75em;
+  border-radius: 999px;
+  background: var(--field);
+  color: #3f3f46;
+  font-size: 0.8125em;
+  font-weight: 500;
+  line-height: 1.5;
+  vertical-align: baseline;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+.answer-panel .markdown-body a:hover { background: var(--line); }
+.answer-panel .markdown-body a:focus-visible {
+  background: var(--line);
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
 .markdown-body mark.search-match { background: #ffeb70; color: #18181b; padding: 0; border-radius: 2px; }
 .evidence-excerpt.markdown-body { line-height: 1.6; }
 .plain-text { white-space: pre-wrap; }
