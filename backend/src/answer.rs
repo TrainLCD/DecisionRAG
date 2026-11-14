@@ -141,7 +141,7 @@ fn coordinated_clauses(clause: &str) -> Vec<&str> {
     });
     static WHETHER: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\bwhether\b").unwrap());
     static CLOSED_COMPLEMENT: LazyLock<Regex> = LazyLock::new(|| {
-        Regex::new(r"\b(?:is|was|remains?)\s+(?:unknown|unclear|unconfirmed|not known)\s*$")
+        Regex::new(r"\b(?:is|was|remains?)\s+(?:(?:still|currently|now|also|yet)\s+)*(?:unknown|unclear|unconfirmed|not known)\s*$")
             .unwrap()
     });
     let mut result = Vec::new();
@@ -699,6 +699,14 @@ mod tests {
         let context = vec![json!({"citation":"p1","kind":"pr"})];
         for (text, excluded) in [
             ("都営バスのみが現在の対応対象です。", true),
+            (
+                "Whether iOS GPS is supported is still unknown and currently only Android GPS is available.",
+                true,
+            ),
+            (
+                "Whether iOS GPS is supported remains currently unclear and only Android GPS is available.",
+                true,
+            ),
             ("Only Acme buses are currently supported.", true),
             ("Only Acme buses are still supported today.", true),
             (

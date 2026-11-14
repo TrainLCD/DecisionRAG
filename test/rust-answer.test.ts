@@ -26,6 +26,7 @@ for (const stream of [false, true]) {
     { name: 'whether coordinated predicates', kind: 'pr', source: 'It is unclear whether only iOS GPS is supported and only Android GPS is available.', text: 'It is unclear whether only iOS GPS is supported and only Android GPS is available.', accepted: true },
     { name: 'whether subject coordinated predicates', kind: 'pr', source: 'Whether only iOS GPS is supported and only Android GPS is available is unknown.', text: 'Whether only iOS GPS is supported and only Android GPS is available is unknown.', accepted: true },
     { name: 'closed whether followed by assertion', kind: 'pr', source: 'Whether only iOS GPS is supported is unknown and currently only Android GPS is available.', text: 'Whether only iOS GPS is supported is unknown and currently only Android GPS is available.', accepted: false },
+    { name: 'closed whether with adverb', kind: 'pr', source: 'Whether iOS GPS is supported is still unknown and currently only Android GPS is available.', text: 'Whether iOS GPS is supported is still unknown and currently only Android GPS is available.', accepted: false },
     { name: 'document-backed current scope', kind: 'doc', source: 'GPS位置情報はiOSのみに対応しています。', text: 'GPS位置情報はiOSのみに対応しています。', accepted: true },
     { name: 'negation reversal', source: 'バックグラウンドではGPS位置情報を更新しない。', text: 'バックグラウンドではGPS位置情報を更新する。', accepted: false },
     { name: 'invented release', source: 'GPS位置情報を更新する処理を修正した。', text: 'GPS位置情報の更新修正をApp Storeで配信済みです。', accepted: false },
@@ -57,7 +58,7 @@ for (const stream of [false, true]) {
           assert.match(wire, /event: draft/);
           const preview = JSON.parse(wire.split('event: draft\ndata: ')[1]!.split('\n\n')[0]!);
           assert.equal(preview.summaries, undefined);
-          if (['historical-only current scope', 'affirmed scope', 'mixed historical and current scope', 'medial current adverb', 'English medial current adverb', 'assertion before separate uncertainty', 'uncertainty before independent English predicate', 'uncertainty after independent English predicate', 'coordinated English subjects', 'closed whether followed by assertion'].includes(scenario.name)) assert.deepEqual(preview.answer, []);
+          if (['historical-only current scope', 'affirmed scope', 'mixed historical and current scope', 'medial current adverb', 'English medial current adverb', 'assertion before separate uncertainty', 'uncertainty before independent English predicate', 'uncertainty after independent English predicate', 'coordinated English subjects', 'closed whether followed by assertion', 'closed whether with adverb'].includes(scenario.name)) assert.deepEqual(preview.answer, []);
           if (scenario.accepted) assert.ok(preview.answer.join('\n').includes(scenario.text));
           result = JSON.parse(wire.split('event: result\ndata: ')[1]!.trim());
         } else result = await response.json();
