@@ -131,9 +131,11 @@ pub fn preview(input: &str, valid: &HashSet<&str>) -> Value {
 // This intentionally recognizes a narrow set of scope assertions, not arbitrary
 // semantic contradictions. Keep historical attribution and uncertainty intact.
 fn current_scope_assertion(text: &str) -> bool {
+    // Temporal adverbs can sit between the subject and predicate. Split only
+    // at punctuation/conjunctions or an explicit Japanese predicate transition.
     static CLAUSES: LazyLock<Regex> = LazyLock::new(|| {
         Regex::new(
-        r"[。\n.!?、,;；]|ですが|けれど|しかし|一方|現在|現状|今は|今も|引き続き|\b(?:but|however|currently|now|still|today)\b"
+        r"[。\n.!?、,;；]|ですが|けれど|しかし|一方|(?:でしたが|していましたが|対応で)(?:現在|現状|今は|今も|引き続き)|\b(?:but|however)\b"
     ).unwrap()
     });
     static EXCLUSIVE: LazyLock<Regex> = LazyLock::new(|| {
@@ -161,7 +163,10 @@ fn current_scope_assertion(text: &str) -> bool {
         ]
         .iter()
         .any(|term| clause.contains(term));
+        // An interrogative complement does not assert exclusivity, even when
+        // its uncertainty predicate follows a comma in the next clause.
         let uncertain = [
+            "かどうか",
             "断定できません",
             "断定できない",
             "確認できません",
@@ -572,6 +577,30 @@ mod tests {
             scoped_preview(ordinary, &valid, &context)["answer"],
             json!(["バスのデータを取り込み"])
         );
+    }
+    #[test]
+    fn scope_adverbs_and_uncertainty_keep_their_predicates() {
+        let valid = HashSet::from(["p1"]);
+        let context = vec![json!({"citation":"p1","kind":"pr"})];
+        for (text, excluded) in [
+            ("都営バスのみが現在の対応対象です。", true),
+            ("Only Acme buses are currently supported.", true),
+            ("Only Acme buses are still supported today.", true),
+            (
+                "都営バスのみ対応しているかどうかは、確認できません。",
+                false,
+            ),
+            ("都営バスのみ対応しており、他社は確認できません。", true),
+        ] {
+            assert_eq!(current_scope_assertion(text), excluded, "{text}");
+            let input = json!({"claims":[{"text":text,"citations":["p1"]}]}).to_string();
+            let draft = scoped_preview(&input, &valid, &context);
+            assert_eq!(
+                draft["answer"].as_array().unwrap().is_empty(),
+                excluded,
+                "{text}"
+            );
+        }
     }
     #[test]
     fn context_preserves_dates_and_includes_distinct_sources_before_extra_passages() {
