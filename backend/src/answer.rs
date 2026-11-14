@@ -130,6 +130,28 @@ pub fn preview(input: &str, valid: &HashSet<&str>) -> Value {
 // A historical ticket is not sufficient evidence for a present-day exclusion.
 // This intentionally recognizes a narrow set of scope assertions, not arbitrary
 // semantic contradictions. Keep historical attribution and uncertainty intact.
+// Split coordinated English predicates, but keep shared subjects/objects such
+// as "Only iOS and Android GPS are supported" in the same clause.
+fn coordinated_clauses(clause: &str) -> Vec<&str> {
+    static AND: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\band\b").unwrap());
+    static PREDICATE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(
+        r"\b(?:is|are|was|were|supports?|remains?|seems?|appears?|can|cannot|could|will|would|does|do|did|has|have|had)\b"
+    ).unwrap()
+    });
+    let mut result = Vec::new();
+    let mut start = 0;
+    for boundary in AND.find_iter(clause) {
+        let left = &clause[start..boundary.start()];
+        let right = &clause[boundary.end()..];
+        if PREDICATE.is_match(left) && PREDICATE.is_match(right) {
+            result.push(left);
+            start = boundary.end();
+        }
+    }
+    result.push(&clause[start..]);
+    result
+}
 fn current_scope_assertion(text: &str) -> bool {
     // Temporal adverbs can sit between the subject and predicate. Split only
     // at punctuation/conjunctions or an explicit Japanese predicate transition.
@@ -142,72 +164,75 @@ fn current_scope_assertion(text: &str) -> bool {
         Regex::new(r"のみ|だけ|しか|以外|その他|\b(?:only|exclusively|no other)\b").unwrap()
     });
     let text = text.to_lowercase();
-    CLAUSES.split(&text).any(|clause| {
-        let attributed = [
-            "当時",
-            "過去の",
-            "prでは",
-            "issueでは",
-            "と記載",
-            "と書かれ",
-            "at the time",
-            "the pr stated",
-            "the issue stated",
-            "対応していました",
-            "対応していた",
-            "対象でした",
-            "サポートしていました",
-            "was supported",
-            "were supported",
-            "used to support",
-        ]
-        .iter()
-        .any(|term| clause.contains(term));
-        // An interrogative complement does not assert exclusivity, even when
-        // its uncertainty predicate follows a comma in the next clause.
-        let uncertain = [
-            "かどうか",
-            "断定できません",
-            "断定できない",
-            "確認できません",
-            "確認できない",
-            "不明",
-            "とは限ら",
-            "cannot confirm",
-            "unclear",
-            "unknown",
-        ]
-        .iter()
-        .any(|term| clause.contains(term));
-        let support = [
-            "対応",
-            "対象",
-            "サポート",
-            "利用可能",
-            "supported",
-            "supports",
-            "available",
-        ]
-        .iter()
-        .any(|term| clause.contains(term));
-        // Remove nonexclusive constructions locally, not the whole sentence:
-        // a following clause may still make an unsupported exclusion.
-        let mut scope = clause.to_string();
-        for phrase in [
-            "だけでなく",
-            "だけではなく",
-            "のみならず",
-            "のみではなく",
-            "以外にも",
-            "以外も",
-            "その他にも",
-            "その他も",
-            "not only",
-        ] {
-            scope = scope.replace(phrase, "");
-        }
-        support && EXCLUSIVE.is_match(&scope) && !attributed && !uncertain
-    })
+    CLAUSES
+        .split(&text)
+        .flat_map(coordinated_clauses)
+        .any(|clause| {
+            let attributed = [
+                "当時",
+                "過去の",
+                "prでは",
+                "issueでは",
+                "と記載",
+                "と書かれ",
+                "at the time",
+                "the pr stated",
+                "the issue stated",
+                "対応していました",
+                "対応していた",
+                "対象でした",
+                "サポートしていました",
+                "was supported",
+                "were supported",
+                "used to support",
+            ]
+            .iter()
+            .any(|term| clause.contains(term));
+            // An interrogative complement does not assert exclusivity, even when
+            // its uncertainty predicate follows a comma in the next clause.
+            let uncertain = [
+                "かどうか",
+                "断定できません",
+                "断定できない",
+                "確認できません",
+                "確認できない",
+                "不明",
+                "とは限ら",
+                "cannot confirm",
+                "unclear",
+                "unknown",
+            ]
+            .iter()
+            .any(|term| clause.contains(term));
+            let support = [
+                "対応",
+                "対象",
+                "サポート",
+                "利用可能",
+                "supported",
+                "supports",
+                "available",
+            ]
+            .iter()
+            .any(|term| clause.contains(term));
+            // Remove nonexclusive constructions locally, not the whole sentence:
+            // a following clause may still make an unsupported exclusion.
+            let mut scope = clause.to_string();
+            for phrase in [
+                "だけでなく",
+                "だけではなく",
+                "のみならず",
+                "のみではなく",
+                "以外にも",
+                "以外も",
+                "その他にも",
+                "その他も",
+                "not only",
+            ] {
+                scope = scope.replace(phrase, "");
+            }
+            support && EXCLUSIVE.is_match(&scope) && !attributed && !uncertain
+        })
 }
 fn historical_scope_only(text: &str, citations: &Value, context: &[Value]) -> bool {
     current_scope_assertion(text)
@@ -577,6 +602,43 @@ mod tests {
             scoped_preview(ordinary, &valid, &context)["answer"],
             json!(["バスのデータを取り込み"])
         );
+    }
+    #[test]
+    fn independent_english_predicates_do_not_share_uncertainty() {
+        let valid = HashSet::from(["p1"]);
+        let context = vec![json!({"citation":"p1","kind":"pr"})];
+        for text in [
+            "The release date is unknown and currently only iOS GPS is supported.",
+            "Only iOS GPS is supported and the release date is unknown.",
+            "Only iOS and Android GPS are currently supported.",
+            "The release date is unknown and only iOS and Android GPS are supported.",
+        ] {
+            assert!(current_scope_assertion(text), "{text}");
+            let input = json!({"claims":[{"text":text,"citations":["p1"]}]}).to_string();
+            assert_eq!(
+                scoped_preview(&input, &valid, &context)["answer"],
+                json!([]),
+                "{text}"
+            );
+        }
+        assert_eq!(
+            coordinated_clauses("only ios and android gps are supported").len(),
+            1
+        );
+        assert_eq!(
+            coordinated_clauses("gps is supported on ios and android").len(),
+            1
+        );
+        assert_eq!(
+            coordinated_clauses(
+                "the release date is unknown and currently only ios gps is supported"
+            )
+            .len(),
+            2
+        );
+        assert!(!current_scope_assertion(
+            "Whether only iOS and Android GPS are supported is unknown."
+        ));
     }
     #[test]
     fn scope_adverbs_and_uncertainty_keep_their_predicates() {
