@@ -127,7 +127,92 @@ pub fn preview(input: &str, valid: &HashSet<&str>) -> Value {
     let markup: Vec<_> = parts.iter().map(|text| crate::api::html(text)).collect();
     json!({"answer":parts,"answer_html":markup,"answer_citations":citations})
 }
-async fn collect(h: &impl Host, ids: &[Value]) -> Result<Value> {
+// A historical ticket is not sufficient evidence for a present-day exclusion.
+// This intentionally recognizes a narrow set of scope assertions, not arbitrary
+// semantic contradictions. Keep historical attribution and uncertainty intact.
+fn current_scope_assertion(text: &str) -> bool {
+    let text = text.to_lowercase();
+    text.split(['。', '\n', '.', '!', '?']).any(|sentence| {
+        let attributed = [
+            "当時",
+            "過去の",
+            "prでは",
+            "issueでは",
+            "と記載",
+            "と書かれ",
+            "at the time",
+            "the pr stated",
+            "the issue stated",
+        ]
+        .iter()
+        .any(|term| sentence.contains(term));
+        let uncertain = [
+            "断定でき",
+            "確認でき",
+            "不明",
+            "とは限ら",
+            "cannot confirm",
+            "unclear",
+            "unknown",
+        ]
+        .iter()
+        .any(|term| sentence.contains(term));
+        let support = [
+            "対応",
+            "対象",
+            "サポート",
+            "利用可能",
+            "supported",
+            "supports",
+            "available",
+        ]
+        .iter()
+        .any(|term| sentence.contains(term));
+        let exclusive = [
+            "のみ",
+            "だけ",
+            "しか",
+            "以外",
+            "その他",
+            "only",
+            "exclusively",
+            "no other",
+        ]
+        .iter()
+        .any(|term| sentence.contains(term));
+        support && exclusive && !attributed && !uncertain
+    })
+}
+fn historical_scope_only(text: &str, citations: &Value, context: &[Value]) -> bool {
+    current_scope_assertion(text)
+        && !context.iter().any(|p| {
+            p["kind"] == "doc"
+                && citations
+                    .as_array()
+                    .is_some_and(|ids| ids.contains(&p["citation"]))
+        })
+}
+fn scoped_preview(input: &str, valid: &HashSet<&str>, context: &[Value]) -> Value {
+    let mut draft = preview(input, valid);
+    let mut texts = Vec::new();
+    let mut html = Vec::new();
+    let mut citations = Vec::new();
+    for (i, text) in draft["answer"].as_array().unwrap().iter().enumerate() {
+        let ids = &draft["answer_citations"][i];
+        // Hold scope assertions until citations establish their source kind.
+        // Ordinary prose continues streaming without waiting for a full claim.
+        if !historical_scope_only(text.as_str().unwrap_or_default(), ids, context) {
+            texts.push(text.clone());
+            html.push(draft["answer_html"][i].clone());
+            citations.push(ids.clone());
+        }
+    }
+    draft["answer"] = json!(texts);
+    draft["answer_html"] = json!(html);
+    draft["answer_citations"] = json!(citations);
+    draft
+}
+async fn collect(h: &impl Host, ids: &[Value], context: &[Value]) -> Result<Value> {
     let valid: HashSet<_> = ids.iter().filter_map(Value::as_str).collect();
     let mut pending = String::new();
     let mut lines = Vec::new();
@@ -185,7 +270,7 @@ async fn collect(h: &impl Host, ids: &[Value]) -> Result<Value> {
             }
             let due = done || now() - last >= 100.;
             if content.len() != published && (due || content[published..].contains('}')) {
-                let draft = preview(&content, &valid);
+                let draft = scoped_preview(&content, &valid, context);
                 // Completed citations must not wait for another model token or DONE.
                 if due || draft["answer_citations"] != published_citations {
                     last = now();
@@ -333,7 +418,7 @@ pub async fn answer(
    if let Some(base)=base.as_ref(){let response=h.call("fetch_stream",json!({"url":base,"headers":{"Authorization":format!("Bearer {}",c.answer_api_key),"Content-Type":"application/json"},"body":input})).await?;
     let status=response["status"].as_u64().unwrap_or(502);if !(200..300).contains(&status){return Err(Error::new(502,format!("upstream_http_{status}")));}
    }else{h.call("ai_stream",json!({"model":MODEL,"input":input})).await?;}
-   let result=collect(h, &ids).await;let _=h.call("stream_cancel",Value::Null).await;result
+   let result=collect(h, &ids, &context).await;let _=h.call("stream_cancel",Value::Null).await;result
   }else if let Some(base)=base.as_ref(){github::parse_response(&github::fetch(h,base,"POST",json!({"Authorization":format!("Bearer {}",c.answer_api_key),"Content-Type":"application/json"}),input,2_000_000).await?)}
   else{h.call("ai",json!({"model":MODEL,"input":input})).await}
  }.await;
@@ -362,7 +447,13 @@ pub async fn answer(
         .filter_map(|v| read_claim(v, &valid))
         .collect();
     let verify_start = now();
-    let verification = decision(json!({"op":"verify","evidence":context,"claims":claims}))?;
+    let mut verification = decision(json!({"op":"verify","evidence":context,"claims":claims}))?;
+    for (i, claim) in claims.iter().enumerate() {
+        if historical_scope_only(s(claim, "text"), &claim["citations"], &context) {
+            verification["claims"][i] = json!(0);
+            verification["reasons"][i] = json!("current_scope_not_established");
+        }
+    }
     traces.push(trace("verify_answer", claims.len(), vec![], verify_start));
     let threshold = bounded(c.support_threshold.as_deref(), 0.85, 0., 1.)?;
     bounded(c.conflict_threshold.as_deref(), 0.7, 0., 1.)?;
@@ -404,6 +495,54 @@ pub async fn answer(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn historical_scope_guard_applies_to_each_sentence_and_keeps_attribution() {
+        for text in [
+            "都営バスのみに対応しています。",
+            "その他のバス路線は対象外です。",
+            "Only Acme buses are supported.",
+            "過去のPRがあります。現在は都営バスだけが対象です。",
+        ] {
+            assert!(current_scope_assertion(text), "{text}");
+        }
+        for text in [
+            "当時は都営バスのみに対応していました。",
+            "都営バスのみ対応とは断定できません。",
+            "PRでは都営バスのみ対応と記載されています。",
+            "At the time only Acme buses were supported.",
+            "都営バスと西武バスのデータを取り込みます。",
+        ] {
+            assert!(!current_scope_assertion(text), "{text}");
+        }
+    }
+    #[test]
+    fn streaming_scope_guard_holds_unattributed_and_historical_only_scope() {
+        let valid = HashSet::from(["p1", "p2"]);
+        let context = vec![
+            json!({"citation":"p1","kind":"pr"}),
+            json!({"citation":"p2","kind":"doc"}),
+        ];
+        let bad = r#"{"claims":[{"text":"都営バスのみに対応しています。","citations":["p1"]}]}"#;
+        assert_eq!(scoped_preview(bad, &valid, &context)["answer"], json!([]));
+        let good = bad.replace("[\"p1\"]", "[\"p2\"]");
+        assert_eq!(
+            scoped_preview(&good, &valid, &context)["answer"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
+        let partial = r#"{"claims":[{"text":"都営バスのみに対応しています。"#;
+        assert_eq!(
+            scoped_preview(partial, &valid, &context)["answer"],
+            json!([])
+        );
+        let ordinary = r#"{"claims":[{"text":"バスのデータを取り込み"#;
+        assert_eq!(
+            scoped_preview(ordinary, &valid, &context)["answer"],
+            json!(["バスのデータを取り込み"])
+        );
+    }
     #[test]
     fn context_preserves_dates_and_includes_distinct_sources_before_extra_passages() {
         let mut all: Vec<_> = (1..=22)
