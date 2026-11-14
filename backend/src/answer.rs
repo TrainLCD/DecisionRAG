@@ -131,8 +131,16 @@ pub fn preview(input: &str, valid: &HashSet<&str>) -> Value {
 // This intentionally recognizes a narrow set of scope assertions, not arbitrary
 // semantic contradictions. Keep historical attribution and uncertainty intact.
 fn current_scope_assertion(text: &str) -> bool {
+    static CLAUSES: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(
+        r"[。\n.!?、,;；]|ですが|けれど|しかし|一方|現在|現状|今は|今も|引き続き|\b(?:but|however|currently|now|still|today)\b"
+    ).unwrap()
+    });
+    static EXCLUSIVE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"のみ|だけ|しか|以外|その他|\b(?:only|exclusively|no other)\b").unwrap()
+    });
     let text = text.to_lowercase();
-    text.split(['。', '\n', '.', '!', '?']).any(|sentence| {
+    CLAUSES.split(&text).any(|clause| {
         let attributed = [
             "当時",
             "過去の",
@@ -143,12 +151,21 @@ fn current_scope_assertion(text: &str) -> bool {
             "at the time",
             "the pr stated",
             "the issue stated",
+            "対応していました",
+            "対応していた",
+            "対象でした",
+            "サポートしていました",
+            "was supported",
+            "were supported",
+            "used to support",
         ]
         .iter()
-        .any(|term| sentence.contains(term));
+        .any(|term| clause.contains(term));
         let uncertain = [
-            "断定でき",
-            "確認でき",
+            "断定できません",
+            "断定できない",
+            "確認できません",
+            "確認できない",
             "不明",
             "とは限ら",
             "cannot confirm",
@@ -156,7 +173,7 @@ fn current_scope_assertion(text: &str) -> bool {
             "unknown",
         ]
         .iter()
-        .any(|term| sentence.contains(term));
+        .any(|term| clause.contains(term));
         let support = [
             "対応",
             "対象",
@@ -167,20 +184,24 @@ fn current_scope_assertion(text: &str) -> bool {
             "available",
         ]
         .iter()
-        .any(|term| sentence.contains(term));
-        let exclusive = [
-            "のみ",
-            "だけ",
-            "しか",
-            "以外",
-            "その他",
-            "only",
-            "exclusively",
-            "no other",
-        ]
-        .iter()
-        .any(|term| sentence.contains(term));
-        support && exclusive && !attributed && !uncertain
+        .any(|term| clause.contains(term));
+        // Remove nonexclusive constructions locally, not the whole sentence:
+        // a following clause may still make an unsupported exclusion.
+        let mut scope = clause.to_string();
+        for phrase in [
+            "だけでなく",
+            "だけではなく",
+            "のみならず",
+            "のみではなく",
+            "以外にも",
+            "以外も",
+            "その他にも",
+            "その他も",
+            "not only",
+        ] {
+            scope = scope.replace(phrase, "");
+        }
+        support && EXCLUSIVE.is_match(&scope) && !attributed && !uncertain
     })
 }
 fn historical_scope_only(text: &str, citations: &Value, context: &[Value]) -> bool {
@@ -501,12 +522,21 @@ mod tests {
             "都営バスのみに対応しています。",
             "その他のバス路線は対象外です。",
             "Only Acme buses are supported.",
+            "都営バスのみ対応していると確認できます。",
+            "当時は都営バスのみ対応でしたが、現在も都営バスのみ対応しています。",
+            "当時は都営バスのみ対応で今も都営バスのみ対応しています。",
+            "都営バスだけでなく西武バスにも対応しますが、その他のバスは対象外です。",
             "過去のPRがあります。現在は都営バスだけが対象です。",
         ] {
             assert!(current_scope_assertion(text), "{text}");
         }
         for text in [
             "当時は都営バスのみに対応していました。",
+            "都営バスのみに対応していました。",
+            "都営バスのみに対応しているとは確認できません。",
+            "都営バスだけでなく西武バスにも対応しています。",
+            "都営バス以外にも対応しています。",
+            "Not only Acme buses are supported.",
             "都営バスのみ対応とは断定できません。",
             "PRでは都営バスのみ対応と記載されています。",
             "At the time only Acme buses were supported.",

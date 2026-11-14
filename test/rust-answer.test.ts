@@ -10,6 +10,11 @@ for (const stream of [false, true]) {
     { name: 'supported paraphrase', source: 'GPS位置情報を更新する処理を修正した。', text: 'GPS位置情報の更新を修正しています。', accepted: true },
     { name: 'related paraphrase with unknown entailment', source: '背景で新しい測位が10秒以上届かない場合だけ、別の背景対応CLLocationManagerで補完します。', text: 'iOSでは、背景での通常測位が10秒以上途絶した場合にのみ、別のCLLocationManagerを使用して補完測位を開始する仕組みになっています。', accepted: true },
     { name: 'historical-only current scope', kind: 'pr', source: 'GPS位置情報はiOSのみに対応しています。', text: 'GPS位置情報はiOSのみに対応しています。', accepted: false },
+    { name: 'past scope attribution', kind: 'pr', source: 'GPS位置情報はiOSのみに対応していました。', text: 'GPS位置情報はiOSのみに対応していました。', accepted: true },
+    { name: 'nonexclusive scope', kind: 'pr', source: 'GPS位置情報はiOSだけでなくAndroidにも対応しています。', text: 'GPS位置情報はiOSだけでなくAndroidにも対応しています。', accepted: true },
+    { name: 'scope uncertainty', kind: 'pr', source: 'GPS位置情報がiOSのみ対応とは確認できません。', text: 'GPS位置情報がiOSのみ対応とは確認できません。', accepted: true },
+    { name: 'affirmed scope', kind: 'pr', source: 'GPS位置情報がiOSのみ対応と確認できます。', text: 'GPS位置情報がiOSのみ対応と確認できます。', accepted: false },
+    { name: 'mixed historical and current scope', kind: 'pr', source: '当時はGPS位置情報がiOSのみ対応でしたが、現在もiOSのみ対応しています。', text: '当時はGPS位置情報がiOSのみ対応でしたが、現在もiOSのみ対応しています。', accepted: false },
     { name: 'document-backed current scope', kind: 'doc', source: 'GPS位置情報はiOSのみに対応しています。', text: 'GPS位置情報はiOSのみに対応しています。', accepted: true },
     { name: 'negation reversal', source: 'バックグラウンドではGPS位置情報を更新しない。', text: 'バックグラウンドではGPS位置情報を更新する。', accepted: false },
     { name: 'invented release', source: 'GPS位置情報を更新する処理を修正した。', text: 'GPS位置情報の更新修正をApp Storeで配信済みです。', accepted: false },
@@ -41,7 +46,8 @@ for (const stream of [false, true]) {
           assert.match(wire, /event: draft/);
           const preview = JSON.parse(wire.split('event: draft\ndata: ')[1]!.split('\n\n')[0]!);
           assert.equal(preview.summaries, undefined);
-          if (scenario.name === 'historical-only current scope') assert.deepEqual(preview.answer, []);
+          if (['historical-only current scope', 'affirmed scope', 'mixed historical and current scope'].includes(scenario.name)) assert.deepEqual(preview.answer, []);
+          if (scenario.accepted) assert.ok(preview.answer.join('\n').includes(scenario.text));
           result = JSON.parse(wire.split('event: result\ndata: ')[1]!.trim());
         } else result = await response.json();
         if (scenario.accepted) {
