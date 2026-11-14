@@ -139,12 +139,23 @@ fn coordinated_clauses(clause: &str) -> Vec<&str> {
         r"\b(?:is|are|was|were|supports?|remains?|seems?|appears?|can|cannot|could|will|would|does|do|did|has|have|had)\b"
     ).unwrap()
     });
+    static WHETHER: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\bwhether\b").unwrap());
+    static CLOSED_COMPLEMENT: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"\b(?:is|was|remains?)\s+(?:unknown|unclear|unconfirmed|not known)\s*$")
+            .unwrap()
+    });
     let mut result = Vec::new();
     let mut start = 0;
     for boundary in AND.find_iter(clause) {
         let left = &clause[start..boundary.start()];
         let right = &clause[boundary.end()..];
-        if PREDICATE.is_match(left) && PREDICATE.is_match(right) {
+        // Coordination within an open whether-complement shares its matrix
+        // uncertainty ("It is unclear whether X and Y"). A trailing matrix
+        // predicate closes subject complements ("Whether X is unknown and Y").
+        let open_complement = WHETHER
+            .find(left)
+            .is_some_and(|marker| !CLOSED_COMPLEMENT.is_match(&left[marker.end()..]));
+        if !open_complement && PREDICATE.is_match(left) && PREDICATE.is_match(right) {
             result.push(left);
             start = boundary.end();
         }
@@ -639,6 +650,48 @@ mod tests {
         assert!(!current_scope_assertion(
             "Whether only iOS and Android GPS are supported is unknown."
         ));
+    }
+    #[test]
+    fn whether_complements_share_uncertainty_without_hiding_later_main_clauses() {
+        let valid = HashSet::from(["p1"]);
+        let context = vec![json!({"citation":"p1","kind":"pr"})];
+        for (text, excluded) in [
+            (
+                "It is unclear whether only iOS GPS is supported and only Android GPS is available.",
+                false,
+            ),
+            (
+                "Whether only iOS GPS is supported and only Android GPS is available is unknown.",
+                false,
+            ),
+            (
+                "The date is unknown and it is unclear whether only iOS GPS is supported and only Android GPS is available.",
+                false,
+            ),
+            (
+                "Whether only iOS GPS is supported is unknown and currently only Android GPS is available.",
+                true,
+            ),
+            (
+                "It is unclear whether only iOS GPS is supported; currently only Android GPS is available.",
+                true,
+            ),
+            (
+                "The date is unknown and currently only iOS GPS is supported.",
+                true,
+            ),
+        ] {
+            assert_eq!(current_scope_assertion(text), excluded, "{text}");
+            let input = json!({"claims":[{"text":text,"citations":["p1"]}]}).to_string();
+            assert_eq!(
+                scoped_preview(&input, &valid, &context)["answer"]
+                    .as_array()
+                    .unwrap()
+                    .is_empty(),
+                excluded,
+                "{text}"
+            );
+        }
     }
     #[test]
     fn scope_adverbs_and_uncertainty_keep_their_predicates() {
