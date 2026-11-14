@@ -21,6 +21,8 @@ for (const stream of [false, true]) {
           assert.deepEqual(input.response_format.json_schema.schema.required, ['claims']);
           assert.equal(input.response_format.json_schema.schema.properties.summaries, undefined);
           const user = JSON.parse(input.messages[1].content.split('\n\n')[0]);
+          assert.equal(user.evidence[0].updated_at, '2026-11-12');
+          assert.deepEqual(user.evidence_scope, { retrieved_passages: 1, included_passages: 1, exhaustive: false });
           const citation = user.evidence[0].citation;
           const content = JSON.stringify({ claims: [{ text: scenario.text, citations: [citation] }], summaries: [{ source_id: 'doc', text: scenario.text, citations: [citation] }] });
           if (!stream) return { choices: [{ message: { content } }] };

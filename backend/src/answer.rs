@@ -253,6 +253,38 @@ fn format_claim(claim: &Value) -> String {
             .join(" ")
     )
 }
+// Preserve search ranking for the UI, but give generation distinct sources before
+// filling remaining slots with additional passages from those sources.
+fn answer_context(all: &[Value]) -> Vec<Value> {
+    let mut sources = HashSet::new();
+    let mut selected = Vec::new();
+    let mut remaining = Vec::new();
+    for p in all {
+        let key = p["source_id"]
+            .as_str()
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| s(p, "citation"));
+        if sources.insert(key) {
+            selected.push(p);
+        } else {
+            remaining.push(p);
+        }
+    }
+    selected.extend(remaining);
+    selected
+        .into_iter()
+        .take(20)
+        .map(|p| {
+            json!({
+                "citation": p["citation"], "source_id": p["source_id"],
+                "repo": p["repo"], "title": p["title"], "text": p["text"],
+                "kind": p["kind"], "metadata": p["metadata"],
+                "updated_at": p["updated_at"]
+            })
+        })
+        .collect()
+}
+
 pub async fn answer(
     h: &impl Host,
     c: &Config,
@@ -264,13 +296,13 @@ pub async fn answer(
     if all.is_empty() {
         return Ok(json!({"status":"insufficient_evidence","answer":null,"citations":[]}));
     }
-    let context:Vec<_>=all.iter().take(20).map(|p|json!({"citation":p["citation"],"source_id":p["source_id"],"repo":p["repo"],"title":p["title"],"text":p["text"],"kind":p["kind"],"metadata":p["metadata"]})).collect();
+    let context = answer_context(all);
     let external = !c.answer_api_key.is_empty() && !c.answer_model.is_empty();
     if !external && !c.ai {
         return fallback();
     }
     let ids: Vec<_> = context.iter().map(|p| p["citation"].clone()).collect();
-    let messages = json!([{"role":"system","content":include_str!("instructions.txt")},{"role":"user","content":format!("{}\n\n{}",json!({"query":query,"evidence":context}),include_str!("writingGuide.txt"))}]);
+    let messages = json!([{"role":"system","content":include_str!("instructions.txt")},{"role":"user","content":format!("{}\n\n{}",json!({"query":query,"evidence":context,"evidence_scope":{"retrieved_passages":all.len(),"included_passages":context.len(),"exhaustive":false}}),include_str!("writingGuide.txt"))}]);
     let base = if external {
         let parsed = url::Url::parse(if c.answer_base_url.is_empty() {
             "https://api.openai.com/v1"
@@ -372,6 +404,46 @@ pub async fn answer(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn context_preserves_dates_and_includes_distinct_sources_before_extra_passages() {
+        let mut all: Vec<_> = (1..=22)
+            .map(|i| {
+                json!({
+                    "citation": format!("p{i}"), "source_id": "old-pr", "kind": "pr",
+                    "updated_at": "2026-11-14", "metadata": {"merged_at": "2026-01-01"},
+                    "text": "都営バスのみ対応"
+                })
+            })
+            .collect();
+        all.push(
+            json!({"citation":"p23","source_id":"current-doc","kind":"doc",
+            "updated_at":"2026-11-13","metadata":{"commit":"abc"},
+            "text":"都営バス、群馬バスに対応"}),
+        );
+        let original = all.clone();
+        let context = answer_context(&all);
+        assert_eq!(context.len(), 20);
+        assert_eq!(context[0]["citation"], "p1");
+        assert_eq!(context[1]["citation"], "p23");
+        assert_eq!(context[1]["updated_at"], "2026-11-13");
+        assert_eq!(context[0]["metadata"]["merged_at"], "2026-01-01");
+        assert_eq!(context[1]["metadata"]["commit"], "abc");
+        assert_eq!(
+            all, original,
+            "UI ordering and citation IDs must not change"
+        );
+    }
+    #[test]
+    fn context_keeps_available_passages_and_does_not_merge_missing_source_ids() {
+        let all = vec![json!({"citation":"p1"}), json!({"citation":"p2"})];
+        assert_eq!(answer_context(&all).len(), 2);
+        assert!(answer_context(&[]).is_empty());
+        let all: Vec<_> = (0..25)
+            .map(|i| json!({"source_id":format!("s{i}"),"citation":format!("p{i}")}))
+            .collect();
+        assert_eq!(answer_context(&all).len(), 20);
+        assert_eq!(answer_context(&all)[19]["citation"], "p19");
+    }
     #[test]
     fn only_answers_are_requested_and_streamed() {
         let schema = schema(&[json!("p1")]);
