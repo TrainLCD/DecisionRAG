@@ -127,7 +127,154 @@ pub fn preview(input: &str, valid: &HashSet<&str>) -> Value {
     let markup: Vec<_> = parts.iter().map(|text| crate::api::html(text)).collect();
     json!({"answer":parts,"answer_html":markup,"answer_citations":citations})
 }
-async fn collect(h: &impl Host, ids: &[Value]) -> Result<Value> {
+// A historical ticket is not sufficient evidence for a present-day exclusion.
+// This intentionally recognizes a narrow set of scope assertions, not arbitrary
+// semantic contradictions. Keep historical attribution and uncertainty intact.
+// Split coordinated English predicates, but keep shared subjects/objects such
+// as "Only iOS and Android GPS are supported" in the same clause.
+fn coordinated_clauses(clause: &str) -> Vec<&str> {
+    static AND: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\band\b").unwrap());
+    static PREDICATE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(
+        r"\b(?:is|are|was|were|supports?|remains?|seems?|appears?|can|cannot|could|will|would|does|do|did|has|have|had)\b"
+    ).unwrap()
+    });
+    static WHETHER: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\bwhether\b").unwrap());
+    static CLOSED_COMPLEMENT: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"\b(?:is|was|remains?)\s+(?:(?:still|currently|now|also|yet)\s+)*(?:unknown|unclear|unconfirmed|not known)\s*$")
+            .unwrap()
+    });
+    let mut result = Vec::new();
+    let mut start = 0;
+    for boundary in AND.find_iter(clause) {
+        let left = &clause[start..boundary.start()];
+        let right = &clause[boundary.end()..];
+        // Coordination within an open whether-complement shares its matrix
+        // uncertainty ("It is unclear whether X and Y"). A trailing matrix
+        // predicate closes subject complements ("Whether X is unknown and Y").
+        let open_complement = WHETHER
+            .find(left)
+            .is_some_and(|marker| !CLOSED_COMPLEMENT.is_match(&left[marker.end()..]));
+        if !open_complement && PREDICATE.is_match(left) && PREDICATE.is_match(right) {
+            result.push(left);
+            start = boundary.end();
+        }
+    }
+    result.push(&clause[start..]);
+    result
+}
+fn current_scope_assertion(text: &str) -> bool {
+    // Temporal adverbs can sit between the subject and predicate. Split only
+    // at punctuation/conjunctions or an explicit Japanese predicate transition.
+    static CLAUSES: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(
+        r"[。\n.!?、,;；]|ですが|けれど|しかし|一方|(?:でしたが|していましたが|対応で)(?:現在|現状|今は|今も|引き続き)|\b(?:but|however)\b"
+    ).unwrap()
+    });
+    static EXCLUSIVE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"のみ|だけ|しか|以外|その他|\b(?:only|exclusively|no other)\b").unwrap()
+    });
+    let text = text.to_lowercase();
+    CLAUSES
+        .split(&text)
+        .flat_map(coordinated_clauses)
+        .any(|clause| {
+            let attributed = [
+                "当時",
+                "過去の",
+                "prでは",
+                "issueでは",
+                "と記載",
+                "と書かれ",
+                "at the time",
+                "the pr stated",
+                "the issue stated",
+                "対応していました",
+                "対応していた",
+                "対象でした",
+                "サポートしていました",
+                "was supported",
+                "were supported",
+                "used to support",
+            ]
+            .iter()
+            .any(|term| clause.contains(term));
+            // An interrogative complement does not assert exclusivity, even when
+            // its uncertainty predicate follows a comma in the next clause.
+            let uncertain = [
+                "かどうか",
+                "断定できません",
+                "断定できない",
+                "確認できません",
+                "確認できない",
+                "不明",
+                "とは限ら",
+                "cannot confirm",
+                "unclear",
+                "unknown",
+            ]
+            .iter()
+            .any(|term| clause.contains(term));
+            let support = [
+                "対応",
+                "対象",
+                "サポート",
+                "利用可能",
+                "supported",
+                "supports",
+                "available",
+            ]
+            .iter()
+            .any(|term| clause.contains(term));
+            // Remove nonexclusive constructions locally, not the whole sentence:
+            // a following clause may still make an unsupported exclusion.
+            let mut scope = clause.to_string();
+            for phrase in [
+                "だけでなく",
+                "だけではなく",
+                "のみならず",
+                "のみではなく",
+                "以外にも",
+                "以外も",
+                "その他にも",
+                "その他も",
+                "not only",
+            ] {
+                scope = scope.replace(phrase, "");
+            }
+            support && EXCLUSIVE.is_match(&scope) && !attributed && !uncertain
+        })
+}
+fn historical_scope_only(text: &str, citations: &Value, context: &[Value]) -> bool {
+    current_scope_assertion(text)
+        && !context.iter().any(|p| {
+            p["kind"] == "doc"
+                && citations
+                    .as_array()
+                    .is_some_and(|ids| ids.contains(&p["citation"]))
+        })
+}
+fn scoped_preview(input: &str, valid: &HashSet<&str>, context: &[Value]) -> Value {
+    let mut draft = preview(input, valid);
+    let mut texts = Vec::new();
+    let mut html = Vec::new();
+    let mut citations = Vec::new();
+    for (i, text) in draft["answer"].as_array().unwrap().iter().enumerate() {
+        let ids = &draft["answer_citations"][i];
+        // Hold scope assertions until citations establish their source kind.
+        // Ordinary prose continues streaming without waiting for a full claim.
+        if !historical_scope_only(text.as_str().unwrap_or_default(), ids, context) {
+            texts.push(text.clone());
+            html.push(draft["answer_html"][i].clone());
+            citations.push(ids.clone());
+        }
+    }
+    draft["answer"] = json!(texts);
+    draft["answer_html"] = json!(html);
+    draft["answer_citations"] = json!(citations);
+    draft
+}
+async fn collect(h: &impl Host, ids: &[Value], context: &[Value]) -> Result<Value> {
     let valid: HashSet<_> = ids.iter().filter_map(Value::as_str).collect();
     let mut pending = String::new();
     let mut lines = Vec::new();
@@ -185,7 +332,7 @@ async fn collect(h: &impl Host, ids: &[Value]) -> Result<Value> {
             }
             let due = done || now() - last >= 100.;
             if content.len() != published && (due || content[published..].contains('}')) {
-                let draft = preview(&content, &valid);
+                let draft = scoped_preview(&content, &valid, context);
                 // Completed citations must not wait for another model token or DONE.
                 if due || draft["answer_citations"] != published_citations {
                     last = now();
@@ -253,6 +400,38 @@ fn format_claim(claim: &Value) -> String {
             .join(" ")
     )
 }
+// Preserve search ranking for the UI, but give generation distinct sources before
+// filling remaining slots with additional passages from those sources.
+fn answer_context(all: &[Value]) -> Vec<Value> {
+    let mut sources = HashSet::new();
+    let mut selected = Vec::new();
+    let mut remaining = Vec::new();
+    for p in all {
+        let key = p["source_id"]
+            .as_str()
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| s(p, "citation"));
+        if sources.insert(key) {
+            selected.push(p);
+        } else {
+            remaining.push(p);
+        }
+    }
+    selected.extend(remaining);
+    selected
+        .into_iter()
+        .take(20)
+        .map(|p| {
+            json!({
+                "citation": p["citation"], "source_id": p["source_id"],
+                "repo": p["repo"], "title": p["title"], "text": p["text"],
+                "kind": p["kind"], "metadata": p["metadata"],
+                "updated_at": p["updated_at"]
+            })
+        })
+        .collect()
+}
+
 pub async fn answer(
     h: &impl Host,
     c: &Config,
@@ -264,13 +443,13 @@ pub async fn answer(
     if all.is_empty() {
         return Ok(json!({"status":"insufficient_evidence","answer":null,"citations":[]}));
     }
-    let context:Vec<_>=all.iter().take(20).map(|p|json!({"citation":p["citation"],"source_id":p["source_id"],"repo":p["repo"],"title":p["title"],"text":p["text"],"kind":p["kind"],"metadata":p["metadata"]})).collect();
+    let context = answer_context(all);
     let external = !c.answer_api_key.is_empty() && !c.answer_model.is_empty();
     if !external && !c.ai {
         return fallback();
     }
     let ids: Vec<_> = context.iter().map(|p| p["citation"].clone()).collect();
-    let messages = json!([{"role":"system","content":include_str!("instructions.txt")},{"role":"user","content":format!("{}\n\n{}",json!({"query":query,"evidence":context}),include_str!("writingGuide.txt"))}]);
+    let messages = json!([{"role":"system","content":include_str!("instructions.txt")},{"role":"user","content":format!("{}\n\n{}",json!({"query":query,"evidence":context,"evidence_scope":{"retrieved_passages":all.len(),"included_passages":context.len(),"exhaustive":false}}),include_str!("writingGuide.txt"))}]);
     let base = if external {
         let parsed = url::Url::parse(if c.answer_base_url.is_empty() {
             "https://api.openai.com/v1"
@@ -301,7 +480,7 @@ pub async fn answer(
    if let Some(base)=base.as_ref(){let response=h.call("fetch_stream",json!({"url":base,"headers":{"Authorization":format!("Bearer {}",c.answer_api_key),"Content-Type":"application/json"},"body":input})).await?;
     let status=response["status"].as_u64().unwrap_or(502);if !(200..300).contains(&status){return Err(Error::new(502,format!("upstream_http_{status}")));}
    }else{h.call("ai_stream",json!({"model":MODEL,"input":input})).await?;}
-   let result=collect(h, &ids).await;let _=h.call("stream_cancel",Value::Null).await;result
+   let result=collect(h, &ids, &context).await;let _=h.call("stream_cancel",Value::Null).await;result
   }else if let Some(base)=base.as_ref(){github::parse_response(&github::fetch(h,base,"POST",json!({"Authorization":format!("Bearer {}",c.answer_api_key),"Content-Type":"application/json"}),input,2_000_000).await?)}
   else{h.call("ai",json!({"model":MODEL,"input":input})).await}
  }.await;
@@ -330,7 +509,13 @@ pub async fn answer(
         .filter_map(|v| read_claim(v, &valid))
         .collect();
     let verify_start = now();
-    let verification = decision(json!({"op":"verify","evidence":context,"claims":claims}))?;
+    let mut verification = decision(json!({"op":"verify","evidence":context,"claims":claims}))?;
+    for (i, claim) in claims.iter().enumerate() {
+        if historical_scope_only(s(claim, "text"), &claim["citations"], &context) {
+            verification["claims"][i] = json!(0);
+            verification["reasons"][i] = json!("current_scope_not_established");
+        }
+    }
     traces.push(trace("verify_answer", claims.len(), vec![], verify_start));
     let threshold = bounded(c.support_threshold.as_deref(), 0.85, 0., 1.)?;
     bounded(c.conflict_threshold.as_deref(), 0.7, 0., 1.)?;
@@ -372,6 +557,214 @@ pub async fn answer(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn historical_scope_guard_applies_to_each_sentence_and_keeps_attribution() {
+        for text in [
+            "都営バスのみに対応しています。",
+            "その他のバス路線は対象外です。",
+            "Only Acme buses are supported.",
+            "都営バスのみ対応していると確認できます。",
+            "当時は都営バスのみ対応でしたが、現在も都営バスのみ対応しています。",
+            "当時は都営バスのみ対応で今も都営バスのみ対応しています。",
+            "都営バスだけでなく西武バスにも対応しますが、その他のバスは対象外です。",
+            "過去のPRがあります。現在は都営バスだけが対象です。",
+        ] {
+            assert!(current_scope_assertion(text), "{text}");
+        }
+        for text in [
+            "当時は都営バスのみに対応していました。",
+            "都営バスのみに対応していました。",
+            "都営バスのみに対応しているとは確認できません。",
+            "都営バスだけでなく西武バスにも対応しています。",
+            "都営バス以外にも対応しています。",
+            "Not only Acme buses are supported.",
+            "都営バスのみ対応とは断定できません。",
+            "PRでは都営バスのみ対応と記載されています。",
+            "At the time only Acme buses were supported.",
+            "都営バスと西武バスのデータを取り込みます。",
+        ] {
+            assert!(!current_scope_assertion(text), "{text}");
+        }
+    }
+    #[test]
+    fn streaming_scope_guard_holds_unattributed_and_historical_only_scope() {
+        let valid = HashSet::from(["p1", "p2"]);
+        let context = vec![
+            json!({"citation":"p1","kind":"pr"}),
+            json!({"citation":"p2","kind":"doc"}),
+        ];
+        let bad = r#"{"claims":[{"text":"都営バスのみに対応しています。","citations":["p1"]}]}"#;
+        assert_eq!(scoped_preview(bad, &valid, &context)["answer"], json!([]));
+        let good = bad.replace("[\"p1\"]", "[\"p2\"]");
+        assert_eq!(
+            scoped_preview(&good, &valid, &context)["answer"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
+        let partial = r#"{"claims":[{"text":"都営バスのみに対応しています。"#;
+        assert_eq!(
+            scoped_preview(partial, &valid, &context)["answer"],
+            json!([])
+        );
+        let ordinary = r#"{"claims":[{"text":"バスのデータを取り込み"#;
+        assert_eq!(
+            scoped_preview(ordinary, &valid, &context)["answer"],
+            json!(["バスのデータを取り込み"])
+        );
+    }
+    #[test]
+    fn independent_english_predicates_do_not_share_uncertainty() {
+        let valid = HashSet::from(["p1"]);
+        let context = vec![json!({"citation":"p1","kind":"pr"})];
+        for text in [
+            "The release date is unknown and currently only iOS GPS is supported.",
+            "Only iOS GPS is supported and the release date is unknown.",
+            "Only iOS and Android GPS are currently supported.",
+            "The release date is unknown and only iOS and Android GPS are supported.",
+        ] {
+            assert!(current_scope_assertion(text), "{text}");
+            let input = json!({"claims":[{"text":text,"citations":["p1"]}]}).to_string();
+            assert_eq!(
+                scoped_preview(&input, &valid, &context)["answer"],
+                json!([]),
+                "{text}"
+            );
+        }
+        assert_eq!(
+            coordinated_clauses("only ios and android gps are supported").len(),
+            1
+        );
+        assert_eq!(
+            coordinated_clauses("gps is supported on ios and android").len(),
+            1
+        );
+        assert_eq!(
+            coordinated_clauses(
+                "the release date is unknown and currently only ios gps is supported"
+            )
+            .len(),
+            2
+        );
+        assert!(!current_scope_assertion(
+            "Whether only iOS and Android GPS are supported is unknown."
+        ));
+    }
+    #[test]
+    fn whether_complements_share_uncertainty_without_hiding_later_main_clauses() {
+        let valid = HashSet::from(["p1"]);
+        let context = vec![json!({"citation":"p1","kind":"pr"})];
+        for (text, excluded) in [
+            (
+                "It is unclear whether only iOS GPS is supported and only Android GPS is available.",
+                false,
+            ),
+            (
+                "Whether only iOS GPS is supported and only Android GPS is available is unknown.",
+                false,
+            ),
+            (
+                "The date is unknown and it is unclear whether only iOS GPS is supported and only Android GPS is available.",
+                false,
+            ),
+            (
+                "Whether only iOS GPS is supported is unknown and currently only Android GPS is available.",
+                true,
+            ),
+            (
+                "It is unclear whether only iOS GPS is supported; currently only Android GPS is available.",
+                true,
+            ),
+            (
+                "The date is unknown and currently only iOS GPS is supported.",
+                true,
+            ),
+        ] {
+            assert_eq!(current_scope_assertion(text), excluded, "{text}");
+            let input = json!({"claims":[{"text":text,"citations":["p1"]}]}).to_string();
+            assert_eq!(
+                scoped_preview(&input, &valid, &context)["answer"]
+                    .as_array()
+                    .unwrap()
+                    .is_empty(),
+                excluded,
+                "{text}"
+            );
+        }
+    }
+    #[test]
+    fn scope_adverbs_and_uncertainty_keep_their_predicates() {
+        let valid = HashSet::from(["p1"]);
+        let context = vec![json!({"citation":"p1","kind":"pr"})];
+        for (text, excluded) in [
+            ("都営バスのみが現在の対応対象です。", true),
+            (
+                "Whether iOS GPS is supported is still unknown and currently only Android GPS is available.",
+                true,
+            ),
+            (
+                "Whether iOS GPS is supported remains currently unclear and only Android GPS is available.",
+                true,
+            ),
+            ("Only Acme buses are currently supported.", true),
+            ("Only Acme buses are still supported today.", true),
+            (
+                "都営バスのみ対応しているかどうかは、確認できません。",
+                false,
+            ),
+            ("都営バスのみ対応しており、他社は確認できません。", true),
+        ] {
+            assert_eq!(current_scope_assertion(text), excluded, "{text}");
+            let input = json!({"claims":[{"text":text,"citations":["p1"]}]}).to_string();
+            let draft = scoped_preview(&input, &valid, &context);
+            assert_eq!(
+                draft["answer"].as_array().unwrap().is_empty(),
+                excluded,
+                "{text}"
+            );
+        }
+    }
+    #[test]
+    fn context_preserves_dates_and_includes_distinct_sources_before_extra_passages() {
+        let mut all: Vec<_> = (1..=22)
+            .map(|i| {
+                json!({
+                    "citation": format!("p{i}"), "source_id": "old-pr", "kind": "pr",
+                    "updated_at": "2026-11-14", "metadata": {"merged_at": "2026-01-01"},
+                    "text": "都営バスのみ対応"
+                })
+            })
+            .collect();
+        all.push(
+            json!({"citation":"p23","source_id":"current-doc","kind":"doc",
+            "updated_at":"2026-11-13","metadata":{"commit":"abc"},
+            "text":"都営バス、群馬バスに対応"}),
+        );
+        let original = all.clone();
+        let context = answer_context(&all);
+        assert_eq!(context.len(), 20);
+        assert_eq!(context[0]["citation"], "p1");
+        assert_eq!(context[1]["citation"], "p23");
+        assert_eq!(context[1]["updated_at"], "2026-11-13");
+        assert_eq!(context[0]["metadata"]["merged_at"], "2026-01-01");
+        assert_eq!(context[1]["metadata"]["commit"], "abc");
+        assert_eq!(
+            all, original,
+            "UI ordering and citation IDs must not change"
+        );
+    }
+    #[test]
+    fn context_keeps_available_passages_and_does_not_merge_missing_source_ids() {
+        let all = vec![json!({"citation":"p1"}), json!({"citation":"p2"})];
+        assert_eq!(answer_context(&all).len(), 2);
+        assert!(answer_context(&[]).is_empty());
+        let all: Vec<_> = (0..25)
+            .map(|i| json!({"source_id":format!("s{i}"),"citation":format!("p{i}")}))
+            .collect();
+        assert_eq!(answer_context(&all).len(), 20);
+        assert_eq!(answer_context(&all)[19]["citation"], "p19");
+    }
     #[test]
     fn only_answers_are_requested_and_streamed() {
         let schema = schema(&[json!("p1")]);
