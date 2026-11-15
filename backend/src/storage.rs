@@ -439,27 +439,37 @@ pub fn rank(
     Ok(out)
 }
 
-/// Semantic selection runs once over the complete selected passage set before pagination.
 // Keep paragraphs/tables/code intact while separating independent sections. The
 // stored passage remains the citation unit; these are inference-only views.
 fn evidence_units(text: &str) -> Vec<String> {
     let mut units = Vec::new();
     let mut current = String::new();
-    let mut fenced = false;
+    let mut fence: Option<(u8, usize)> = None;
     for line in text.split_inclusive('\n') {
         let heading = line.trim_start().starts_with('#');
-        if !fenced
+        if fence.is_none()
             && !current.is_empty()
             && (heading || (line.trim().is_empty() && current.chars().count() >= 600))
         {
             units.push(std::mem::take(&mut current));
         }
-        if line.trim_start().starts_with("```") || line.trim_start().starts_with("~~~") {
-            fenced = !fenced;
+        let trimmed = line.trim_start_matches(' ');
+        let marker = trimmed.as_bytes().first().copied().unwrap_or(0);
+        let width = trimmed.bytes().take_while(|b| *b == marker).count();
+        if line.len() - trimmed.len() <= 3 && matches!(marker, b'`' | b'~') && width >= 3 {
+            match fence {
+                Some((open, length))
+                    if marker == open && width >= length && trimmed[width..].trim().is_empty() =>
+                {
+                    fence = None
+                }
+                None => fence = Some((marker, width)),
+                _ => {}
+            }
         }
         current.push_str(line);
     }
-    if !current.trim().is_empty() {
+    if !current.is_empty() {
         units.push(current);
     }
     units
@@ -475,7 +485,7 @@ fn semantic_candidates(passages: &[Value]) -> Result<(Vec<Value>, Vec<usize>)> {
         if p["ordinal"] == 0 {
             units.insert(0, format!("Source title: {}", s(p, "title")));
         }
-        for unit in units {
+        for unit in units.into_iter().filter(|unit| !unit.trim().is_empty()) {
             let description = format!(
                 "Context only (not evidence): title={}; source={}; repository={}; metadata={}\nEvidence to judge:\n{}",
                 s(p, "title"),
@@ -495,6 +505,7 @@ fn semantic_candidates(passages: &[Value]) -> Result<(Vec<Value>, Vec<usize>)> {
     Ok((candidates, parents))
 }
 
+/// Semantic selection runs once over all selected evidence units before pagination.
 pub async fn rank_semantic(
     judge: &crate::judge::Judge<'_, impl Host>,
     query: &str,
@@ -505,6 +516,20 @@ pub async fn rank_semantic(
     let rows = judge
         .score(query, &candidates, "passage_scoring", traces)
         .await?;
+    if let Some(trace) = traces.last_mut() {
+        let mut selected = HashSet::new();
+        trace["selected"] = json!(
+            rows.iter()
+                .filter_map(|row| {
+                    let index = s(row, "id").parse::<usize>().ok()?;
+                    let id = passages[*parents.get(index)?]["id"].clone();
+                    selected.insert(id.to_string()).then_some(id)
+                })
+                .take(12)
+                .collect::<Vec<_>>()
+        );
+        trace["passages"] = json!(passages.len());
+    }
     let mut out = Vec::new();
     let mut seen = HashSet::new();
     // Descending scores: a passage is represented by its strongest explicit
@@ -549,6 +574,17 @@ mod tests {
                 .iter()
                 .any(|u| u.contains("```rust\n# not a heading\n```"))
         );
+    }
+    #[test]
+    fn mismatched_fences_do_not_split_code_and_trailing_bytes_survive() {
+        let text =
+            "````markdown\n```\n# example heading\n~~~\n# still code\n````\n\n# actual heading\n\n";
+        let units = evidence_units(text);
+        assert_eq!(units.concat(), text);
+        assert_eq!(units.len(), 2);
+        assert!(units[0].contains("# still code"));
+        let text = format!("{}\n\n", "x".repeat(700));
+        assert_eq!(evidence_units(&text).concat(), text);
     }
     #[test]
     fn title_evidence_belongs_only_to_the_first_passage() {
