@@ -1,0 +1,246 @@
+[
+  {
+    "name": "mixed",
+    "query": "地下鉄で位置更新が止まる問題",
+    "evidence": [
+      {
+        "citation": "p3",
+        "source_id": "example-search-doc",
+        "repo": "TrainLCD/DecisionRAG",
+        "title": "検索評価の仕様（回帰テスト用合成資料）",
+        "kind": "doc",
+        "text": "検索評価には「地下鉄で位置更新が止まる問題」を入力例として使う。検索にはClef Flashを用い、回答の主張が閾値に達しない場合は裏付けのあるチケット要約だけを表示する。これは検索の仕様であり、実際の測位障害の原因や対応を記録した資料ではない。",
+        "metadata": {}
+      },
+      {
+        "id": "TrainLCD/MobileApp#420:0",
+        "source_id": "TrainLCD/MobileApp#420",
+        "text": "(No body)",
+        "title": "iOS版 トンネル通過時間が長いと移動していないとカウントされて位置情報追跡が切れる",
+        "url": "https://github.com/TrainLCD/MobileApp/issues/420",
+        "repo": "TrainLCD/MobileApp",
+        "kind": "issue",
+        "metadata": {
+          "number": 420,
+          "state": "closed",
+          "state_reason": "completed",
+          "labels": [
+            "bug"
+          ],
+          "author": "TinyKitten",
+          "release_status": "unknown"
+        },
+        "ordinal": 0,
+        "updated_at": "2020-12-30T17:19:27Z",
+        "citation": "p1"
+      },
+      {
+        "id": "TrainLCD/MobileApp#423:0",
+        "source_id": "TrainLCD/MobileApp#423",
+        "text": "closes #420 \r\n卍して動作確認\n\n## Changed files\nmodified: src/screens/Main/index.tsx",
+        "title": "位置情報更新をiosで止めないようにした",
+        "url": "https://github.com/TrainLCD/MobileApp/pull/423",
+        "repo": "TrainLCD/MobileApp",
+        "kind": "pr",
+        "metadata": {
+          "number": 423,
+          "state": "closed",
+          "state_reason": null,
+          "labels": [
+            "enhancement"
+          ],
+          "author": "TinyKitten",
+          "release_status": "included_in_github_release",
+          "merged_at": "2020-12-30T17:19:27Z",
+          "merge_commit_sha": "1671b59efa8ef335cbe234be0e6f6c462982bff7",
+          "draft": false,
+          "base_branch": "dev",
+          "head_branch": "fix/ios-tunnel-fix",
+          "github_release": {
+            "tag": "v10.19.2",
+            "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+            "published_at": "2026-10-29T16:39:14Z"
+          }
+        },
+        "ordinal": 0,
+        "updated_at": "2020-12-30T17:19:28Z",
+        "citation": "p2"
+      }
+    ],
+    "allowed": [
+      "p1",
+      "p2"
+    ],
+    "required": [
+      "p2"
+    ]
+  },
+  {
+    "name": "examples-only",
+    "query": "地下鉄で位置更新が止まる問題",
+    "evidence": [
+      {
+        "citation": "p3",
+        "source_id": "example-search-doc",
+        "repo": "TrainLCD/DecisionRAG",
+        "title": "検索評価の仕様（回帰テスト用合成資料）",
+        "kind": "doc",
+        "text": "検索評価には「地下鉄で位置更新が止まる問題」を入力例として使う。検索にはClef Flashを用い、回答の主張が閾値に達しない場合は裏付けのあるチケット要約だけを表示する。これは検索の仕様であり、実際の測位障害の原因や対応を記録した資料ではない。",
+        "metadata": {}
+      }
+    ],
+    "allowed": [],
+    "required": []
+  },
+  {
+    "name": "search-system",
+    "query": "検索の候補選定には何を使い、主張が閾値未満ならどうする？",
+    "evidence": [
+      {
+        "citation": "p3",
+        "source_id": "example-search-doc",
+        "repo": "TrainLCD/DecisionRAG",
+        "title": "検索評価の仕様（回帰テスト用合成資料）",
+        "kind": "doc",
+        "text": "検索評価には「地下鉄で位置更新が止まる問題」を入力例として使う。検索にはClef Flashを用い、回答の主張が閾値に達しない場合は裏付けのあるチケット要約だけを表示する。これは検索の仕様であり、実際の測位障害の原因や対応を記録した資料ではない。",
+        "metadata": {}
+      },
+      {
+        "id": "TrainLCD/MobileApp#420:0",
+        "source_id": "TrainLCD/MobileApp#420",
+        "text": "(No body)",
+        "title": "iOS版 トンネル通過時間が長いと移動していないとカウントされて位置情報追跡が切れる",
+        "url": "https://github.com/TrainLCD/MobileApp/issues/420",
+        "repo": "TrainLCD/MobileApp",
+        "kind": "issue",
+        "metadata": {
+          "number": 420,
+          "state": "closed",
+          "state_reason": "completed",
+          "labels": [
+            "bug"
+          ],
+          "author": "TinyKitten",
+          "release_status": "unknown"
+        },
+        "ordinal": 0,
+        "updated_at": "2020-12-30T17:19:27Z",
+        "citation": "p1"
+      },
+      {
+        "id": "TrainLCD/MobileApp#423:0",
+        "source_id": "TrainLCD/MobileApp#423",
+        "text": "closes #420 \r\n卍して動作確認\n\n## Changed files\nmodified: src/screens/Main/index.tsx",
+        "title": "位置情報更新をiosで止めないようにした",
+        "url": "https://github.com/TrainLCD/MobileApp/pull/423",
+        "repo": "TrainLCD/MobileApp",
+        "kind": "pr",
+        "metadata": {
+          "number": 423,
+          "state": "closed",
+          "state_reason": null,
+          "labels": [
+            "enhancement"
+          ],
+          "author": "TinyKitten",
+          "release_status": "included_in_github_release",
+          "merged_at": "2020-12-30T17:19:27Z",
+          "merge_commit_sha": "1671b59efa8ef335cbe234be0e6f6c462982bff7",
+          "draft": false,
+          "base_branch": "dev",
+          "head_branch": "fix/ios-tunnel-fix",
+          "github_release": {
+            "tag": "v10.19.2",
+            "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+            "published_at": "2026-10-29T16:39:14Z"
+          }
+        },
+        "ordinal": 0,
+        "updated_at": "2020-12-30T17:19:28Z",
+        "citation": "p2"
+      }
+    ],
+    "allowed": [
+      "p3"
+    ],
+    "required": [
+      "p3"
+    ]
+  },
+  {
+    "name": "paraphrase",
+    "query": "トンネル内でiOSの追跡が切れる件への対応は？",
+    "evidence": [
+      {
+        "citation": "p3",
+        "source_id": "example-search-doc",
+        "repo": "TrainLCD/DecisionRAG",
+        "title": "検索評価の仕様（回帰テスト用合成資料）",
+        "kind": "doc",
+        "text": "検索評価には「地下鉄で位置更新が止まる問題」を入力例として使う。検索にはClef Flashを用い、回答の主張が閾値に達しない場合は裏付けのあるチケット要約だけを表示する。これは検索の仕様であり、実際の測位障害の原因や対応を記録した資料ではない。",
+        "metadata": {}
+      },
+      {
+        "id": "TrainLCD/MobileApp#420:0",
+        "source_id": "TrainLCD/MobileApp#420",
+        "text": "(No body)",
+        "title": "iOS版 トンネル通過時間が長いと移動していないとカウントされて位置情報追跡が切れる",
+        "url": "https://github.com/TrainLCD/MobileApp/issues/420",
+        "repo": "TrainLCD/MobileApp",
+        "kind": "issue",
+        "metadata": {
+          "number": 420,
+          "state": "closed",
+          "state_reason": "completed",
+          "labels": [
+            "bug"
+          ],
+          "author": "TinyKitten",
+          "release_status": "unknown"
+        },
+        "ordinal": 0,
+        "updated_at": "2020-12-30T17:19:27Z",
+        "citation": "p1"
+      },
+      {
+        "id": "TrainLCD/MobileApp#423:0",
+        "source_id": "TrainLCD/MobileApp#423",
+        "text": "closes #420 \r\n卍して動作確認\n\n## Changed files\nmodified: src/screens/Main/index.tsx",
+        "title": "位置情報更新をiosで止めないようにした",
+        "url": "https://github.com/TrainLCD/MobileApp/pull/423",
+        "repo": "TrainLCD/MobileApp",
+        "kind": "pr",
+        "metadata": {
+          "number": 423,
+          "state": "closed",
+          "state_reason": null,
+          "labels": [
+            "enhancement"
+          ],
+          "author": "TinyKitten",
+          "release_status": "included_in_github_release",
+          "merged_at": "2020-12-30T17:19:27Z",
+          "merge_commit_sha": "1671b59efa8ef335cbe234be0e6f6c462982bff7",
+          "draft": false,
+          "base_branch": "dev",
+          "head_branch": "fix/ios-tunnel-fix",
+          "github_release": {
+            "tag": "v10.19.2",
+            "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+            "published_at": "2026-10-29T16:39:14Z"
+          }
+        },
+        "ordinal": 0,
+        "updated_at": "2020-12-30T17:19:28Z",
+        "citation": "p2"
+      }
+    ],
+    "allowed": [
+      "p1",
+      "p2"
+    ],
+    "required": [
+      "p2"
+    ]
+  }
+]
