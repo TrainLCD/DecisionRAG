@@ -48,7 +48,7 @@ for (const q of questions.filter(q => (split === 'all' || q.split === split) && 
       const reply = await response.clone().json();
       for (const [id, description] of Object.entries(request.state.candidates)) {
         if (requiredSources.some(source => String(description).includes(`source=${source};`))) {
-          decisionSamples.push({candidate: description, score: reply.answers?.[id]?.noul ?? null});
+          decisionSamples.push({stage: Object.values(request.questions)[0].instructions.includes('specific subject') ? 'subject' : Object.values(request.questions)[0].instructions.includes('collection\'s membership') ? 'collection' : 'relevance', candidate: description, score: reply.answers?.[id]?.noul ?? null});
         }
       }
     }

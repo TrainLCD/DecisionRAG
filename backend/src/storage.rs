@@ -523,8 +523,44 @@ pub async fn rank_semantic(
     traces: &mut Vec<Value>,
 ) -> Result<Vec<Value>> {
     let (candidates, parents) = semantic_candidates(passages)?;
+    // Subject eligibility is a separate constraint, not a contribution to an
+    // additive relevance score. This prevents an unrelated platform or feature
+    // from qualifying merely because it contains detailed background facts.
+    let subject_rows = judge
+        .score(query, &candidates, "passage_subject", traces)
+        .await?;
+    let eligible: HashSet<_> = subject_rows
+        .iter()
+        .filter(|r| r["score"].as_f64().unwrap_or(0.) > 0.5)
+        .map(|r| s(r, "id"))
+        .collect();
+    let candidates: Vec<_> = candidates
+        .into_iter()
+        .filter(|r| eligible.contains(s(r, "id")))
+        .collect();
+    if candidates.is_empty() {
+        return Ok(Vec::new());
+    }
+    let intent = judge
+        .score(
+            query,
+            &[json!({"id":"collection","description":query})],
+            "query_collection",
+            traces,
+        )
+        .await?;
+    let collection = intent[0]["score"].as_f64().unwrap_or(0.) > 0.5;
     let rows = judge
-        .score(query, &candidates, "passage_scoring", traces)
+        .score(
+            query,
+            &candidates,
+            if collection {
+                "collection_evidence"
+            } else {
+                "passage_scoring"
+            },
+            traces,
+        )
         .await?;
     if let Some(trace) = traces.last_mut() {
         let mut selected = HashSet::new();
@@ -609,6 +645,27 @@ mod tests {
                 .contains("Evidence to judge:\nSource header: Feature added")
         );
         assert!(s(&candidates[1], "description").ends_with("Evidence to judge:\nopaque payload"));
+    }
+    #[test]
+    fn first_unit_keeps_the_title_link_and_release_evidence_together() {
+        let passages = vec![
+            json!({"id":"App#20:0","source_id":"App#20","ordinal":0,"title":"Fix location refresh","text":"closes #19","metadata":{"merged_at":"2026-11-15","github_release":{"tag":"v1"}}}),
+        ];
+        let (candidates, parents) = semantic_candidates(&passages).unwrap();
+        assert_eq!(parents, vec![0]);
+        let evidence = s(&candidates[0], "description")
+            .split("Evidence to judge:\n")
+            .nth(1)
+            .unwrap();
+        for fact in [
+            "Fix location refresh",
+            "App#20",
+            "closes #19",
+            "merged_at",
+            "github_release",
+        ] {
+            assert!(evidence.contains(fact));
+        }
     }
     #[test]
     fn passage_boundaries_preserve_unicode_and_size_budget() {

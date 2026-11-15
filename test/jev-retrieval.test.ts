@@ -188,3 +188,30 @@ test('large candidate descriptions fail during collection before sending any mod
     assert.equal(calls, 0);
   } finally { restore(); f.sqlite.close(); }
 });
+
+test('subject eligibility gates collection evidence without changing the original question', async () => {
+  const f = await setup(2);
+  let collectionCalls = 0;
+  const restore = mockFetch((_url, init) => {
+    const body = JSON.parse(String(init?.body));
+    const instructions = Object.values<any>(body.questions)[0].instructions;
+    const subject = instructions.includes('specific subject requested');
+    const collection = instructions.includes("collection's membership");
+    if (collection) collectionCalls++;
+    const answers = Object.fromEntries(Object.entries<string>(body.state.candidates).map(([id, text]) => {
+      const excluded = text.includes('title=事業者 0;') || text.includes('title=アイコン配色;');
+      if (collection) assert.equal(excluded, false, 'An ineligible subject must never reach collection evidence scoring');
+      return [id, {type: 'noul', noul: subject && excluded ? 0.01 : 0.9}];
+    }));
+    return Response.json({model:'jev-1.14.0',usage:{input_tokens:20,output_tokens:2},answers});
+  });
+  try {
+    const response = await f.request({query:'対応している事業者の割合は？'});
+    assert.equal(response.status,200);
+    const result: any = await response.json();
+    assert.deepEqual(result.evidence.map((p:any)=>p.source_id).sort(),['bus1','population']);
+    assert.ok(collectionCalls > 0);
+    assert.ok(result.trace.some((t:any)=>t.stage==='passage_subject'));
+    assert.ok(result.trace.some((t:any)=>t.stage==='query_collection'));
+  } finally { restore(); f.sqlite.close(); }
+});
