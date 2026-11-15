@@ -59,7 +59,7 @@ impl<'a, H: Host> Judge<'a, H> {
             let task = if stage == "document_screening" {
                 "Could this document contain any useful evidence for the query? Descriptions are incomplete; retain uncertain or partial evidence."
             } else {
-                "Does this passage provide any evidence needed to answer the query, including one input to a comparison or calculation, definitions, scope, counts, exceptions or conflicting facts? Do not reject it because a stronger candidate exists."
+                "Does this passage explicitly supply a concrete fact that answers a requested aspect of the query, or a necessary input, definition, scope condition or conflicting fact for its comparison or calculation? Mere thematic similarity, generic implementation background, or a mention of the topic is not enough. Respect the requested entity, platform, action and time. Use title and metadata to identify the subject, date and explicit links, but do not infer missing facts from them. Evidence about another subject is relevant only when it establishes a relationship requested by the query. Partial evidence is valid when it contributes a specific needed fact; it need not contain the complete final answer."
             };
             questions.insert(
                 id.clone(),

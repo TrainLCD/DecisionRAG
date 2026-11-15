@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import worker from '../../dist-test/src/index.js';
 import { fixture, mockFetch } from '../../dist-test/test/helpers.js';
 const corpusBytes = readFileSync('test/fixtures/jev-evaluation/corpus.json');
-const questionsBytes = readFileSync('test/fixtures/jev-evaluation/questions.json');
+const questionsBytes = readFileSync(process.env.EVALUATION_QUESTIONS ?? 'test/fixtures/jev-evaluation/questions.json');
 const corpus = JSON.parse(corpusBytes); const questions = JSON.parse(questionsBytes).questions;
 const proxy = process.env.EVALUATION_PROXY; const token = process.env.EVALUATION_TOKEN;
 const split = process.env.EVALUATION_SPLIT ?? 'all';
@@ -46,6 +46,6 @@ for (const q of questions.filter(q => (split === 'all' || q.split === split) && 
     const top=ids.slice(0,10); const falseTop=top.filter(id=>!relevant.has(id));
     const fault=q.mode!=='normal';
     const record={id:q.id,group:q.group,split:q.split,query:q.query,run,engine,status:response.status,error:data.error??null,model_calls:modelCalls,leaked,elapsed_ms:performance.now()-start,hits:data.hit_count??null,ids,required_count:q.required_groups.length,recalled_count:q.required_groups.length-missing.length,missing:missingStages,unrelated_at_10:top.length?falseTop.length/top.length:0,unrelated_ids:falseTop,empty_with_evidence:q.required_groups.length>0&&ids.length===0,mandatory:q.mandatory,mode:q.mode,control_pass: fault ? engine==='jev'&&response.status===502&&data.hit_count===undefined : null,input_tokens:(data.trace??[]).reduce((n,t)=>n+(t.input_tokens??0),0),output_tokens:(data.trace??[]).reduce((n,t)=>n+(t.output_tokens??0),0)};
-    report.results.push(record); console.log(JSON.stringify({...record,ids:undefined,unrelated_ids:undefined}));
+    report.results.push(record); console.log(JSON.stringify(record));
   } finally {restore();f.sqlite.close();writeFileSync('evaluation-results/'+split+'.json',JSON.stringify(report,null,2)+'\n');}
 }
