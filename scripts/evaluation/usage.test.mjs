@@ -9,7 +9,7 @@ test('partial success followed by an unknown failure preserves measured usage', 
   await ledger.response(response);
   assert.deepEqual(await response.json(), body, 'measurement must not consume the engine response');
   await ledger.response(new Response('unavailable', { status: 500 }));
-  assert.deepEqual(ledger.snapshot(), { provider_calls: 2, usage_unknown_calls: 1,
+  assert.deepEqual(ledger.snapshot(), { provider_calls: 2, provider_statuses: { 200: 1, 500: 1 }, usage_unknown_calls: 1,
     observed_input_tokens: 123, observed_output_tokens: 7, input_tokens: null, output_tokens: null });
 });
 

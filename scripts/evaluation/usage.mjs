@@ -1,6 +1,7 @@
 // Keep measured usage even when a later provider call fails. Never invent zero.
 export class UsageLedger {
   calls = 0;
+  statuses = {};
   unknown = 0;
   input = 0;
   output = 0;
@@ -9,6 +10,7 @@ export class UsageLedger {
 
   async response(response) {
     this.calls++;
+    this.statuses[response.status] = (this.statuses[response.status] ?? 0) + 1;
     try {
       const { usage } = await response.clone().json();
       if (!Number.isSafeInteger(usage?.input_tokens) || usage.input_tokens < 0
@@ -21,6 +23,7 @@ export class UsageLedger {
   snapshot() {
     return {
       provider_calls: this.calls,
+      provider_statuses: { ...this.statuses },
       usage_unknown_calls: this.unknown,
       observed_input_tokens: this.input,
       observed_output_tokens: this.output,
