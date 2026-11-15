@@ -1,4 +1,4 @@
-// Build revision: a730347e33641f0b8d9507ca7f8b623963bf022d47354db52b973728bd803850
+// Build revision: 809d48178ae77ad59ac1624f98ae854b274fa20840fcd19fbda66a4ad29c65fb
 "use strict";
 // Bump this version whenever either offline asset changes.
 const CACHE = "decisionrag-offline-v2";
