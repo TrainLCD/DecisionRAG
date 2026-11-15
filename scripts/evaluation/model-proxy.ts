@@ -2,6 +2,8 @@
 // A short-lived random bearer is generated and masked by the evaluation job.
 interface EvaluationEnv { EVALUATION_TOKEN: string; EVALUATION_EXPIRES: string; TYPESAFE_API_KEY: string }
 export default {
+  async queue() { throw new Error("Evaluation versions cannot consume queues"); },
+  async scheduled() { throw new Error("Evaluation versions cannot synchronize sources"); },
   async fetch(request: Request, env: EvaluationEnv): Promise<Response> {
     const expires = Number(env.EVALUATION_EXPIRES);
     if (!env.EVALUATION_TOKEN || !Number.isFinite(expires) || Date.now() >= expires
