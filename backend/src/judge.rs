@@ -99,11 +99,11 @@ impl<'a, H: Host> Judge<'a, H> {
         }
         json!({"model":self.model(),"state":{"query":query,"candidates":candidates},"questions":questions})
     }
-    async fn call(&self, body: &Value) -> Result<Value> {
+    async fn call(&self, body: &Value, stage: &str) -> Result<Value> {
         let size = body.to_string().len();
         for attempt in 0..2 {
             if self.calls.get() >= MAX_CALLS || self.bytes.get() + size > MAX_TOTAL_BYTES {
-                return Err(Error::new(422, "decision_budget_exceeded"));
+                return Err(Error::new(422, "decision_budget_exceeded").with_details(json!({"stage":stage,"calls":self.calls.get(),"max_calls":MAX_CALLS,"sent_bytes":self.bytes.get(),"next_bytes":size,"max_bytes":MAX_TOTAL_BYTES})));
             }
             let remaining = DEADLINE_MS - (now() - self.start);
             if remaining <= 0. {
@@ -188,7 +188,7 @@ impl<'a, H: Host> Judge<'a, H> {
         let mut output_tokens = 0u64;
         for lane in batches.chunks(CONCURRENCY) {
             let requests: Vec<_> = lane.iter().map(|b| self.request(query, b, stage)).collect();
-            let responses = join_all(requests.iter().map(|r| self.call(r))).await;
+            let responses = join_all(requests.iter().map(|r| self.call(r, stage))).await;
             for (items, response) in lane.iter().zip(responses) {
                 let value = response?;
                 rows.extend(parse_scores(items, &value)?);
