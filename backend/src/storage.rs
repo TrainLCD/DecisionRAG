@@ -526,8 +526,18 @@ pub async fn rank_semantic(
     // Subject eligibility is a separate constraint, not a contribution to an
     // additive relevance score. This prevents an unrelated platform or feature
     // from qualifying merely because it contains detailed background facts.
+    let collection = judge.collection_query(query, traces).await?;
     let subject_rows = judge
-        .score(query, &candidates, "passage_subject", traces)
+        .score(
+            query,
+            &candidates,
+            if collection {
+                "collection_subject"
+            } else {
+                "passage_subject"
+            },
+            traces,
+        )
         .await?;
     let eligible: HashSet<_> = subject_rows
         .iter()
@@ -541,15 +551,6 @@ pub async fn rank_semantic(
     if candidates.is_empty() {
         return Ok(Vec::new());
     }
-    let intent = judge
-        .score(
-            query,
-            &[json!({"id":"collection","description":query})],
-            "query_collection",
-            traces,
-        )
-        .await?;
-    let collection = intent[0]["score"].as_f64().unwrap_or(0.) > 0.5;
     let rows = judge
         .score(
             query,

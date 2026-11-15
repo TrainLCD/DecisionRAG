@@ -1,0 +1,117 @@
+{
+  "recorded_at": "2026-11-15T07:22:10.027Z",
+  "preview": "https://f9cc2f32-trainlcd-decision-rag.catwalk8205.workers.dev",
+  "scope": "Live public index; two queries, all cursor pages; no generated-answer or aggregate validation",
+  "results": [
+    {
+      "query": "バス対応の網羅率",
+      "pages": [
+        {
+          "status": 200,
+          "transport_status": 0,
+          "wall_ms": 22856,
+          "elapsed_ms": 14106,
+          "hits": 13,
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0",
+            "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:2",
+            "TrainLCD/StationAPI:docs/architecture.md:11",
+            "TrainLCD/StationAPI:docs/architecture.md:12",
+            "TrainLCD/StationAPI:CONTRIBUTING.md:0",
+            "TrainLCD/StationAPI:docs/architecture.md:2",
+            "TrainLCD/StationAPI:docs/nearby-bus-stops.md:0",
+            "TrainLCD/Website#186:2",
+            "TrainLCD/Website#186:0",
+            "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:0",
+            "TrainLCD/BFF#15:0",
+            "TrainLCD/StationAPI:docs/architecture.md:0",
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:4"
+          ],
+          "cached": false,
+          "calls": 264,
+          "input_tokens": 1864734,
+          "output_tokens": 67785
+        }
+      ],
+      "ids": [
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:2",
+        "TrainLCD/StationAPI:docs/architecture.md:11",
+        "TrainLCD/StationAPI:docs/architecture.md:12",
+        "TrainLCD/StationAPI:CONTRIBUTING.md:0",
+        "TrainLCD/StationAPI:docs/architecture.md:2",
+        "TrainLCD/StationAPI:docs/nearby-bus-stops.md:0",
+        "TrainLCD/Website#186:2",
+        "TrainLCD/Website#186:0",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:0",
+        "TrainLCD/BFF#15:0",
+        "TrainLCD/StationAPI:docs/architecture.md:0",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:4"
+      ],
+      "required_recovered": false,
+      "error": "Missing required evidence or inconsistent hit count"
+    },
+    {
+      "query": "バス対応の網羅率はどれくらい？",
+      "pages": [
+        {
+          "status": 200,
+          "transport_status": 0,
+          "wall_ms": 19675,
+          "elapsed_ms": 12479,
+          "hits": 20,
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0",
+            "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:2",
+            "TrainLCD/StationAPI:docs/architecture.md:11",
+            "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:0",
+            "TrainLCD/StationAPI:docs/architecture.md:1",
+            "TrainLCD/StationAPI:docs/architecture.md:5",
+            "TrainLCD/StationAPI:CONTRIBUTING.md:0",
+            "TrainLCD/StationAPI:docs/architecture.md:2",
+            "TrainLCD/StationAPI:docs/architecture.md:12",
+            "TrainLCD/StationAPI:README.md:2",
+            "TrainLCD/BFF#15:0",
+            "TrainLCD/StationAPI:docs/nearby-bus-stops.md:0",
+            "TrainLCD/BFF#14:0",
+            "TrainLCD/StationAPI:data/gtfs-feeds/README.md:0",
+            "TrainLCD/Website#186:2",
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:4",
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:3",
+            "TrainLCD/Website#186:0",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0182_joshin_kanko_bus.md:0",
+            "TrainLCD/StationAPI:docs/nearby-bus-stops.md:2"
+          ],
+          "cached": false,
+          "calls": 274,
+          "input_tokens": 1930753,
+          "output_tokens": 69601
+        }
+      ],
+      "ids": [
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:2",
+        "TrainLCD/StationAPI:docs/architecture.md:11",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:0",
+        "TrainLCD/StationAPI:docs/architecture.md:1",
+        "TrainLCD/StationAPI:docs/architecture.md:5",
+        "TrainLCD/StationAPI:CONTRIBUTING.md:0",
+        "TrainLCD/StationAPI:docs/architecture.md:2",
+        "TrainLCD/StationAPI:docs/architecture.md:12",
+        "TrainLCD/StationAPI:README.md:2",
+        "TrainLCD/BFF#15:0",
+        "TrainLCD/StationAPI:docs/nearby-bus-stops.md:0",
+        "TrainLCD/BFF#14:0",
+        "TrainLCD/StationAPI:data/gtfs-feeds/README.md:0",
+        "TrainLCD/Website#186:2",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:4",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:3",
+        "TrainLCD/Website#186:0",
+        "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0182_joshin_kanko_bus.md:0",
+        "TrainLCD/StationAPI:docs/nearby-bus-stops.md:2"
+      ],
+      "required_recovered": false,
+      "error": "Missing required evidence or inconsistent hit count"
+    }
+  ]
+}

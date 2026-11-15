@@ -151,13 +151,15 @@ test('answer SSE keeps semantic sources even when generation is unavailable', as
 test('empty-result expansion reuses document decisions and still returns a legitimate empty result', async () => {
   const f = await setup();
   let screenedDocuments = 0;
+  let classifiedQueries = 0;
   let scoredPassages = 0;
   const restore = mockFetch((_url, init) => {
     const body = JSON.parse(String(init?.body));
     const entries = Object.keys(body.state.candidates);
     const documentStage = Object.values<any>(body.questions)[0].instructions.includes('Could this document');
+    if (Object.values<any>(body.questions)[0].instructions.includes("Is the query requesting")) classifiedQueries++;
     if (documentStage) screenedDocuments += entries.length;
-    else scoredPassages += entries.length;
+    else if (!Object.values<any>(body.questions)[0].instructions.includes("Is the query requesting")) scoredPassages += entries.length;
     return Response.json({ model: 'jev-1.14.0', answers: Object.fromEntries(entries.map(id => [id, { type: 'noul', noul: 0.01 }])), usage: { input_tokens: 10, output_tokens: 1 } });
   });
   try {
@@ -166,6 +168,7 @@ test('empty-result expansion reuses document decisions and still returns a legit
     const result: any = await response.json();
     assert.equal(result.status, 'empty');
     assert.equal(result.hit_count, 0);
+    assert.equal(classifiedQueries, 1, 'The intent decision must be reused during expansion');
     assert.equal(screenedDocuments, 43, 'Each document must be screened only once');
     assert.equal(scoredPassages, 30 + 43, 'The wider scan must judge each short passage with its source header');
     assert.equal(result.trace.filter((t: any) => t.stage === 'document_screening').length, 1);
@@ -195,7 +198,7 @@ test('subject eligibility gates collection evidence without changing the origina
   const restore = mockFetch((_url, init) => {
     const body = JSON.parse(String(init?.body));
     const instructions = Object.values<any>(body.questions)[0].instructions;
-    const subject = instructions.includes('specific subject requested');
+    const subject = instructions.includes('specific subject requested') || instructions.includes('domain/identity check');
     const collection = instructions.includes("collection's membership");
     if (collection) collectionCalls++;
     const answers = Object.fromEntries(Object.entries<string>(body.state.candidates).map(([id, text]) => {
@@ -211,7 +214,7 @@ test('subject eligibility gates collection evidence without changing the origina
     const result: any = await response.json();
     assert.deepEqual(result.evidence.map((p:any)=>p.source_id).sort(),['bus1','population']);
     assert.ok(collectionCalls > 0);
-    assert.ok(result.trace.some((t:any)=>t.stage==='passage_subject'));
+    assert.ok(result.trace.some((t:any)=>t.stage==='collection_subject'));
     assert.ok(result.trace.some((t:any)=>t.stage==='query_collection'));
   } finally { restore(); f.sqlite.close(); }
 });

@@ -2,7 +2,10 @@
 use crate::runtime::*;
 use futures_util::future::join_all;
 use serde_json::{Map, Value, json};
-use std::{cell::Cell, collections::HashSet};
+use std::{
+    cell::{Cell, RefCell},
+    collections::HashSet,
+};
 
 pub const ENGINE: &str = "jev-semantic-v1";
 pub const MODEL: &str = "jev-1.14.0";
@@ -22,6 +25,7 @@ pub struct Judge<'a, H> {
     start: f64,
     calls: Cell<usize>,
     bytes: Cell<usize>,
+    collection: RefCell<Option<(String, bool)>>,
 }
 pub fn enabled(c: &Config) -> Result<bool> {
     match c.retrieval_engine.as_str() {
@@ -41,6 +45,7 @@ impl<'a, H: Host> Judge<'a, H> {
             start: now(),
             calls: Cell::new(0),
             bytes: Cell::new(0),
+            collection: RefCell::new(None),
         })
     }
     pub fn model(&self) -> &str {
@@ -50,6 +55,24 @@ impl<'a, H: Host> Judge<'a, H> {
             &self.c.jev_model
         }
     }
+    pub async fn collection_query(&self, query: &str, traces: &mut Vec<Value>) -> Result<bool> {
+        if let Some((cached_query, answer)) = &*self.collection.borrow() {
+            if cached_query == query {
+                return Ok(*answer);
+            }
+        }
+        let rows = self
+            .score(
+                query,
+                &[json!({"id":"collection","description":query})],
+                "query_collection",
+                traces,
+            )
+            .await?;
+        let answer = rows[0]["score"].as_f64().unwrap_or(0.) > 0.5;
+        self.collection.replace(Some((query.to_string(), answer)));
+        Ok(answer)
+    }
     fn request(&self, query: &str, items: &[Value], stage: &str) -> Value {
         let mut candidates = Map::new();
         let mut questions = Map::new();
@@ -58,6 +81,8 @@ impl<'a, H: Host> Judge<'a, H> {
             candidates.insert(id.clone(), item["description"].clone());
             let task = if stage == "query_collection" {
                 "Is the query requesting the extent, coverage, completeness, count, proportion or inventory of a collection? Such a request needs to establish which members are included or omitted. A question about a single implementation detail, bug, identifier, platform feature or a comparison of two scalar values is not a collection request."
+            } else if stage == "collection_subject" {
+                "The query concerns a population or collection. Does this evidence concern that population, a member/subset of it, or data representing it? This is a domain/identity check, NOT an answer or task match: a request to calculate coverage needs data collection, import, inclusion/exclusion and failure conditions even though they describe a different operation than calculating a percentage. A source need not mention coverage or provide totals. Use context to identify the population. Respect named datasets, organizations, geography and time: a fictional regional registry is not a real national population, and unrelated real datasets cannot establish the contents of a specifically named registry. Accept subsets as subsets; do not require national completeness of each fact."
             } else if stage == "passage_subject" {
                 "Does the Evidence to judge concern the specific subject requested by the query? Match the entity, action or feature, platform, scope and explicit relationships, using the context to disambiguate. Different wording can name the same subject. A requested collection may include individual members. An explicit link to a requested issue or PR is a matching relationship. But sharing a broad topic or infrastructure is not enough: a feature on one platform is not evidence about another platform, and an automatic behavior is not the same as a manually requested action. A fictional dataset is not evidence about a real-world population unless the query asks about that dataset. Do not require the final answer or a complete numeric calculation; this question only checks the subject."
             } else if stage == "collection_evidence" {
