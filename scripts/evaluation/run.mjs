@@ -13,7 +13,7 @@ const transport = dryRun ? async (_url, init) => {
   const body=JSON.parse(init.body);
   return Response.json({model:'jev-1.14.0',usage:{input_tokens:0,output_tokens:0},answers:Object.fromEntries(Object.keys(body.state.candidates).map(id=>[id,{type:'noul',noul:0.01}]))});
 } : globalThis.fetch;
-const report = { version: 1, model_mode: dryRun ? "mock-plumbing-only" : "real", commit: process.env.GITHUB_SHA ?? 'local', corpus_sha256: createHash('sha256').update(corpusBytes).digest('hex'), questions_sha256: createHash('sha256').update(questionsBytes).digest('hex'), recorded_at: new Date().toISOString(), split, results: [] };
+const report = { version: 1, model_mode: dryRun ? "mock-plumbing-only" : "real", commit: process.env.GITHUB_SHA ?? 'local', corpus_sha256: createHash('sha256').update(corpusBytes).digest('hex'), questions_sha256: createHash('sha256').update(questionsBytes).digest('hex'), recorded_at: new Date().toISOString(), split, expected_question_ids: questions.filter(q => split === "all" || q.split === split).map(q => q.id), results: [] };
 mkdirSync('evaluation-results', { recursive: true });
 for (const q of questions.filter(q => (split === 'all' || q.split === split) && (!process.env.EVALUATION_QUESTION_ID || q.id === process.env.EVALUATION_QUESTION_ID))) for (let run = 1; run <= 3; run++) for (const engine of ['rust-rules-v1', 'jev']) {
   const f = fixture(); f.env.RETRIEVAL_ENGINE = engine; f.env.TYPESAFE_API_KEY = 'evaluation-host-placeholder'; f.env.AI = undefined;
