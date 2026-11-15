@@ -56,10 +56,10 @@ impl<'a, H: Host> Judge<'a, H> {
         }
     }
     pub async fn collection_query(&self, query: &str, traces: &mut Vec<Value>) -> Result<bool> {
-        if let Some((cached_query, answer)) = &*self.collection.borrow() {
-            if cached_query == query {
-                return Ok(*answer);
-            }
+        if let Some((cached_query, answer)) = &*self.collection.borrow()
+            && cached_query == query
+        {
+            return Ok(*answer);
         }
         let rows = self
             .score(
