@@ -69,6 +69,12 @@ jobs:
           EVALUATION_SPLIT: ${{ startsWith(github.ref_name, 'evaluation/jev-heldout-') && 'evaluation' || 'all' }}
           EVALUATION_QUESTIONS: ${{ startsWith(github.ref_name, 'evaluation/jev-heldout-') && 'test/fixtures/jev-evaluation/questions-v2.json' || 'test/fixtures/jev-evaluation/questions.json' }}
         run: node --loader ./scripts/wasm-test-loader.mjs scripts/evaluation/run.mjs
+      - name: Score frozen quality gates
+        run: |
+          inputs=(evaluation-results/*.json)
+          test "${#inputs[@]}" -eq 1
+          node scripts/evaluation/summarize.mjs "${inputs[0]}" evaluation-results/summary.json
+          node --input-type=module -e 'import {readFileSync} from "node:fs"; if (!JSON.parse(readFileSync("evaluation-results/summary.json", "utf8")).pass) process.exit(1);'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
