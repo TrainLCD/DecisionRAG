@@ -1,3 +1,5 @@
+import { createHash, createDecipheriv } from 'node:crypto';
+import { encodeCursor } from './reference/search-cursor.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../src/index.js';
@@ -388,4 +390,28 @@ test('public repository membership invalidates cursors even when selected passag
     assert.equal((await response.json() as any).error,'search_results_changed');
     assert.equal(calls,before);
   } finally {restore();f.sqlite.close();}
+});
+
+test('real WASM rejects a cached aggregate after its source deadline but before cursor expiry', async () => {
+  const f=await setup();let calls=0;
+  const restore=mockFetch((_url,init)=>{calls++;return Response.json(aggregationDecisions(JSON.parse(String(init?.body))));});
+  try {
+    const query='公開GTFSの本番対応事業者の割合';
+    const first:any=await(await f.request({query,paginated:true},'/answer')).json();
+    const raw=Buffer.from(first.pagination.next_cursor,'base64url');
+    const key=createHash('sha256').update('search-cursor-v1:'+f.env.API_TOKEN).digest();
+    const decrypt=createDecipheriv('aes-256-gcm',key,raw.subarray(0,12));
+    decrypt.setAuthTag(raw.subarray(-16));
+    const payload=JSON.parse(Buffer.concat([decrypt.update(raw.subarray(12,-16)),decrypt.final()]).toString());
+    assert.ok(payload.expires>Date.now()+60000);
+    const before=calls;
+    for(const [deadline,expected] of [[new Date(Date.now()+60000).toISOString(),200],[new Date(Date.now()-1000).toISOString(),409],['invalid',409]] as const){
+      // Test-only authenticated cursor represents a previously computed snapshot.
+      const cursor=await encodeCursor({...payload,aggregation:{status:'computed',valid_until:deadline,numerator:1,denominator:1,value:100,definition:'fixture',as_of:'2026-11-16T00:00:00Z'}},f.env.API_TOKEN);
+      const response=await f.request({query,paginated:true,cursor},'/answer');
+      assert.equal(response.status,expected);
+      if(expected===409)assert.equal((await response.json() as any).error,'search_results_changed');
+    }
+    assert.equal(calls,before,'Expiration checks never call the model');
+  }finally{restore();f.sqlite.close();}
 });

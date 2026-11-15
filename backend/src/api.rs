@@ -331,7 +331,9 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
         .as_ref()
         .is_some_and(|p| p["aggregation_resolved"] == true);
     let aggregation = if aggregation_resolved {
-        previous.as_ref().unwrap()["aggregation"].clone()
+        let cached = &previous.as_ref().unwrap()["aggregation"];
+        crate::aggregate::validate_cached(cached, crate::aggregate::clock()?)?;
+        cached.clone()
     } else if path == "/answer" {
         if let Some(judge) = &semantic_judge {
             crate::aggregate::resolve(judge, scope.as_ref(), query, &mut traces).await?

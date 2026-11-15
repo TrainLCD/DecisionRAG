@@ -103,6 +103,11 @@ pub fn calculate(metric: &Metric, now: time::OffsetDateTime) -> Value {
         out["missing_requirements"] = json!(["supported_members_must_belong_to_population"]);
         return out;
     }
+    out["valid_until"] = json!(if timestamp(&p.valid_until) < timestamp(&s.valid_until) {
+        &p.valid_until
+    } else {
+        &s.valid_until
+    });
     out["as_of"] = json!(p.as_of);
     out["source_refs"] = json!(
         p.source_refs
@@ -126,6 +131,21 @@ pub fn calculate(metric: &Metric, now: time::OffsetDateTime) -> Value {
     out["denominator"] = json!(population.len());
     out["value"] = json!(hundredths as f64 / 100.);
     out
+}
+
+pub fn clock() -> Result<time::OffsetDateTime> {
+    time::OffsetDateTime::from_unix_timestamp_nanos((now() as i128) * 1_000_000)
+        .map_err(|_| Error::new(503, "invalid_clock"))
+}
+/// Preserve the frozen calculation, but never extend its source validity to the
+/// cursor lifetime. This check performs no inference or arithmetic recomputation.
+pub fn validate_cached(value: &Value, current: time::OffsetDateTime) -> Result<()> {
+    if matches!(s(value, "status"), "computed" | "empty_population")
+        && timestamp(s(value, "valid_until")).is_none_or(|expiry| expiry < current)
+    {
+        return Err(Error::new(409, "search_results_changed"));
+    }
+    Ok(())
 }
 
 pub const REGISTRY: &str = include_str!("../../data/metrics/public-gtfs-operators.json");
@@ -195,11 +215,7 @@ pub async fn resolve<H: Host>(
                 "missing_requirements":["accessible_structured_sources"]}));
         }
     }
-    Ok(calculate(
-        &metric,
-        time::OffsetDateTime::from_unix_timestamp((now() / 1000.) as i64)
-            .map_err(|_| Error::new(503, "invalid_clock"))?,
-    ))
+    Ok(calculate(&metric, clock()?))
 }
 
 /// No generated arithmetic reaches either the draft or the final answer.
@@ -338,5 +354,42 @@ mod tests {
         let r = calculate(&m, t);
         assert_eq!(r["status"], "empty_population");
         assert!(r["value"].is_null());
+    }
+    #[test]
+    fn cached_aggregation_expires_at_the_earlier_source_deadline() {
+        let (mut m, t) = fixture();
+        m.supported.as_mut().unwrap().valid_until = "2026-11-16T00:01:00Z".into();
+        let result = calculate(&m, t);
+        assert_eq!(result["valid_until"], "2026-11-16T00:01:00Z");
+        assert!(validate_cached(&result, t).is_ok());
+        assert!(validate_cached(&result, timestamp("2026-11-16T00:01:00.001Z").unwrap()).is_err());
+        assert!(validate_cached(&result, timestamp("2026-11-16T00:01:00Z").unwrap()).is_ok());
+        let error =
+            validate_cached(&result, timestamp("2026-11-16T00:01:01Z").unwrap()).unwrap_err();
+        assert_eq!(error.status, 409);
+        assert_eq!(error.code, "search_results_changed");
+    }
+    #[test]
+    fn cached_results_cannot_omit_or_corrupt_the_source_deadline() {
+        let (m, t) = fixture();
+        let result = calculate(&m, t);
+        for deadline in [Value::Null, json!("invalid")] {
+            let mut changed = result.clone();
+            changed["valid_until"] = deadline;
+            assert!(validate_cached(&changed, t).is_err());
+        }
+        assert!(validate_cached(&json!({"status":"missing_population"}), t).is_ok());
+    }
+    #[test]
+    fn empty_population_results_also_expire() {
+        let (mut m, t) = fixture();
+        for snapshot in [&mut m.population, &mut m.supported] {
+            let snapshot = snapshot.as_mut().unwrap();
+            snapshot.members.clear();
+            snapshot.expected_count = 0;
+        }
+        let result = calculate(&m, t);
+        assert_eq!(result["status"], "empty_population");
+        assert!(validate_cached(&result, timestamp("2026-11-18T00:00:00Z").unwrap()).is_err());
     }
 }
