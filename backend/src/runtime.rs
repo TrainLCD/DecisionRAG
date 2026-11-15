@@ -6,20 +6,30 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub struct Error {
     pub status: u16,
     pub code: String,
+    pub details: Option<Value>,
 }
 impl Error {
     pub fn new(status: u16, code: impl Into<String>) -> Self {
         Self {
             status,
             code: code.into(),
+            details: None,
         }
+    }
+    pub fn with_details(mut self, details: Value) -> Self {
+        self.details = Some(details);
+        self
     }
     pub fn response(&self) -> Value {
         let mut headers = json!({"Cache-Control":"no-store","X-Content-Type-Options":"nosniff","Content-Type":"application/json"});
         if self.status == 429 {
             headers["Retry-After"] = json!(60);
         }
-        json!({"status":self.status,"body":{"error":self.code},"headers":headers})
+        let mut body = json!({"error":self.code});
+        if let Some(details) = &self.details {
+            body["details"] = details.clone();
+        }
+        json!({"status":self.status,"body":body,"headers":headers})
     }
 }
 #[allow(async_fn_in_trait)]
