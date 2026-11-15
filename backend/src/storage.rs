@@ -192,16 +192,19 @@ pub async fn plan(
     h: &impl Host,
     query: &str,
     scope: Option<&Scope>,
-    max: usize,
+    limits: (usize, usize),
+    judge: Option<&crate::judge::Judge<'_, impl Host>>,
     vocabulary: &[Value],
     traces: &mut Vec<Value>,
 ) -> Result<Vec<String>> {
+    let (max, seed_limit) = limits;
     let start = now();
     let measured = TimedDbHost::new(h);
     let h = &measured;
     let mut after = String::new();
     let mut candidates = Vec::new();
     let mut scored = Vec::new();
+    let mut semantic_candidates = Vec::new();
     loop {
         let sql = format!(
             "SELECT s.id,s.kind,s.title,s.metadata, CASE WHEN s.kind='doc' THEN substr(s.body,1,1400)||' … '||substr(s.body,max(1,length(s.body)/4),400)||' … '||substr(s.body,max(1,length(s.body)/2),400)||' … '||substr(s.body,max(1,3*length(s.body)/4),400)||' … '||substr(s.body,-400) ELSE substr(s.body,1,480) END AS introduction, substr(s.body,1,60)||' … '||substr(s.body,max(1,length(s.body)/2-20),40)||' … '||substr(s.body,-40) AS sample FROM sources s JOIN repositories r ON s.repo=r.repo WHERE {} AND (s.kind<>'pr' OR instr(s.body,char(10)||'PENDING'||char(10))=0) AND s.id>? ORDER BY s.id LIMIT ?",
@@ -225,8 +228,11 @@ pub async fn plan(
         }
         after = next;
         let descriptions:Vec<_>=rows.iter().map(|r|json!({"id":r["id"],"description":format!("{}\n{} ({})\n{}\nBody excerpts: {}\n{}",s(r,"title"),s(r,"id"),s(r,"kind"),s(r,"metadata"),s(r,"sample"),s(r,"introduction"))})).collect();
-        for chunk in descriptions.chunks(64) {
-            scored.extend(
+        if judge.is_some() {
+            semantic_candidates.extend(descriptions);
+        } else {
+            for chunk in descriptions.chunks(64) {
+                scored.extend(
                 array(
                     &decision(
                         json!({"op":"score","query":query,"candidates":chunk,"allow_partial":true,"vocabulary":vocabulary}),
@@ -235,6 +241,7 @@ pub async fn plan(
                 .iter()
                 .cloned(),
             );
+            }
         }
         for row in &rows {
             candidates.push(json!({"id":row["id"],"references":local_references(s(row,"id"),&format!("{}\n{}",s(row,"sample"),s(row,"introduction")))}));
@@ -243,14 +250,24 @@ pub async fn plan(
             break;
         }
     }
+    if let Some(judge) = judge {
+        traces.push(with_storage_timing(
+            trace("document_loading", candidates.len(), vec![], start),
+            measured.storage_ms(),
+        ));
+        scored = judge
+            .score(query, &semantic_candidates, "document_screening", traces)
+            .await?;
+    }
     scored.sort_by(|a, b| {
         b["score"]
             .as_f64()
             .unwrap_or(0.)
             .total_cmp(&a["score"].as_f64().unwrap_or(0.))
     });
-    let result =
-        decision(json!({"op":"select_scored","candidates":candidates,"scores":scored,"limit":30}))?;
+    let result = decision(
+        json!({"op":"select_scored","candidates":candidates,"scores":scored,"limit":seed_limit}),
+    )?;
     let ids: Vec<String> = array(&result["ids"])?
         .iter()
         .filter_map(|v| v.as_str().map(String::from))
@@ -268,15 +285,17 @@ pub async fn plan(
             return Err(Error::new(422, "passage_screening_budget_exceeded"));
         }
     }
-    traces.push(with_storage_timing(
-        trace(
-            "document_screening",
-            scored.len(),
-            ids.iter().take(12).map(|s| json!(s)).collect(),
-            start,
-        ),
-        measured.storage_ms(),
-    ));
+    if judge.is_none() {
+        traces.push(with_storage_timing(
+            trace(
+                "document_screening",
+                scored.len(),
+                ids.iter().take(12).map(|s| json!(s)).collect(),
+                start,
+            ),
+            measured.storage_ms(),
+        ));
+    }
     Ok(ids)
 }
 pub async fn passages(h: &impl Host, ids: &[String], scope: Option<&Scope>) -> Result<Vec<Value>> {
@@ -392,6 +411,34 @@ pub fn rank(
         out.iter().take(12).map(|p| p["id"].clone()).collect(),
         start,
     ));
+    Ok(out)
+}
+
+/// Semantic selection runs once over the complete selected passage set before pagination.
+pub async fn rank_semantic(
+    judge: &crate::judge::Judge<'_, impl Host>,
+    query: &str,
+    passages: &[Value],
+    traces: &mut Vec<Value>,
+) -> Result<Vec<Value>> {
+    let candidates: Vec<_> = passages.iter().map(|p| json!({
+        "id":p["id"],
+        "description":format!("{}\nSource: {}\nRepository: {}\nMetadata: {}\n{}",s(p,"title"),s(p,"source_id"),s(p,"repo"),p["metadata"],s(p,"text"))
+    })).collect();
+    let rows = judge
+        .score(query, &candidates, "passage_scoring", traces)
+        .await?;
+    let by_id: HashMap<_, _> = passages.iter().map(|p| (s(p, "id"), p)).collect();
+    let mut out = Vec::new();
+    for row in rows
+        .iter()
+        .filter(|r| r["score"].as_f64().unwrap_or(0.) > 0.5)
+    {
+        let mut p = by_id[s(row, "id")].clone();
+        p["citation"] = json!(format!("p{}", out.len() + 1));
+        p["relevance"] = row["score"].clone();
+        out.push(p);
+    }
     Ok(out)
 }
 

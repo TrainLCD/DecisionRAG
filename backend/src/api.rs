@@ -1,4 +1,4 @@
-use crate::{answer, cursor, github, runtime::*, storage, sync};
+use crate::{answer, cursor, github, judge, runtime::*, storage, sync};
 use hmac::{Hmac, Mac};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
@@ -174,27 +174,56 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
     let measured = TimedDbHost::new(h);
     let h = &measured;
     let mut traces = Vec::new();
+    let semantic = judge::enabled(c)?;
+    let engine = if semantic {
+        judge::ENGINE
+    } else {
+        "rust-rules-v1"
+    };
+    if previous
+        .as_ref()
+        .is_some_and(|p| p["engine"].as_str().unwrap_or("rust-rules-v1") != engine)
+    {
+        return Err(Error::new(409, "search_results_changed"));
+    }
+    let semantic_judge = if semantic {
+        Some(judge::Judge::new(h, c)?)
+    } else {
+        None
+    };
     let vocabulary_start = now();
-    let vocabulary = crate::vocabulary::load(h, query, scope.as_ref()).await?;
-    traces.push(with_storage_timing(
-        trace(
-            "vocabulary_expansion",
-            vocabulary.len(),
-            vocabulary
-                .iter()
-                .map(|p| json!([p["term"], p["alias"]]))
-                .collect(),
-            vocabulary_start,
-        ),
-        measured.storage_ms(),
-    ));
-    let ids = if let Some(previous) = &previous {
+    let vocabulary = if semantic {
+        Vec::new()
+    } else {
+        crate::vocabulary::load(h, query, scope.as_ref()).await?
+    };
+    if !semantic {
+        traces.push(with_storage_timing(
+            trace(
+                "vocabulary_expansion",
+                vocabulary.len(),
+                vec![],
+                vocabulary_start,
+            ),
+            measured.storage_ms(),
+        ));
+    }
+    let mut ids = if let Some(previous) = &previous {
         array(&previous["ids"])?
             .iter()
             .map(|v| v.as_str().unwrap().to_string())
             .collect()
     } else {
-        storage::plan(h, query, scope.as_ref(), max, &vocabulary, &mut traces).await?
+        storage::plan(
+            h,
+            query,
+            scope.as_ref(),
+            (max, 30),
+            semantic_judge.as_ref(),
+            &vocabulary,
+            &mut traces,
+        )
+        .await?
     };
     let mut passages = storage::passages(h, &ids, scope.as_ref()).await?;
     let order: HashMap<_, _> = ids
@@ -208,10 +237,54 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
             order.get(s(p, "source_id")).copied().unwrap_or(0),
         )
     });
+    let mut fresh_semantic = None;
+    if previous.is_none()
+        && let Some(judge) = &semantic_judge
+    {
+        let mut found = storage::rank_semantic(judge, query, &passages, &mut traces).await?;
+        if found.is_empty() && ids.len() >= 30 {
+            let mut expanded = storage::plan(
+                h,
+                query,
+                scope.as_ref(),
+                (max, 120),
+                Some(judge),
+                &vocabulary,
+                &mut traces,
+            )
+            .await?;
+            for id in &ids {
+                if !expanded.contains(id) {
+                    expanded.push(id.clone());
+                }
+            }
+            if expanded != ids {
+                ids = expanded;
+                passages = storage::passages(h, &ids, scope.as_ref()).await?;
+                let order: HashMap<_, _> = ids
+                    .iter()
+                    .enumerate()
+                    .map(|(i, id)| (id.as_str(), i))
+                    .collect();
+                passages.sort_by_key(|p| {
+                    (
+                        p["ordinal"].as_u64().unwrap_or(0),
+                        order.get(s(p, "source_id")).copied().unwrap_or(0),
+                    )
+                });
+                found = storage::rank_semantic(judge, query, &passages, &mut traces).await?;
+            }
+        }
+        fresh_semantic = Some(found);
+    }
     let revision = digest(
-        serde_json::to_string(&json!([passages, vocabulary]))
-            .unwrap()
-            .as_bytes(),
+        serde_json::to_string(&if semantic {
+            json!([passages, engine, semantic_judge.as_ref().unwrap().model()])
+        } else {
+            json!([passages, vocabulary])
+        })
+        .unwrap()
+        .as_bytes(),
     );
     if previous.as_ref().is_some_and(|p| p["revision"] != revision) {
         return Err(Error::new(409, "search_results_changed"));
@@ -223,16 +296,45 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
         .unwrap_or(0) as usize;
     let paginated = b["paginated"] == true;
     let size = if paginated { 20 } else { 4000 };
-    let page: Vec<_> = passages.iter().skip(offset).take(size).cloned().collect();
-    let mut evidence = storage::rank(query, &passages, &page, &vocabulary, &mut traces)?;
+    // Authenticate scores and ordering in the cursor; reload scoped source text and
+    // check its revision on every page. No model is called for continuation pages.
+    let (all, frozen) = if semantic {
+        if let Some(previous) = &previous {
+            let all = restore_semantic_results(&passages, &previous["results"])?;
+            (all, previous["results"].clone())
+        } else {
+            let all = fresh_semantic.take().unwrap();
+            let positions: HashMap<_, _> = passages
+                .iter()
+                .enumerate()
+                .map(|(i, p)| (s(p, "id"), i))
+                .collect();
+            let frozen = json!(
+                all.iter()
+                    .map(|p| json!([positions[s(p, "id")], p["relevance"]]))
+                    .collect::<Vec<_>>()
+            );
+            (all, frozen)
+        }
+    } else {
+        (passages.clone(), Value::Null)
+    };
+    let page: Vec<_> = all.iter().skip(offset).take(size).cloned().collect();
+    let mut evidence = if semantic {
+        page
+    } else {
+        storage::rank(query, &passages, &page, &vocabulary, &mut traces)?
+    };
+    let hit_count = if semantic { all.len() } else { evidence.len() };
     let mut pagination = Value::Null;
     if paginated {
-        let next = if offset + size < passages.len() {
-            json!(cursor::encode(h,&json!({"query":query,"scope":scope_key,"ids":ids,"offset":offset+size,"revision":revision,"expires":previous.as_ref().map(|p|p["expires"].clone()).unwrap_or(json!(now()+15.*60000.))}),&c.api_token).await?)
+        let next = if offset + size < all.len() {
+            json!(cursor::encode(h,&json!({"query":query,"scope":scope_key,"ids":ids,"offset":offset+size,"revision":revision,"engine":engine,"results":frozen,"expires":previous.as_ref().map(|p|p["expires"].clone()).unwrap_or(json!(now()+15.*60000.))}),&c.api_token).await?)
         } else {
             Value::Null
         };
-        pagination = json!({"page":offset/size+1,"total_pages":passages.len().div_ceil(size),"next_cursor":next});
+        pagination =
+            json!({"page":offset/size+1,"total_pages":all.len().div_ceil(size),"next_cursor":next});
     }
     for p in &mut evidence {
         p["highlight_terms"] = json!(decision_rag_core::highlight_terms(query, s(p, "text")));
@@ -243,7 +345,7 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
             p["text_html"] = json!(markup);
         }
     }
-    let mut state = json!({"query":query,"evidence":evidence,"hit_count":evidence.len(),"pagination":pagination,"trace":traces,"start":start,"timings":{"scope_ms":scope_ms,"storage_ms":storage_ms.max(0.),"model_ms":0,"generation_ms":0,"retrieval_ms":now()-start}});
+    let mut state = json!({"query":query,"evidence":evidence,"hit_count":hit_count,"retrieval":engine,"retrieval_details":{"engine":engine,"coverage":"bounded","cached":previous.is_some()},"pagination":pagination,"trace":traces,"start":start,"timings":{"scope_ms":scope_ms,"storage_ms":storage_ms.max(0.),"model_ms":0,"generation_ms":0,"retrieval_ms":now()-start}});
     if path == "/answer" && s(&request["headers"], "accept").contains("text/event-stream") {
         return Ok(
             json!({"stream":true,"state":state,"status":200,"headers":{"Content-Type":"text/event-stream; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}}),
@@ -257,6 +359,35 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
     state["trace"] = json!(traces);
     Ok(json_response(finish(state, result), 200))
 }
+fn restore_semantic_results(passages: &[Value], frozen: &Value) -> Result<Vec<Value>> {
+    let invalid = || Error::new(400, "invalid_search_cursor");
+    let rows = frozen.as_array().ok_or_else(invalid)?;
+    let mut seen = std::collections::HashSet::new();
+    let mut out = Vec::new();
+    for row in rows {
+        let pair = row
+            .as_array()
+            .filter(|p| p.len() == 2)
+            .ok_or_else(invalid)?;
+        let index = pair[0]
+            .as_u64()
+            .and_then(|v| usize::try_from(v).ok())
+            .ok_or_else(invalid)?;
+        let score = pair[1]
+            .as_f64()
+            .filter(|v| v.is_finite() && *v > 0.5 && *v <= 1.)
+            .ok_or_else(invalid)?;
+        if !seen.insert(index) {
+            return Err(invalid());
+        }
+        let mut p = passages.get(index).ok_or_else(invalid)?.clone();
+        p["relevance"] = json!(score);
+        p["citation"] = json!(format!("p{}", out.len() + 1));
+        out.push(p);
+    }
+    Ok(out)
+}
+
 fn finish(mut state: Value, result: Value) -> Value {
     let mut model_ms = 0.;
     let mut generation_ms = 0.;
@@ -281,7 +412,8 @@ fn finish(mut state: Value, result: Value) -> Value {
         out["pagination"] = state["pagination"].clone();
     }
     out["elapsed_ms"] = json!(now() - state["start"].as_f64().unwrap_or(now()));
-    out["retrieval"] = json!("rust-rules-v1");
+    out["retrieval"] = state["retrieval"].clone();
+    out["retrieval_details"] = state["retrieval_details"].clone();
     out["release_inference"] = json!("github_release_commit_ancestry");
     out
 }

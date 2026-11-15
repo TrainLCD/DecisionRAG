@@ -3,3 +3,8 @@ WEBHOOK_SECRET=replace-with-a-github-webhook-secret
 GITHUB_TOKEN=replace-with-a-read-only-token
 ANSWER_API_KEY=replace-with-a-generation-provider-key
 
+
+# Jev semantic retrieval (never falls back automatically)
+RETRIEVAL_ENGINE=jev
+TYPESAFE_API_KEY=replace-with-a-typesafe-key
+JEV_MODEL=jev-1.14.0

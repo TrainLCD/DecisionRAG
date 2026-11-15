@@ -3,6 +3,7 @@ pub mod api;
 pub mod cursor;
 pub mod display;
 pub mod github;
+pub mod judge;
 pub mod runtime;
 pub mod storage;
 pub mod sync;

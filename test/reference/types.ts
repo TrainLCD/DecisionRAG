@@ -1,4 +1,7 @@
 export interface Env {
+  RETRIEVAL_ENGINE?: 'jev' | 'rust-rules-v1';
+  TYPESAFE_API_KEY?: string;
+  JEV_MODEL?: string;
   AI?: Ai;
   PUBLIC_SEARCH_RATE_LIMIT?: RateLimit;
   DB: D1Database;
