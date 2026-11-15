@@ -242,5 +242,443 @@
     "required": [
       "p2"
     ]
+  },
+  {
+    "name": "reported-production-context",
+    "query": "地下鉄で位置更新が止まる問題",
+    "evidence": [
+      {
+        "citation": "p1",
+        "source_id": "TrainLCD/THQ:docs/location-freeze-regression.md",
+        "repo": "TrainLCD/THQ",
+        "title": "docs/location-freeze-regression.md",
+        "text": "```graphql\nquery {\n  locationFreezes(\n    filter: {\n      from: \"2026-07-01T00:00:00Z\"\n      to: \"2026-07-08T00:00:00Z\"\n      appVersion: \"10.4.1(100)\"\n    }\n  ) {\n    sessionId\n    segmentId\n    gapStart\n    gapEnd\n    gapMs\n    speedBeforeGap\n    coordsBeforeGap { latitude longitude accuracy speed }\n    coordsAfterGap { latitude longitude accuracy speed }\n    jumpDistanceMeters\n    aliveEventCount\n  }\n}\n```\n\n`jumpDistanceMeters` は `coordsBeforeGap` と `coordsAfterGap` の大円距離(m)で、\n凍結中に表示位置が実位置からどれだけ離れたかの目安です。`aliveEventCount` は欠落期間中に\n届いた `log_events` + `interaction_events` の件数で、条件 3 の根拠にあたります。\n\n## しきい値の考え方\n\n- **`gapThresholdMs`**: 既定の 60000 ms は、送信間隔(最大 1 回/秒)の 60 倍にあたります。\n  地下鉄やトンネル区間では測位が正常に途切れるため、そのままでは正常な欠落を拾います。\n  対象を路線で絞る(`lineId` / `segmentId`)か、しきい値を大きめに取ってください。\n  THQ は路線種別(地上/地下)を持っていないため、この判断は自動化できません。\n- **`speedThresholdKmh`**: 既定の 30 km/h は、駅停車・徐行と走行中を分けるための値です。\n  在来線の低速区間を見るときは下げ、新幹線の高速域だけを見るときは上げます。\n  なお `speed` は OS 由来の値で、欠落直前の 1 行しか見ていません。\n- **`requireAppAlive`**: `false` にすると条件 3 を外し、アプリが落ちた可能性のある欠落も\n  含めて返します。「凍結ではなくクラッシュではないか」を確かめるとき、true と false の\n  件数差を見るのが手軽です。\n- **`limit`**: 既定 100、上限 2000 に丸められます。\n\n## 検索窓と、検出できない欠落\n\n`[from, to)` は **欠落の開始行** を絞ります。つまり `from <= gapStart < to` の欠落が対象で、\n欠落を閉じる行(`gapEnd`)は `to` 以降であっても構いません。窓の末尾で始まった欠落も、\nその後に位置ログが再開していれば `gapMs` まで含めて正しく返ります。\n\n仕組み上検出できないのは、**閉じない欠落** だけです。電源断・アプリ終了・乗車終了などで\n位置ログが二度と来なかった場合、欠落の長さを測る相手が存在しないため、セッション最後の行に\n続く空白は返りません。これは条件 3 で除外したいケースとも重なります。\n\n一方、`locationFreezeSessions` / `locationFreezeSummary` が返す件数\n(`locationCount` / `startedAt` / `endedAt`)は **窓の中の行だけ** を数えます。\n`to` をまたいだ欠落を閉じる行は、欠落の測定には使われますが、これらの集計には入りません。\n\nまた、`session_id` が NULL の行(旧クライアント)は対象外です。\n\n## 過去データの `appVersion` 補完\n\n`location_logs` の `app_version` / `platform` / `channel` は THQ#30 で追加した列です。\nそれ以前の行と、まだ送っていないクライアントの行では NULL になります。\n\nこのため 3 つの Query は、位置ログの列が NULL のときに **同一 `session_id` の\n`log_events` / `interaction_events` からビルド情報を補完** します。補完値は、そのセッションの\n**最初のイベント行(`app_version` を持つ行を優先)から 3 列をまとめて取ります**。\n列ごとに `MIN` を取ると、別々の行の `appVersion` と `platform` が混ざった実在しない組み合わせに\nなり得るためです。\n`appVersion` / `platform` / `channel` フィルタも、この補完後の値に対して適用されます。\nどちらにも情報が無ければ `null` のままです。\n\n補完はセッション単位なので、1 セッションの途中でアプリを更新するようなケースは表現できません。\n実運用では乗車中にビルドが変わることはないため、この単純化を採用しています。\n\n## 実装メモ",
+        "kind": "doc",
+        "metadata": {
+          "blob_sha": "58846a8465ef3a92858713814f6f6f0a941b45fd",
+          "branch": "main",
+          "commit": "37208ef7dbac9af640a41cf85c205474377dc277",
+          "path": "docs/location-freeze-regression.md"
+        },
+        "updated_at": "2026-11-12T12:18:43.284Z"
+      },
+      {
+        "citation": "p2",
+        "source_id": "TrainLCD/DecisionRAG#18",
+        "repo": "TrainLCD/DecisionRAG",
+        "title": "feat: 検索・出典検証をCloudflare Clefへ切り替える",
+        "text": "Typesafe APIがHTTP 402を返し検索が502で失敗するため、判定を既存のWorkers AIバインディング経由の `@cf/cloudflare/clef` に切り替えます。TypesafeキーとJEV_MODELは参照しません。文書・枝の評価を64問単位に分割し、全候補を評価します。回答生成モデルと出典検証の閾値は維持します。\n\nPR作成前に、同じ本番データを使う読み取り専用の検証版で動作確認しました。\n- ブラウザ:「地下鉄で位置更新が止まる問題」で検索→生成途中の文章表示→出典検証済みのチケット要約まで完了。生成中に結果欄が見えること、質問への回答→各チケットの要約の順を確認。\n- トレース: 文書2690件を43回に分割し、検索・回答検証がすべてclefを使用。\n- API:「東京メトロ固有の問題」の検索も確認。\n- npm test（34件）、npm run check、Wrangler dry-run成功。検証用ワークフローは削除済み。\n\n検証版: https://clef-verification-trainlcd-decision-rag.catwalk8205.workers.dev/\n\nモデル変更により検索結果や検証確率は変わります。地下鉄の確認では、直接回答の主張が閾値に届かず、裏付けを通過したチケット要約のみが最終表示されました。\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n<!-- coderabbit-ai-generated:v1 -->\n\n## Summary by CodeRabbit\n\n* **変更点**\n  * 判定処理をWorkers AIのClefに切り替え、Typesafe APIキーの設定が不要になりました。\n  * 画面上の判定時間ラベルとエラー表示を更新しました。\n  * 検索候補の上限を、枝・文書ともに64件に変更しました。\n  * セットアップや検索・回答APIに関するドキュメントを更新しました。\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->\n\n## Comment: coderabbitai[bot]\nhttps://github.com/TrainLCD/DecisionRAG/pull/18#issuecomment-6786434143\n\n\n<!-- coderabbit-ai-generated:v1 -->\n\n<!-- This is an auto-generated comment: summarize by coderabbit.ai -->\n<!-- review_stack_entry_start -->\n\n<a href=\"https://app.coderabbit.ai/change-stack/TrainLCD/DecisionRAG/pull/18?scope=ghh_OusAJGA4HG8ljoOV0wJvVx8NmnZIjc2DdjmxOu0xZWA&amp;cs_source=review_comment\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://storage.googleapis.com/coderabbit_public_assets/review-stack-buttons-v1/explain-change-dark.svg\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://storage.googleapis.com/coderabbit_public_assets/review-stack-buttons-v1/explain-change.svg\"><img src=\"https://storage.googleapis.com/coderabbit_public_assets/review-stack-buttons-v1/explain-change.svg\" alt=\"Explain Change →\" height=\"32\"></picture></a>\n\n<!-- review_stack_entry_end -->\n<!-- This is an auto-generated comment: failure by coderabbit.ai -->\n\n> [!CAUTION]\n> ## Review failed\n> \n> The pull request is closed.\n\n<!-- end of auto-generated comment: failure by coderabbit.ai -->\n\n<!-- walkthrough_start -->\n\n<details>\n<summary><strong>Walkthrough</strong></summary>\n<dl>\n<dd>\n<br>\n\n判定処理をTypesafe APIからCloudflare AIのClefに切り替えました。質問数と候補バッチの上限、設定、エラー処理、テスト、画面表示、READMEを更新しています。\n\n**Changes: Clef判定処理**",
+        "kind": "pr",
+        "metadata": {
+          "author": "TinyKitten",
+          "base_branch": "main",
+          "draft": false,
+          "head_branch": "feat/cloudflare-clef",
+          "labels": [],
+          "merge_commit_sha": "7f4dc82b8225db8a01d093f77799799e7bacdd83",
+          "merged_at": "2026-11-11T03:53:34Z",
+          "number": 18,
+          "release_status": "unknown",
+          "state": "closed",
+          "state_reason": null
+        },
+        "updated_at": "2026-11-12T12:03:42Z"
+      },
+      {
+        "citation": "p3",
+        "source_id": "TrainLCD/DecisionRAG#19",
+        "repo": "TrainLCD/DecisionRAG",
+        "title": "perf: タイトル・枝の選択をClef-flashに切り替える",
+        "text": "検索時のタイトル判定が全体の大半を占めていたため、タイトル・枝の選択を `@cf/cloudflare/clef-flash` に切り替えます。本文評価、Choice、回答検証はClefを維持します。並列数・候補数・しきい値は変更しません。\n\nPR作成前に本番D1を共有する読み取り専用バージョンをアップロードし、実API・ブラウザーで確認しました。\n\n| 質問 | 変更前の検索時間 | 変更後 | 本文ヒット数 |\n| --- | ---: | ---: | ---: |\n| 地下鉄で位置更新が止まる問題 | 16.833秒 | 9.476秒 | 11→10 |\n| 東京メトロ固有の問題 | 14.834秒 | 7.471秒 | 13→8 |\n\n各1回の比較であり、網羅的な精度評価ではありません。資料集合は変化します。地下鉄の質問では#420と修正PR #423を保持、背景測位診断文書などは今回の最終結果から外れました。メトロの質問では#268/#261を保持、#525やStationAPI #48などは今回外れました。\n\n全工程をflashにした試験では、地下鉄の修正PRが本文判定で落ち、生成回答も検証で却下されたため、本文以降はClefを維持しました。最終構成ではブラウザーで検索・回答生成・検証済み回答の表示まで成功。自動テスト34件と型チェック成功。\n\n検証URL: https://05711ab8-trainlcd-decision-rag.catwalk8205.workers.dev/\n\n検証用の一時ワークフローは削除済みです。\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n<!-- coderabbit-ai-generated:v1 -->\n\n## Summary by CodeRabbit\n\n* **変更点**\n  * 資料の候補選定には「Clef Flash」を、本文の評価・並べ替え・回答の検証には「Clef」を使用するようになりました。\n  * TypesafeのAPIキーが不要である点に変更はありません。\n* **ドキュメント**\n  * 利用するAIモデルの説明を更新しました。\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->\n\nレビュー対応（cce5977）: flashの24,576トークン枠に合わせ、クエリ・質問・JSONを含むUTF-8バイト数をトークン数の保守的な上界として分割します。テンプレート用4,096を確保し、単独で大きい候補はClefの枠で評価、そこにも収まらない候補は切り捨てず失敗させます。日本語/絵文字/長いクエリ/大きな単独候補の保持と予算超過をテスト済み。35テスト・型チェック・CI・プレビュースモーク成功。\n\n上表の時間・資料集合は入力予算修正前の実測です。修正後の実検索は上流GitHub HTTP 403で阻害され、変更前の本番でも同じ403を再現しました。修正後の検索速度は未再計測です。\n検証URL（cce5977）: https://71ad223c-trainlcd-decision-rag.catwalk8205.workers.dev/\n\n## Comment: coderabbitai[bot]\nhttps://github.com/TrainLCD/DecisionRAG/pull/19#issuecomment-6788322551\n\n\n<!-- coderabbit-ai-generated:v1 -->\n\n<!-- This is an auto-generated comment: summarize by coderabbit.ai -->\n<!-- review_stack_entry_start -->\n\n<a href=\"https://app.coderabbit.ai/change-stack/TrainLCD/DecisionRAG/pull/19?scope=ghh_OusAJGA4HG8ljoOV0wJvVx8NmnZIjc2DdjmxOu0xZWA&amp;cs_source=review_comment\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://storage.googleapis.com/coderabbit_public_assets/review-stack-buttons-v1/explain-change-dark.svg\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://storage.googleapis.com/coderabbit_public_assets/review-stack-buttons-v1/explain-change.svg\"><img src=\"https://storage.googleapis.com/coderabbit_public_assets/review-stack-buttons-v1/explain-change.svg\" alt=\"Explain Change →\" height=\"32\"></picture></a>\n\n<!-- review_stack_entry_end -->\n<!-- walkthrough_start -->",
+        "kind": "pr",
+        "metadata": {
+          "author": "TinyKitten",
+          "base_branch": "main",
+          "draft": false,
+          "head_branch": "perf/clef-title-concurrency",
+          "labels": [],
+          "merge_commit_sha": "e625932ac90202a02fd3d5c7ff96d40b70532c9e",
+          "merged_at": "2026-11-11T06:36:37Z",
+          "number": 19,
+          "release_status": "unknown",
+          "state": "closed",
+          "state_reason": null
+        },
+        "updated_at": "2026-11-12T12:03:44Z"
+      },
+      {
+        "citation": "p4",
+        "source_id": "TrainLCD/DecisionRAG:docs/clef-evaluation-plan.md",
+        "repo": "TrainLCD/DecisionRAG",
+        "title": "docs/clef-evaluation-plan.md",
+        "text": "# Clef / Clef-flash の検索品質・速度評価案\n\n作成日: 2026-11-12  \n状態: 提案。評価セットの採点・モデル比較は未実施。数値基準は暫定案であり、合意済みの仕様や実測結果ではない。  \n確認した実装: `07050be7eb1fd2125d0c913bb141876a6b5baab6`\n\n## 1. 何を判断するか\n\nTrainLCDの開発者がIssue・PR・ドキュメントを横断して、調査や意思決定に必要な情報を短時間で見つけられることを目的とする。\n\n「通常Clefと同じ資料が返ること」は正解の定義にしない。別の資料でも必要な事実が裏付けられれば成功とする。一方、同じIssueが返っても必要な本文が欠けていれば成功にはしない。\n\nまず検索だけを評価し、本文評価や並べ替えをFlashへ変更する価値があるかを判断する。回答の生成・検証は別に評価する。モデルの採否を決める前に、用途と許容できる失敗を明文化する。\n\n## 2. 現状と過去の検証の扱い\n\n現在のコードでは候補選別に主にFlashを使い、長文ドキュメントの個別判定、本文評価、Choiceによる並べ替え、根拠評価・回答検証には通常Clefを使う。`SCREENING_MODEL=clef` は候補選別を通常Clefにする設定であり、全工程をFlashにするスイッチではない。本番の実効設定は比較時に別途記録する。\n\n[PR #19](https://github.com/TrainLCD/DecisionRAG/pull/19)では、全工程をFlashにした試験で修正PRが本文判定から落ち、生成回答が検証で却下されたと報告されている。しかし、事前に定義した正解情報・許容差・十分な質問数がないため、この観測だけで「Flashは不適格」と結論づけない。却下された回答自体が正しかったかも、根拠に照らして確認する必要がある。\n\n[既存の実データ検証](pagination-evaluation.md)と[表示回帰検証](pagination-regression.md)は参考資料とする。過去のページ単位APIと現在の全件取得を混ぜてモデルの性能差にしない。\n\n現行のクラス名 `Jev` はWorkers AIのClefを呼ぶ実装である。「以前のJev」と比較する場合は、当時のコミット・接続先・モデル・入力・設定を特定する。再現できない過去の体感速度を比較値にはしない。\n\n## 3. 最初の評価セット\n\n最初は20問。開発用12問と最終確認用8問を、正解を作った後、モデル比較を始める前に固定する。必須ケース5問は、開発用と最終確認用の各セットに、回答可能な必須ケース（`answerability: answerable` かつ必須事実が1項目以上ある質問）を1問以上含めるように配分する。最終確認用の結果を見て調整したら、その8問は開発用へ移し、新しい最終確認用セットを作る。新しい最終確認用セットにも同じ条件を適用する。\n\n下表は質問の候補であり、資料の存在や答えを確認済みという意味ではない。各分類から指定数を選び、重複する話題に偏らないようにする。\n\n| 分類 | 問数 | 質問候補 | 成功に必要な情報 |\n|---|---:|---|---|\n| 症状から原因・対処を調べる | 4 | 地下鉄で位置更新が止まる問題には何をした？／バックグラウンド測位の復旧方針は？ | 症状と対応の関係。原因未確定ならその区別 |\n| 仕様・実装意図を調べる | 4 | バス同士の乗換を表示しないのはなぜ？／経路切替確認が出る条件は？ | 条件と理由。提案と実装済みの区別 |\n| 修正・反映状況を調べる | 4 | バス停の重複はどう修正した？／特定の変更はどのGitHubリリースに含まれる？ | 修正内容、マージ状態、確認可能な反映範囲 |\n| 表記揺れ・複数資料をまたぐ | 4 | 地下でGPSが戻らない／直通情報の更新が遅い原因と対処／駅番号がない時のウィジェット表示は？ | 語句一致に依存せず必要な事実を結び付ける |\n| 根拠不足・似た別問題を区別 | 4 | 資料にない将来対応日は？／マージ済みPRはApp Storeで配信済み？ | 根拠不足を区別し、別件の資料で答えたことにしない |\n\n根拠不足の4問は、固定した評価対象資料で答えを裏付けられないことを確認してから採用する。検索で関連資料が返るだけでは失敗にしない。検索結果の関連性と、回答の断定の可否を混同しない。\n\n運用で重視する5問を「必須ケース」として事前指定する。例は、対処PRへ到達する、仕様変更の理由を拾う、未マージとマージ済みを区別する、過去と現在を区別する、配信を裏付けなく断定しない。必須という重みは利用者の用途に基づく提案であり、AIが特定資料を好むことを理由に付けない。\n\n## 4. 正解の作り方\n\n1. 各質問に必要な事実を1〜3項目へ分解する。例: 「症状」「対応内容」「対応の状態」。\n2. リポジトリの原文を直接読み、各事実を裏付ける本文・URL・コミットまたは更新日時を記録する。AIが下書きを作り、開発者が必須事実と用途上の重要度を確認する。\n3. 正解は資料IDの単一リストではなく、事実ごとの代替根拠の集合にする。複数資料を合わせて初めて裏付けられる場合も記録する。\n4. 同じ出来事でも、症状報告だけでは修正内容の代替にしない。古い仕様や撤回案も現在の仕様の代替にしない。\n5. 判定不能な事実は「未確定」とし、採点対象から外す。未確定が残る質問は正式評価セットへ入れない。",
+        "kind": "doc",
+        "metadata": {
+          "blob_sha": "6b0f277a991a1fbb35fbb3a51fd9fa093ebc5ee8",
+          "branch": "main",
+          "commit": "830f0855d88547e13e2fb5b6823ee4f097a5a265",
+          "path": "docs/clef-evaluation-plan.md"
+        },
+        "updated_at": "2026-11-12T12:18:37.459Z"
+      },
+      {
+        "citation": "p5",
+        "source_id": "TrainLCD/DecisionRAG#4",
+        "repo": "TrainLCD/DecisionRAG",
+        "title": "DecisionRAG の検索待ち時間を短縮し、工程別に計測する",
+        "text": "## 変更内容\n\n- 選択した枝の文書ページを D1 の `batch()` でまとめて取得し、短い最終ページの次に空ページを取りに行く往復を省きます。\n- GitHub での公開範囲の確認と D1 の枝の取得を並行し、確認が済んだ資料だけを Jev に渡します。\n- 全本文候補が最終候補枠と一つのコンテキストに収まる場合は、Jev の関連度判定と Choice を一つのリクエストにまとめます。候補が多いときは先に選別します。\n- 公開範囲の確認、D1、Jev、要約生成の時間をレスポンスと画面の詳細に表示します。\n\n## 検証\n\n- 型チェックとテスト17件が通過。ページ境界、公開範囲、候補選別、引用検証を確認しました。\n- 本番データを使った Cloudflare プレビューで、「地下鉄で位置更新が止まる問題」の検索処理は1.82〜1.92秒でした。同時期の変更前は2.04〜2.20秒でした（サーバー計測、各2回）。要約付きは生成時間の変動が大きく、総時間の短縮は試行によって異なります。\n\n本番は `main` に未反映の `4da7505` を実行していたため、このブランチはそのコミットから作成しました。今回の性能変更は `ea1c575` です。`main` との差分には既に本番稼働していた公開検索や要約の実装、および #3 の修正も含まれます。\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n<!-- coderabbit-ai-generated:v1 -->\n\n## Summary by CodeRabbit\n\n* **新機能**\n  * 認証なしで公開資料を検索できます。フィードバックを含む検索や管理機能にはAPIトークンが必要です。\n  * 検索結果に、根拠を確認した回答や処理時間の内訳を表示します。\n  * 公開検索には利用回数の制限が適用されます。\n\n* **改善**\n  * 複数の文書を並行して評価し、関連する検索結果を選びやすくしました。\n  * 保留中のレビューと関連コメントを検索対象から除外します。\n  * 外部サービスの通信失敗やタイムアウトをエラーとして通知します。\n\n* **ドキュメント**\n  * 検索範囲、認証、回答状態、利用制限に関する説明を更新しました。\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->\n\n## Comment: coderabbitai[bot]\nhttps://github.com/TrainLCD/DecisionRAG/pull/4#issuecomment-6762964854\n\n\n<!-- coderabbit-ai-generated:v1 -->\n\n<!-- This is an auto-generated comment: summarize by coderabbit.ai -->\n<!-- review_stack_entry_start -->\n\n<a href=\"https://app.coderabbit.ai/change-stack/TrainLCD/DecisionRAG/pull/4?scope=ghh_OusAJGA4HG8ljoOV0wJvVx8NmnZIjc2DdjmxOu0xZWA&amp;cs_source=review_comment\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://storage.googleapis.com/coderabbit_public_assets/review-stack-buttons-v1/explain-change-dark.svg\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://storage.googleapis.com/coderabbit_public_assets/review-stack-buttons-v1/explain-change.svg\"><img src=\"https://storage.googleapis.com/coderabbit_public_assets/review-stack-buttons-v1/explain-change.svg\" alt=\"Explain Change →\" height=\"32\"></picture></a>\n\n<!-- review_stack_entry_end -->\n<!-- recent_review_status_start -->\n\nNo actionable comments were generated in the recent review.\n\n<!-- recent_review_status_end -->\n<!-- walkthrough_start -->\n\n<details>\n<summary><strong>Walkthrough</strong></summary>\n<dl>\n<dd>\n<br>\n\n公開検索と認証付きフィードバック検索の範囲を変更しました。文書取得と候補評価をバッチ化しました。回答生成では引用付きクレームを検証します。APIの認証とレート制限、検索画面、上流リクエスト処理も変更しました。\n\n**Changes: 公開検索と回答生成**",
+        "kind": "pr",
+        "metadata": {
+          "author": "TinyKitten",
+          "base_branch": "main",
+          "draft": false,
+          "head_branch": "fix/search-response-latency",
+          "labels": [],
+          "merge_commit_sha": "19f91737cbb4e2863e628b195ad271c743a26e33",
+          "merged_at": "2026-11-10T12:56:01Z",
+          "number": 4,
+          "release_status": "unknown",
+          "state": "closed",
+          "state_reason": null
+        },
+        "updated_at": "2026-11-12T12:03:02Z"
+      },
+      {
+        "citation": "p6",
+        "source_id": "TrainLCD/DecisionRAG:docs/pagination-evaluation.md",
+        "repo": "TrainLCD/DecisionRAG",
+        "title": "docs/pagination-evaluation.md",
+        "text": "# ページ分割の実データ検証（2026-11-11）\n\n最終コード: `59fc331edfe4ce3606d089272c95ff1260d1e942`。本番比較対象: `e625932ac90202a02fd3d5c7ff96d40b70532c9e`。\n同じ本番D1の公開資料2,713文書、フィードバックなし。試作は `paginated: true`、本番は従来の全本文評価。[最終測定値と出典一覧](evaluation/pagination-final-2026-11-11.json) を保存した。比較対象は完全な正解集合ではなく、限られた質問による検証である。\n\n## 初回検索時間\n\n本番と試作の検索を順番に実行し、同時ベンチマークによる干渉を避けた。`/search` の成功した要求を測定し、回答生成は含めない。\n\n| 質問 | サーバー処理：本番 → 試作 | HTTP往復込み：本番 → 試作 |\n|---|---:|---:|\n| 地下鉄で位置更新が止まる問題（3回中央値） | 10.244 → 8.791秒 | 18.578 → 16.979秒 |\n| 東京メトロ固有の問題はある？ | 7.882 → 7.659秒 | 17.153 → 14.087秒 |\n| 直通情報がすぐに反映されない問題 | 8.924 → 5.662秒 | 17.198 → 13.015秒 |\n\n地下鉄の中央値はサーバー内で約14.2%、HTTP往復込みで約8.6%短縮。3回のサーバー処理は本番10.244 / 10.279 / 9.651秒、試作9.216 / 8.302 / 8.791秒だった。単発測定のメトロではサーバー処理差が小さく、全質問で同じ改善率とは主張しない。通信時間はこの実行環境の値で、利用者端末での保証値ではない。\n\n計測期間の候補コミットは `2e3725e`〜`59fc331`。モデル、判定文、通常文書の入力、16並列の設定は同じで、途中の変更はエラー後のキュー停止と過大なグループのUTF-8サイズ確認である。最後に固定バージョンのプレビュー `https://e4e32c5c-trainlcd-decision-rag.catwalk8205.workers.dev/` でも地下鉄を全ページ検索した。初ページ8.378秒、続きは2.032 / 2.616 / 3.259 / 1.781秒。全ページを読む合計時間を短縮する設計ではない。\n\n## 資料の回収\n\n- 地下鉄: 本番の8出典を全5ページで回収。#420・#423・#267は3回とも初ページにある。本文区間は14区間中12区間が一致し、`location-simulation.md` のGPX導入と欠測再生の2区間は非一致。同じ文書の別区間は取得しているが、出典単位の一致を完全な本文再現率とは扱わない。\n- メトロ: 本番の7出典・7本文区間を全3ページで回収。#258・#261・#268、修正PR #259、直通の#1022を確認した。\n- 直通情報: MobileApp #1022を初ページで取得し、修正PR #1023も取得。本番だけに出たWebsite #108 / #113はWebステータス配信・Redis TTLの資料で、列車の直通案内の根拠ではなかった。\n\n関連性を広く扱うため、試作には本番にない候補も含まれる。全出典の適合率や未確認の質問に対する精度を保証するものではない。\n\n## 入力と並列処理\n\nタイトルだけの判定を避け、本文の複数位置の抜粋と導入部を入力する。通常Clefだけに切り替えた初期試作でも取りこぼしが残り、地下鉄の初ページは11.7〜13.5秒だったため、モデル切り替えだけを解決策とはしなかった。既定はグループ・Issue・PRにflash、長文ドキュメント個別判定と本文以降に通常Clefを使う。`SCREENING_MODEL=clef` で全通常Clefとの比較も可能。\n\n共有入力で5区間ずつ評価すると、資料の並び順変更で#420が落ちた。20区間以下のページは1区間ずつ通常Clefに送り、タイトル・本文・明示的に関連する資料を合わせて、質問に関連する事実を含むか判定する。Issueと修正PRの参照は検索範囲内で双方向に1段だけ扱う。選択した候補の表示順は別のChoice要求で決める。\n\n並列数24の実験では、連続計測中に `decision_upstream_error` が3要求で発生した。元の原因コードを取得していないため、容量不足やレート制限とは断定しない。この設定は採用せず、文書・グループの並列数を16に抑えた。16並列の表の5回の初回検索と続きのページ取得、固定バージョンでの全ページ検索は成功した。既知の容量不足・レート制限・日次枠のエラーは秘密情報を含まない固定コードに分類し、失敗後は未開始の呼び出しを止める。上流サービスの障害自体をなくす変更ではない。\n\nモデル呼び出し数は増えている。地下鉄の初回は本番75回に対して試作142回。候補に本文を含めることと独立判定のためで、API使用量を削減する変更ではない。失敗した24並列の測定も最終JSONに残した。[初期候補の測定](evaluation/pagination-2026-11-11.json) は別コミットの記録であり、上表の数値とは混ぜていない。\n\n## ブラウザー・ストリーミング",
+        "kind": "doc",
+        "metadata": {
+          "blob_sha": "c4908f54e67b9fb83805d9a5d6e679b58205860b",
+          "branch": "main",
+          "commit": "830f0855d88547e13e2fb5b6823ee4f097a5a265",
+          "path": "docs/pagination-evaluation.md"
+        },
+        "updated_at": "2026-11-12T12:18:39.879Z"
+      },
+      {
+        "citation": "p7",
+        "source_id": "TrainLCD/DecisionRAG:docs/rust-local-decisions.md",
+        "repo": "TrainLCD/DecisionRAG",
+        "title": "docs/rust-local-decisions.md",
+        "text": "# Rustでのローカル判定への移行\n\n## 実装した範囲\n\n- `rust/lib.rs` / `rust/rules.rs`: 正規化、日英用語対応、間接的な技術の手掛かり、未知の日本語名、技術識別子と番号の一致、関連度と安定した順位付け、同一検索範囲内の参照文書の1段展開、引用検査、原文抽出。\n- `backend/src/`: HTTPルーティング、認証、Webhook HMAC、公開範囲、D1 SQLとスナップショット、GitHub同期、リリース祖先判定、Queue再試行、暗号化カーソル、検索、生成レスポンス検査、SSE解析。\n- `src/host.ts` / `src/worker.ts`: CloudflareバインディングとWeb APIのI/Oだけを接続する薄いホスト。ドメイン処理はRust/WASMを呼ぶ。\n- 判定はCPUのみ。モデル重みの取得・推論サーバー・GPU・Decision APIキーは不要。\n- 文書は540件単位で読み込み、64候補ずつ採点する。全許可範囲を走査し、予算超過は422。選択後の文書に属する本文区間を、本文取得の前に合算する。4,000区間を超えた場合は422 `passage_screening_budget_exceeded` とし、文書やヒット件数を黙って切り詰めない。取得中に件数が変わった場合も既存の取得側ガードで拒否する。\n- Webの10件ずつのページ送り、全件数、総ページ数、ページ送り時に検索・生成を繰り返さない仕様は変更しない。APIの旧カーソルモードは既存の20区間単位を維持する。\n\n## 判定の意味\n\nこれは学習済みモデルの再現ではない。ルールのバージョンは `rust-rules-v1`。スコアは校正された確率ではなく、概念のカバー率と見出し一致による順位・選別の指標。CLIでは各候補の `matched` / `missing` を返す。既存APIの `relevance` と内部の `probability` は互換名として残す。\n\n意味の近い文だからといって裏付け済みとしない。原文の文全体と一致する主張は出典への帰属だけを確認する。知らない引用IDや検出可能な否定・条件の反転、対象の違う数値の流用は拒否する。言い換えは引用先との関連性とローカルルールで扱い、意味的な支持を証明できない場合も、矛盾と同一視して一律に削除せず `semantic_status: unknown` として返す。回答の完全性と意味的な矛盾検出は `unknown`。旧数値フィールドの0を「矛盾が存在しない確率」と解釈してはいけない。\n\n生成した回答が検証を通らない場合は、根拠中の最大400文字の一文をそのまま「資料の記載」として返す。要約対象は従来どおり上位20区間。生成サービスのない構成でもこの引用を返す。文章生成用のWorkers AIまたは外部生成サービスは残る。生成途中のdraftは従来どおり仮表示であり、最終resultに置き換える。\n\n語句の類似やルールを通過したことは、意味的な裏付けの証明ではない。`semantic_status: unknown` は回答の完全性や意味的な矛盾がないことを保証しない。一般的な矛盾、因果関係、時間・バージョンをまたぐ解決状況を完全に判定するものではない。\n\n## 検証と実測\n\n2026-11-12、現行本番の公開検索から取得した測位35区間とウィジェット4区間、公開PR #7403の本文1区間を保存。全40区間の再現可能な入力は `test/fixtures/public-passages.json`。\n\n- 旧API: 「地下鉄で位置更新が止まる問題」35件、サーバー13,911ms、HTTP全体24,519ms。「ウィジェットの駅番号の表示」4件、HTTP全体17,263ms。\n- 「バスの乗換案内と音声読み上げ」は503 `decision_capacity_exceeded` となり比較不能。\n- ネイティブRustとWASMの6質問の結果が一致。40区間の採点中央値は約3ms。詳細は `evaluation/rust-local.json`。\n- SQLiteでD1を模した実API経路では、測位27件・中央値約16ms、ウィジェット3件・約12ms、バス2件・約12ms。詳細は `evaluation/rust-local-api.json`。\n- 複数観点の質問に対して1語だけで採用しないよう改訂した結果、旧APIの測位35区間のうち27区間、ウィジェット4区間のうち3区間を採用する。旧結果との完全一致は保証しない。\n\n**上記は旧検索の返した資料を多く含む偏った小規模コーパス**。旧モデルの結果を正解ラベルとはみなさない。語彙調整にもこの資料を使用したため、未知の質問での精度保証ではない。全本番索引の再現率・適合率・Workers CPU時間・ピークメモリは未測定。ローカルAPIの計測はリモートD1、GitHubの公開範囲確認、文章生成、ネットワークを含まず、本番との単純な速度倍率は出さない。\n\nRustのテストでは日英の照合、番号境界、未知の駅名、同点順序、参照範囲、否定・条件・配信済みの捏造拒否を確認。新しい統合テストは本物のWASMで全41件の保持、Decision通信0回、公開範囲の隔離、SSEと引用への復帰、繰り返しのメモリ確保を確認する。",
+        "kind": "doc",
+        "metadata": {
+          "blob_sha": "044750812c91b445bcdbded3721dd92cd31cd17e",
+          "branch": "main",
+          "commit": "830f0855d88547e13e2fb5b6823ee4f097a5a265",
+          "path": "docs/rust-local-decisions.md"
+        },
+        "updated_at": "2026-11-12T12:18:39.916Z"
+      },
+      {
+        "citation": "p8",
+        "source_id": "TrainLCD/MobileApp:docs/changelog.md",
+        "repo": "TrainLCD/MobileApp",
+        "title": "docs/changelog.md",
+        "text": "# 変更履歴\n\n依存パッケージの更新や Expo SDK の移行など、アプリ全体に影響する変更の記録。\nCLAUDE.md「Security & Configuration Guardrails」に従い、依存更新後に実施した\n`expo-doctor` / `npm run lint` / `npm test` / `npm run typecheck` の結果をここに残す。\n\n新しいエントリを上に追加する。\n\n## 2026-11-05 — iOS背景補完測位の開始待ちを短縮\n\n- #7355で10秒に揃えていた背景補完測位の開始待ちを5秒へ分離しました。測位の取得上限30秒、失敗後の再試行待ち10秒、測位の鮮度上限10秒は維持します。前景の補完開始と通常の10m制限も維持します。\n- 通常測位と補完測位のどちらも、JS側の最大許容精度を超える測位では補完を延期・終了しません。リモート設定の取得後は、許容精度の変更を背景タスクにも反映します。\n- 許容精度の更新時に古い開始処理が新しい測位タスクを停止する競合を修正しました。開始と停止を直列化し、古い開始と停止の完了後に新しい設定で開始します。開始後に取り消しを検出して個別に停止する処理は、この順序保証へ置き換えました。\n- `npm run lint`、`npm run typecheck`、測位関連7スイート・130テストに成功しました。未変更のexpo-location 58.0.16へパッチを適用し、検証対象のネイティブ4ファイルとの一致を確認しました。Objective-CのiOSビルドと実機走行は未実施です。\n- 背景補完の回数が増えるため、電池消費と到着判定までの時間を実機で比較します。サスペンド中は開始タイマーを実行できません。適用にはiOSアプリの再ビルドが必要です。\n\n## 2026-11-03 — iOS補完測位のビルドエラー修正\n\n- カナリアのArchiveで、補完測位のエラー判定に使用する`kCLErrorLocationUnknown`の宣言を参照できず、コンパイルが失敗しました。`CoreLocation/CLError.h`を明示的にimportします。\n- Cの判定関数テストではObjective-Cのimport不足を検出できませんでした。修正後の確認にはiOSのArchiveも必要です。\n\n## 2026-11-03 — iOS背景測位の途絶時に限定した補完測位\n\n- 通常測位の10m制限は維持します。背景で新しい測位が10秒以上届かない場合だけ、別の背景対応CLLocationManagerで補完します。要求精度と活動種別は通常測位から引き継ぎます。\n- 新しく有効な時刻の測位を受信したら補完を停止し、既存の位置情報タスクへ即時配信します。通常測位から新しい測位が届いた場合も補完を終了します。JavaScript側の精度フィルターと重複排除を経由します。\n- 補完の待機上限は30秒です。タイムアウト、取得失敗、UIKitの背景実行期限切れでは購読を閉じ、再試行まで10秒待ちます。古い測位や重複測位では待機期限を延長しません。\n- 前景復帰、設定変更、タスク解除では補完用のタイマー、測位要求、背景タスクを破棄します。端末の省電力モードへの移行はネイティブ側でも監視します。常時位置情報の許可がない場合と省電力測位中には開始しません。\n- #7353の継続測位の10m制限を残し、途絶時の補完要求に限って距離制限を設けません。#7257の通常の保留データ配信処理とAndroidの測位処理は維持します。\n- 待機用タイマーでアプリのサスペンドを解除することはできません。補完中だけ有限のUIKit背景タスクを使用します。OSから測位が届かない場合や、座標の誤差自体は解消しません。電池消費と発熱は実機で比較する必要があります。\n- `npm run lint`、`npm run typecheck`、測位関連7スイート・125テストに成功しました。ネイティブ側の判定関数はCとしてコンパイルし、途絶判定、再試行待機、古い測位と重複測位、省電力条件を検証しました。未変更のexpo-location 58.0.16へのパッチ適用と適用後のファイル一致を確認しました。\n- Objective-CのiOSビルドと実機検証は未実施です。適用にはiOSアプリの再ビルドが必要です。実機では地上走行、停車、地下駅で画面ロック前後の測位時刻とaccuracyを比較します。前景復帰、省電力切り替え、案内終了時の補完停止も確認します。\n\n## 2026-11-03 — iOS背景測位の10m間引きを復活\n\n- #7304で追加した「背景測位の10m制限を解除」を試験的機能画面から削除しました。\n- 旧設定の保存値に関係なく、通常のiOS背景測位でも10mの距離制限を適用します。\n- Androidと省電力測位のオプション、保留データの配信処理は維持します。\n\n## 2026-11-03 — 初回案内の保存失敗を処理\n\n- 初回案内のOK操作で完了フラグの保存に失敗した場合、例外をSentryへ報告してダイアログの終了処理を完了します。\n- 保存失敗時に代替の完了フラグを設けず、次回マウント時の案内から保存を再試行できます。MMKVへの同期保存と既存の文字列形式は維持します。\n- 回帰テストではダイアログの終了処理を経由し、通常の保存、保存例外、再表示後の保存を検証します。\n\n## 2026-11-03 — iOSの位置情報利用目的をInfo.plistに追加",
+        "kind": "doc",
+        "metadata": {
+          "blob_sha": "349901303234337b66f37b31a67b3e07220ebf68",
+          "branch": "dev",
+          "commit": "d6a7a15507c02b1a040effea3636b39434c4abd5",
+          "path": "docs/changelog.md"
+        },
+        "updated_at": "2026-11-12T12:18:09.642Z"
+      },
+      {
+        "citation": "p10",
+        "source_id": "TrainLCD/MobileApp:docs/location-simulation.md",
+        "repo": "TrainLCD/MobileApp",
+        "title": "docs/location-simulation.md",
+        "text": "`--line` は路線の全駅を並べるだけなので、種別ごとの通過駅を `--skip` に手で書き出す\n必要があり、直通で複数路線にまたがる経路は表現できない。`--line-group`\n(`lineGroupId`) を使うと `lineGroupStations` が返す経路をそのまま走らせられる。\n\n- 通過駅は各駅の `stopCondition` から自動判定する。規則はアプリ本体\n  (`src/utils/isPass.ts`) と同じで、`Not` は通過、`Partial` / `PartialStop` は停車扱い。\n- `Weekday` / `Holiday` は `--start` の日付 (JST) で判定する。既定の\n  `2026-01-01T00:00:00Z` は元日なので休日扱いになる。\n- 直通先の路線も 1 本の経路として繋がる。\n- `--from` / `--to` を省略すると経路の全区間を走る。\n- `--skip` は自動判定に**追加**される。臨時の通過を足すときに使う。\n\n区間の時間は、StationAPI の `trainRoute` に `model: Estimated` を渡して取る到着・出発の\n見込みに合わせる。見込みは、同じ区間の `estimateArrivalTimes` と同じ値で、路線・種別\nごとの速度を実ダイヤで較正した到着時間推定から出る。アプリのオートモード\n(`useSimulationMode`) も同じ見込みで走るので、GPX・オートモード・ETA の時間がそろう。\n\nオートモードがこの見込みで走るのは、Worker の `/config/remote` が\n`auto_mode_estimated_enabled: true` を配信しているときだけ。`false`・未配信・取得失敗の\nときは、`model` を渡さない従来の値 (`Legacy`) で区間の最高速度を出して走る。値は Worker の\nKV `config:remote` に入れる。`true` でも StationAPI が `model` を知らずにエラーを返したときは、\n`Legacy` に戻して走る。\n\n- 停車駅から次の停車駅までの時間は「次の停車駅の到着 − この駅の出発」。推定では停まるが\n  GPX では通過する駅 (平日運転の駅を休日に走る、`--skip` など) は、その駅の停車時間を\n  走行から引く。\n- その時間で走り切る巡航速度を台形の式から求め、線路の長さの上を走らせる。加減速は\n  `trainRoute` の値 (推定のモデルの値) を使う。1 秒ごとの点は台形の位置の式から置くので、\n  区間の点の数は求めた時間ちょうどになる。計算はオートモードと共通で、\n  `src/utils/trainRouteTiming.ts` にある。区間ごとの 1 秒未満の端数は、次の区間で\n  計画した到着時刻へ戻すので、終点までに積み上がらない。\n- 途中の停車駅では、推定の停車時間 (出発 − 到着) だけ停まる。GPX では停まるのに推定では\n  通過する駅があると、停車時間の見込みが無いので `--dwell` を求めて止まる。\n- 見込みには運転余裕のぶんの時間が入っているので、巡航速度は路線の最高速度より低くなる。\n  駅間の中ほどでは、実際の列車より遅く走る。到着圏に入るときの速度は、減速度で決まり\n  巡航速度にはほとんど依存しない (駅の手前 x m での速度は √(2·減速度·x))。\n- 推定に較正の無い路線・種別は、実ダイヤとの差が大きいことがある。\n\n`trainRoute` の `model` 引数が無い StationAPI では、`--line-group` はエラーになる。\n\n`lineGroupId` は駅から辿る。`--list-train-types` にその駅の駅 ID を渡すと、\n`groupId` と種別名の対応が出る。\n\n```bash\n\n\n# 京王線新宿 (2400101) を通る種別と lineGroupId を出す\nnpm run gpx:generate -- --list-train-types 2400101\n\n\n# → 71  特急  Special Express  京王線\n\n# 経路と stopCondition を確認する\nnpm run gpx:generate -- --line-group 71 --list\n\n# 新宿→京王八王子を特急の停車パターンで生成する\nnpm run gpx:generate -- --line-group 71 --out assets/gpx/KeioSpecialExpress.gpx\n```\n\n生成時、標準エラーに同じ経路をアプリで開くためのディープリンクのクエリ部を出す。\n`skips` は `sids` に対する 0 起点の通過駅 index なので、自動判定した通過駅を\n手で数え直さずにそのまま再生手順へ渡せる。\n\n```text\nアプリを同じ経路で開くディープリンク: ?sids=2400101,2400104,...&skips=2,4,5,...\n```\n\n## 電波環境を GPX に書く\n\n既定の GPX は「常に測位が届き、精度は再生側が決める」トラックになる。地下鉄のように\n電波が入りづらい条件は `--signal-profile` で GPX 自身に埋め込む。\n\n電波環境は 3 つの成分に分かれ、それぞれ GPX 上の表現が違う。",
+        "kind": "doc",
+        "metadata": {
+          "blob_sha": "c42ac010e78c00a935619f3de5d9a03e79aa1449",
+          "branch": "dev",
+          "commit": "d6a7a15507c02b1a040effea3636b39434c4abd5",
+          "path": "docs/location-simulation.md"
+        },
+        "updated_at": "2026-11-12T12:18:19.606Z"
+      },
+      {
+        "citation": "p11",
+        "source_id": "TrainLCD/MobileApp:.claude/skills/replay-gpx/SKILL.md",
+        "repo": "TrainLCD/MobileApp",
+        "title": ".claude/skills/replay-gpx/SKILL.md",
+        "text": "- **電波環境入りの GPX では `--accuracy` を渡さない。** 明示すると GPX に記録された\n  精度を上書きしてしまい、坑口帯とホーム帯の切り替わりが消える。精度の出所は起動時の\n  ログに出るので、`GPX に記録された精度を使います` と出ているか確認する。\n  (200m 以上の値を一律に渡すと、今度は全点が地下鉄分岐に入って別の状態になる。)\n- **欠測は実際に測位の途絶になる。** 「投入を止めるだけなので Fused が最後の測位を\n  配り続けるのでは」という懸念は Galaxy SCG13 (Android 16) で確認済みで、欠測中は\n  `dumpsys location` の `last location` が `et=` (測位時刻) ごと固まり、新しい測位は\n  1 つも生まれなかった。疑わしいときは次で確認する。\n\n  ```bash\n  adb shell dumpsys location | grep -A3 \"fused provider\" | grep \"last location=\"\n  ```\n\n- **バックグラウンドで走らせたときは後始末を必ず手で確認する。** エージェントの\n  タスク停止は SIGTERM ではなく kill として届くことがあり、その場合スクリプトの\n  後始末が走らない。`[killed]` で終わっていたら下の手動手順を実行する。\n- **`--speed` は 1 のままにする。** `MAX_PLAUSIBLE_SPEED` は 100m/s (360km/h) なので、\n  320km/h の GPX を 2 倍速以上で流すと速度フィルタが全点を棄却して現在地が凍る。\n  倍速で流したいときは `--max-speed` を下げた GPX を作り直す。\n- **`gps` だけでは足りない。** Play 開発者サービスの Fused は独自に融合するため、\n  既定どおり `gps,network,fused` の 3 つへ同じ座標を流す。`fused` 単独だと\n  実測位が優先されてモックが無視される。\n- **テストプロバイダは走行中に OS 側から外れることがある。** Samsung の\n  「擬似ロケーション」通知の OFF や location サービス再起動で消える。スクリプトは\n  失敗を検知して自動で再登録し、ログに `再登録n回` として出す。\n- **`--time` は渡さない。** ホストと端末の時計がずれていると Samsung の\n  `PositionManager` が `ignore mock location for time validation` で捨て、\n  `handleTrackingLocation` の重複破棄にも引っかかる。\n- **`CURRENT SPEED` は常に 0km/h になる。** `cmd location providers` に速度を渡す\n  引数が無く、`coords.speed` が埋まらないため。アプリ内の速度フィルタは座標差分から\n  算出するので影響しないが、DEV OVERLAY の速度表示は当てにならない。\n- **中断は 1 回で待つ。** 2 回目の `Ctrl+C` は後始末を飛ばすため、テストプロバイダと\n  `mock_location` の appop が端末に残る。私物端末では特に、1 回で待って後始末を通す。\n- **ユーザーの私物端末では MMKV を書き換えない。** テーマやウォークスルーの状態を\n  変更する検証は避ける。\n\n## 再現できないこと\n\n| 条件 | この手順 |\n| ---- | ---- |\n| 精度を落とした測位 (α=0.6 / 0.3) | ✅ `--accuracy 100,300` などで指定できる |\n| トンネルでの測位途絶 | ✅ `--signal-profile subway` の GPX で `<time>` に穴を開ける |\n| 車体による GPS 減衰 | ❌ |\n| `coords.speed` を使う表示の検証 | ❌ 常に 0 |\n",
+        "kind": "doc",
+        "metadata": {
+          "blob_sha": "a4fe8b5026690d8212f1f4b83a44a23764b7680c",
+          "branch": "dev",
+          "commit": "d6a7a15507c02b1a040effea3636b39434c4abd5",
+          "path": ".claude/skills/replay-gpx/SKILL.md"
+        },
+        "updated_at": "2026-11-12T12:18:12.143Z"
+      },
+      {
+        "citation": "p15",
+        "source_id": "TrainLCD/MobileApp#401",
+        "repo": "TrainLCD/MobileApp",
+        "title": "地下鉄に乗っている時だけBestForNavigationに精度を上げる",
+        "text": "(No body)",
+        "kind": "issue",
+        "metadata": {
+          "author": "TinyKitten",
+          "labels": [
+            "enhancement"
+          ],
+          "number": 401,
+          "release_status": "unknown",
+          "state": "closed",
+          "state_reason": "completed"
+        },
+        "updated_at": "2020-12-26T17:06:49Z"
+      },
+      {
+        "citation": "p16",
+        "source_id": "TrainLCD/MobileApp#402",
+        "repo": "TrainLCD/MobileApp",
+        "title": "地下鉄ではBestForNavigation&メイン画面行かない限り位置を取り続けない",
+        "text": "closes #401 \r\n\r\nそもそもメイン画面以外で位置を取り続けてたのはバグだった\n\n## Changed files\nmodified: src/screens/Main/index.tsx",
+        "kind": "pr",
+        "metadata": {
+          "author": "TinyKitten",
+          "base_branch": "dev",
+          "draft": false,
+          "github_release": {
+            "published_at": "2026-10-29T16:39:14Z",
+            "tag": "v10.19.2",
+            "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2"
+          },
+          "head_branch": "feature/subway-accuracy",
+          "labels": [
+            "bug",
+            "enhancement"
+          ],
+          "merge_commit_sha": "44e23c92d74003f9d30b31d92e6810e588ae6d6c",
+          "merged_at": "2020-12-26T17:06:48Z",
+          "number": 402,
+          "release_status": "included_in_github_release",
+          "state": "closed",
+          "state_reason": null
+        },
+        "updated_at": "2020-12-26T17:06:50Z"
+      },
+      {
+        "citation": "p17",
+        "source_id": "TrainLCD/MobileApp#420",
+        "repo": "TrainLCD/MobileApp",
+        "title": "iOS版 トンネル通過時間が長いと移動していないとカウントされて位置情報追跡が切れる",
+        "text": "(No body)",
+        "kind": "issue",
+        "metadata": {
+          "author": "TinyKitten",
+          "labels": [
+            "bug"
+          ],
+          "number": 420,
+          "release_status": "unknown",
+          "state": "closed",
+          "state_reason": "completed"
+        },
+        "updated_at": "2020-12-30T17:19:27Z"
+      },
+      {
+        "citation": "p18",
+        "source_id": "TrainLCD/MobileApp#423",
+        "repo": "TrainLCD/MobileApp",
+        "title": "位置情報更新をiosで止めないようにした",
+        "text": "closes #420 \r\n卍して動作確認\n\n## Changed files\nmodified: src/screens/Main/index.tsx",
+        "kind": "pr",
+        "metadata": {
+          "author": "TinyKitten",
+          "base_branch": "dev",
+          "draft": false,
+          "github_release": {
+            "published_at": "2026-10-29T16:39:14Z",
+            "tag": "v10.19.2",
+            "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2"
+          },
+          "head_branch": "fix/ios-tunnel-fix",
+          "labels": [
+            "enhancement"
+          ],
+          "merge_commit_sha": "1671b59efa8ef335cbe234be0e6f6c462982bff7",
+          "merged_at": "2020-12-30T17:19:27Z",
+          "number": 423,
+          "release_status": "included_in_github_release",
+          "state": "closed",
+          "state_reason": null
+        },
+        "updated_at": "2020-12-30T17:19:28Z"
+      },
+      {
+        "citation": "p19",
+        "source_id": "TrainLCD/MobileApp#1510",
+        "repo": "TrainLCD/MobileApp",
+        "title": "位置情報取得調整",
+        "text": "- 位置情報取得タイムアウトの撤廃\r\n- `geolib.getDistance()` の精度を1000m変更\r\n- 位置情報更新時にrafを使用\r\n- 位置情報精度をbalancedに変更\r\n- 不要なActionSheet関係の処理を削除\n\n## Changed files\nmodified: src/components/Permitted.tsx\nmodified: src/constants/index.ts\nadded: src/constants/location.ts\nmodified: src/hooks/useMirroringShare.ts\nmodified: src/hooks/useRefreshStation.ts\nmodified: src/hooks/useResetMainState.ts\nmodified: src/screens/Main.tsx\nmodified: src/screens/SelectBound.tsx\nmodified: src/utils/stationDistance.ts",
+        "kind": "pr",
+        "metadata": {
+          "author": "TinyKitten",
+          "base_branch": "dev",
+          "draft": false,
+          "github_release": {
+            "published_at": "2026-10-29T16:39:14Z",
+            "tag": "v10.19.2",
+            "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2"
+          },
+          "head_branch": "fix/subway-hang",
+          "labels": [
+            "enhancement",
+            "react"
+          ],
+          "merge_commit_sha": "a47f27c83a9c703536ba8b9545fab55aa461b262",
+          "merged_at": "2022-06-04T13:02:25Z",
+          "number": 1510,
+          "release_status": "included_in_github_release",
+          "state": "closed",
+          "state_reason": null
+        },
+        "updated_at": "2022-06-04T13:02:26Z"
+      },
+      {
+        "citation": "p20",
+        "source_id": "TrainLCD/MobileApp#267",
+        "repo": "TrainLCD/MobileApp",
+        "title": "位置情報精度設定と開発者モード有効化",
+        "text": "related: #263\n\n## Changed files\nmodified: src/components/DevOverlay/index.tsx\nmodified: src/components/Layout/Permitted.tsx\nremoved: src/devMode.ts\nmodified: src/screens/Main/index.tsx",
+        "kind": "pr",
+        "metadata": {
+          "author": "TinyKitten",
+          "base_branch": "dev",
+          "draft": false,
+          "github_release": {
+            "published_at": "2026-10-29T16:39:14Z",
+            "tag": "v10.19.2",
+            "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2"
+          },
+          "head_branch": "feature/subway",
+          "labels": [
+            "enhancement"
+          ],
+          "merge_commit_sha": "40b10452c5e7a62ffb0eb28cc2a5aa3376f177eb",
+          "merged_at": "2020-10-12T13:52:35Z",
+          "number": 267,
+          "release_status": "included_in_github_release",
+          "state": "closed",
+          "state_reason": null
+        },
+        "updated_at": "2020-10-12T13:52:36Z"
+      },
+      {
+        "citation": "p21",
+        "source_id": "TrainLCD/MobileApp#415",
+        "repo": "TrainLCD/MobileApp",
+        "title": "きめ細やかに位置情報精度を変えてバッテリー持ちを良くする",
+        "text": "位置情報取得精度を下げても扱うデータ量が増えて電池持ちに貢献するかはわからないけどとりあえず普通電車とかは下げてみる\n\n一例として:\n- 普通列車 Balanced\n- 地下鉄 BestForNavigation\n- トラム/AGT High?\n- 新幹線 Balanced",
+        "kind": "issue",
+        "metadata": {
+          "author": "TinyKitten",
+          "labels": [
+            "enhancement"
+          ],
+          "number": 415,
+          "release_status": "unknown",
+          "state": "closed",
+          "state_reason": "completed"
+        },
+        "updated_at": "2020-12-30T02:29:32Z"
+      },
+      {
+        "citation": "p22",
+        "source_id": "TrainLCD/MobileApp#416",
+        "repo": "TrainLCD/MobileApp",
+        "title": "位置情報精度改善",
+        "text": "closes #415 \n\n## Comment: TinyKitten\nhttps://github.com/TrainLCD/MobileApp/pull/416#issuecomment-752305103\n\n\n一旦mergeして問題が起きたら調節\n\n## Changed files\nmodified: src/screens/Main/index.tsx",
+        "kind": "pr",
+        "metadata": {
+          "author": "TinyKitten",
+          "base_branch": "dev",
+          "draft": false,
+          "github_release": {
+            "published_at": "2026-10-29T16:39:14Z",
+            "tag": "v10.19.2",
+            "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2"
+          },
+          "head_branch": "feature/battry-life",
+          "labels": [
+            "enhancement"
+          ],
+          "merge_commit_sha": "6c329e29ce515ec458de30ff9fdef8b3fdbb6fb2",
+          "merged_at": "2020-12-30T02:29:32Z",
+          "number": 416,
+          "release_status": "included_in_github_release",
+          "state": "closed",
+          "state_reason": null
+        },
+        "updated_at": "2020-12-30T02:29:33Z"
+      },
+      {
+        "citation": "p23",
+        "source_id": "TrainLCD/MobileApp#440",
+        "repo": "TrainLCD/MobileApp",
+        "title": "位置情報が取れない場合でも\b開始駅を指定できるようにする",
+        "text": "トンネル内で起動したときに便利だと思う",
+        "kind": "issue",
+        "metadata": {
+          "author": "TinyKitten",
+          "labels": [
+            "enhancement"
+          ],
+          "number": 440,
+          "release_status": "unknown",
+          "state": "closed",
+          "state_reason": "completed"
+        },
+        "updated_at": "2021-04-05T14:37:16Z"
+      },
+      {
+        "citation": "p24",
+        "source_id": "TrainLCD/MobileApp#545",
+        "repo": "TrainLCD/MobileApp",
+        "title": "Location.Accuracy.BestForNavigationは使わないべきなのでは？",
+        "text": "`Location.Accuracy.BestForNavigation`を使っている地下鉄は動かないのに、`Location.Accuracy.High`を使っている田園都市線の地下区間は割と快適に動いた。\r\nどうせトンネル内では位置が取れないので、位置情報の精度が低くても駅についた瞬間位置を取れるようにしたほうが良いのでは？",
+        "kind": "issue",
+        "metadata": {
+          "author": "TinyKitten",
+          "labels": [
+            "enhancement"
+          ],
+          "number": 545,
+          "release_status": "unknown",
+          "state": "closed",
+          "state_reason": "completed"
+        },
+        "updated_at": "2021-03-04T08:15:55Z"
+      }
+    ],
+    "retrieved_passages": 58,
+    "allowed": [
+      "p1",
+      "p8",
+      "p10",
+      "p11",
+      "p15",
+      "p16",
+      "p17",
+      "p18",
+      "p19",
+      "p20",
+      "p21",
+      "p22",
+      "p23",
+      "p24"
+    ],
+    "required": [],
+    "minimum_claims": 1
   }
 ]
