@@ -83,6 +83,12 @@ test('missing Jev key and malformed decisions fail explicitly instead of returni
     assert.equal(missing.status, 503);
     assert.equal((await missing.json() as any).error, 'jev_not_configured');
     f.env.TYPESAFE_API_KEY = 'test';
+    const duplicate = mockFetch(() => new Response('{"model":"jev-1.14.0","answers":{"c0":{"type":"noul","noul":0.1},"c0":{"type":"noul","noul":0.9}},"usage":{"input_tokens":1,"output_tokens":1}}'));
+    try {
+      const response = await f.request({ query: 'バス' });
+      assert.equal(response.status, 502);
+      assert.equal((await response.json() as any).error, 'invalid_jev_response');
+    } finally { duplicate(); }
     for (const bad of [{}, { wrong: { type: 'noul', noul: 0.9 } }]) {
       const restore = mockFetch(() => Response.json({ model: 'jev-1.14.0', answers: bad, usage: { input_tokens: 1, output_tokens: 0 } }));
       try {

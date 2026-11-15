@@ -86,8 +86,7 @@ impl<'a, H: Host> Judge<'a, H> {
             })).await?;
             let status = response["status"].as_u64().unwrap_or(0);
             if status == 200 {
-                let value: Value = serde_json::from_str(s(&response, "body"))
-                    .map_err(|_| Error::new(502, "invalid_jev_response"))?;
+                let value = parse_response(s(&response, "body"))?;
                 if value["model"].as_str().is_none_or(str::is_empty)
                     || value["usage"]["input_tokens"].as_u64().is_none()
                     || value["usage"]["output_tokens"].as_u64().is_none()
@@ -178,6 +177,54 @@ impl<'a, H: Host> Judge<'a, H> {
         Ok(rows)
     }
 }
+// Deserialize before converting to Value: Value silently overwrites duplicate
+// JSON keys, which could turn conflicting decisions into an accepted score.
+#[derive(serde::Deserialize, serde::Serialize)]
+struct DecisionResponse {
+    model: String,
+    usage: Usage,
+    #[serde(deserialize_with = "unique_answers")]
+    answers: std::collections::BTreeMap<String, DecisionAnswer>,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+struct Usage {
+    input_tokens: u64,
+    output_tokens: u64,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+struct DecisionAnswer {
+    r#type: String,
+    noul: f64,
+}
+fn unique_answers<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> std::result::Result<std::collections::BTreeMap<String, DecisionAnswer>, D::Error> {
+    struct Answers;
+    impl<'de> serde::de::Visitor<'de> for Answers {
+        type Value = std::collections::BTreeMap<String, DecisionAnswer>;
+        fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            f.write_str("unique candidate decisions")
+        }
+        fn visit_map<A: serde::de::MapAccess<'de>>(
+            self,
+            mut map: A,
+        ) -> std::result::Result<Self::Value, A::Error> {
+            let mut answers = std::collections::BTreeMap::new();
+            while let Some((key, value)) = map.next_entry::<String, DecisionAnswer>()? {
+                if answers.insert(key, value).is_some() {
+                    return Err(serde::de::Error::custom("duplicate candidate decision"));
+                }
+            }
+            Ok(answers)
+        }
+    }
+    deserializer.deserialize_map(Answers)
+}
+fn parse_response(raw: &str) -> Result<Value> {
+    let response: DecisionResponse =
+        serde_json::from_str(raw).map_err(|_| Error::new(502, "invalid_jev_response"))?;
+    serde_json::to_value(response).map_err(|_| Error::new(502, "invalid_jev_response"))
+}
 fn retry_delay(headers: &Value) -> Result<f64> {
     let raw = s(headers, "retry-after");
     let delay = if raw.is_empty() {
@@ -238,6 +285,18 @@ mod tests {
         .unwrap();
         assert_eq!(rows[0]["id"], "one");
         assert_eq!(rows[1]["score"], 0.2);
+    }
+    #[test]
+    fn conflicting_duplicate_decisions_are_rejected() {
+        for answers in [
+            r#"{"c0":{"type":"noul","noul":0.1},"c0":{"type":"noul","noul":0.9}}"#,
+            r#"{"c0":{"type":"noul","noul":0.1,"noul":0.9}}"#,
+        ] {
+            let raw = format!(
+                r#"{{"model":"jev-1.14.0","usage":{{"input_tokens":1,"output_tokens":1}},"answers":{answers}}}"#
+            );
+            assert!(parse_response(&raw).is_err());
+        }
     }
     #[test]
     fn retry_after_is_not_shortened() {
