@@ -1,0 +1,76 @@
+name: Jev fixed-corpus evaluation
+on:
+  push:
+    branches: ['evaluation/jev-*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evaluate:
+    if: github.repository == 'TrainLCD/DecisionRAG'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 45
+    concurrency:
+      group: decisionrag-fixed-evaluation
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        id: rust
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: cargo-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust.outputs.cachekey }}-${{ hashFiles('Cargo.lock') }}
+      - uses: actions/cache/restore@v4
+        id: bindgen
+        with:
+          path: ~/.cargo/bin/wasm-bindgen
+          key: wasm-bindgen-${{ runner.os }}-${{ runner.arch }}-0.2.129
+      - if: steps.bindgen.outputs.cache-hit != 'true'
+        run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
+      - run: npm ci
+      - run: npm run build:rust && npx tsc -p tsconfig.test.json
+      - name: Prepare expiring evaluation proxy
+        run: |
+          token=$(openssl rand -hex 32)
+          echo "::add-mask::$token"
+          echo "EVALUATION_TOKEN=$token" >> "$GITHUB_ENV"
+          EVALUATION_TOKEN="$token" node scripts/evaluation/prepare-proxy.mjs
+      - name: Upload evaluation-only version (never deploy traffic)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          output=$(mktemp)
+          trap 'rm -f "$output" wrangler.evaluation.json' EXIT
+          WRANGLER_OUTPUT_FILE_PATH="$output" npx --no-install wrangler versions upload \
+            --config wrangler.evaluation.json --strict --tag "evaluation-$GITHUB_RUN_ID"
+          node --input-type=module - "$output" <<'JS'
+          import {readFileSync,appendFileSync} from 'node:fs';
+          const rows=readFileSync(process.argv[2],'utf8').trim().split('\n').map(JSON.parse);
+          const url=rows.find(r=>r.type==='version-upload')?.preview_url;
+          if(!url || !/^https:\/\/[a-z0-9.-]+\.workers\.dev\/?$/.test(url))throw Error('No evaluation version URL');
+          appendFileSync(process.env.GITHUB_ENV,`EVALUATION_PROXY=${url}\n`);
+          JS
+      - name: Run frozen split with real model
+        env:
+          EVALUATION_SPLIT: ${{ startsWith(github.ref_name, 'evaluation/jev-heldout-') && 'evaluation' || 'development' }}
+        run: node --loader ./scripts/wasm-test-loader.mjs scripts/evaluation/run.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jev-fixed-evaluation
+          path: evaluation-results/*.json
+          if-no-files-found: error
