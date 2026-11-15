@@ -42,6 +42,7 @@ for (const q of questions.filter(q => (split === 'all' || q.split === split) && 
     try { response = await transport(proxy+'/judge', { method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:init.body,signal:AbortSignal.timeout(40000) }); }
     catch (error) { usage.failure(); throw error; }
     await usage.response(response);
+    try {
     if (q.mandatory && q.mode === 'normal' && response.ok) {
       const request = JSON.parse(String(init.body));
       const reply = await response.clone().json();
@@ -51,6 +52,7 @@ for (const q of questions.filter(q => (split === 'all' || q.split === split) && 
         }
       }
     }
+    } catch { /* Diagnostics must not change provider response handling. */ }
     return response;
   });
   const start=performance.now();
