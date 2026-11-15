@@ -449,7 +449,7 @@ pub async fn answer(
         return fallback();
     }
     let ids: Vec<_> = context.iter().map(|p| p["citation"].clone()).collect();
-    let messages = json!([{"role":"system","content":include_str!("instructions.txt")},{"role":"user","content":format!("{}\n\n{}",json!({"query":query,"evidence":context,"evidence_scope":{"retrieved_passages":all.len(),"included_passages":context.len(),"exhaustive":false}}),include_str!("writingGuide.txt"))}]);
+    let messages = json!([{"role":"system","content":include_str!("instructions.txt")},{"role":"user","content":format!("{}\n\n{}\n\n{}\n{}",json!({"query":query,"evidence":context,"evidence_scope":{"retrieved_passages":all.len(),"included_passages":context.len(),"exhaustive":false}}),include_str!("writingGuide.txt"),include_str!("answerFocus.txt"),json!({"original_query":query}))}]);
     let base = if external {
         let parsed = url::Url::parse(if c.answer_base_url.is_empty() {
             "https://api.openai.com/v1"

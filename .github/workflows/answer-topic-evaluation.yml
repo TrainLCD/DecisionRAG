@@ -5,6 +5,7 @@ on:
     paths:
       - backend/src/instructions.txt
       - backend/src/writingGuide.txt
+      - backend/src/answerFocus.txt
       - scripts/evaluate-answer-topic.mjs
       - scripts/answer-topic-worker.*
       - test/fixtures/answer-topic/**
