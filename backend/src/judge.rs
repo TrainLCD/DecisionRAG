@@ -22,7 +22,6 @@ pub struct Judge<'a, H> {
     start: f64,
     calls: Cell<usize>,
     bytes: Cell<usize>,
-    premises_needed: Cell<Option<bool>>,
 }
 pub fn enabled(c: &Config) -> Result<bool> {
     match c.retrieval_engine.as_str() {
@@ -42,7 +41,6 @@ impl<'a, H: Host> Judge<'a, H> {
             start: now(),
             calls: Cell::new(0),
             bytes: Cell::new(0),
-            premises_needed: Cell::new(None),
         })
     }
     pub fn model(&self) -> &str {
@@ -52,29 +50,16 @@ impl<'a, H: Host> Judge<'a, H> {
             &self.c.jev_model
         }
     }
-    pub async fn needs_premises(&self, query: &str, traces: &mut Vec<Value>) -> Result<bool> {
-        if let Some(needed) = self.premises_needed.get() {
-            return Ok(needed);
-        }
-        let rows = self.score(query, &[json!({"id":"premises","description":"Determine the evidence requirements of the original query."})], "query_planning", traces).await?;
-        let needed = rows[0]["score"].as_f64().unwrap() > 0.5;
-        self.premises_needed.set(Some(needed));
-        Ok(needed)
-    }
     fn request(&self, query: &str, items: &[Value], stage: &str) -> Value {
         let mut candidates = Map::new();
         let mut questions = Map::new();
         for (i, item) in items.iter().enumerate() {
             let id = format!("c{i}");
             candidates.insert(id.clone(), item["description"].clone());
-            let task = if stage == "query_planning" {
-                "Does the query require measuring or comparing the extent, fraction, count, completeness or membership of a collection, so that inclusion/exclusion and data-availability premises are necessary? This includes a metric named without a question mark. A simple feature, procedure, issue lookup or unrelated factual question does not require this collection-premise check. Judge the requested reasoning, not whether a particular word appears."
-            } else if stage == "document_screening" {
+            let task = if stage == "document_screening" {
                 "Could this document contain any useful evidence for the query? Descriptions are incomplete; retain uncertain or partial evidence."
-            } else if stage == "premise_scoring" {
-                "Does this passage explicitly state a necessary premise for interpreting or computing an answer to the query: a definition of the measured unit, an inclusion or exclusion rule, a condition that makes records available or missing, documented membership of part of the requested set, or dated evidence that limits or changes a claimed scope? At least one such specific fact is sufficient. It need not give the final answer, a total, or the entire requested collection. Generic implementation background, test-only sample rows, tooling logs and facts about unrelated entities are not premises. Preserve the fact's date and limitations; a subset never proves completeness of the whole. The title may state a fact only for ordinal 0; for later ordinals it only identifies the subject and the body must contribute the fact."
             } else {
-                "Does this passage explicitly supply a concrete fact that answers a requested aspect of the query, or a necessary input, definition, scope condition or conflicting fact for its comparison or calculation? Evaluate individual explicit facts, not just the dominant topic or document label: one relevant fact is sufficient even when the rest is background. A dated update inside an older design document can supply evidence; retain its date and qualification rather than treating it as proof of current completeness. Mere thematic similarity, generic implementation background without such a fact, or a mention of the topic is not enough. Respect the requested entity, platform, action and time when identifying what each fact establishes. A query about a whole collection can need facts about individual members or subsets: do not require every passage to cover the entire requested scope. Evidence about a subset is relevant to that subset only and does not establish completeness of the whole. For ordinal 0, evaluate explicit facts in the title as well as the body; for later ordinals the title only identifies the subject and the body must contribute a fact; an issue title can state a reported problem or requested change even if its body is empty. Use metadata to identify the subject, date, status and explicit links, but do not infer implementation or release from a request or closed status alone. Evidence about another subject is relevant only when it establishes a relationship requested by the query. For questions about extent, coverage, counts or completeness, explicit inclusion/exclusion rules and conditions that can omit records are evidence about the measured set, even without a numeric total. For causal or feasibility questions, explicitly documented prerequisites and limitations also contribute evidence. Partial evidence is valid when it contributes a specific needed fact; it need not contain the complete final answer."
+                "Does this passage explicitly supply a concrete fact that answers a requested aspect of the query, or a necessary input, definition, scope condition or conflicting fact for its comparison or calculation? Evaluate individual explicit facts, not just the dominant topic or document label: one relevant fact is sufficient even when the rest is background. A dated update inside an older design document can supply evidence; retain its date and qualification rather than treating it as proof of current completeness. Mere thematic similarity, generic implementation background without such a fact, or a mention of the topic is not enough. Respect the requested entity, platform, action and time when identifying what each fact establishes. A query about a whole collection can need facts about individual members or subsets: do not require every passage to cover the entire requested scope. Evidence about a subset is relevant to that subset only and does not establish completeness of the whole. Evaluate explicit facts in the title as well as the body; an issue title can state a reported problem or requested change even if its body is empty. Use metadata to identify the subject, date, status and explicit links, but do not infer implementation or release from a request or closed status alone. Evidence about another subject is relevant only when it establishes a relationship requested by the query. For questions about extent, coverage, counts or completeness, explicit inclusion/exclusion rules and conditions that can omit records are evidence about the measured set, even without a numeric total. For causal or feasibility questions, explicitly documented prerequisites and limitations also contribute evidence. Partial evidence is valid when it contributes a specific needed fact; it need not contain the complete final answer."
             };
             questions.insert(
                 id.clone(),
@@ -153,7 +138,7 @@ impl<'a, H: Host> Judge<'a, H> {
             let mut probe = batch.clone();
             probe.push(item.clone());
             if !batch.is_empty()
-                && (probe.len() > if stage == "premise_scoring" { 1 } else { 60 }
+                && (probe.len() > 60
                     || self.request(query, &probe, stage).to_string().len() > MAX_BYTES)
             {
                 batches.push(std::mem::take(&mut batch));

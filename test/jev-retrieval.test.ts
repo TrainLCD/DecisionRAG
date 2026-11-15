@@ -28,39 +28,6 @@ function decisions(body: any) {
   ])), usage: { input_tokens: 400, output_tokens: 10 } };
 }
 
-test('a premise rejected as a direct answer is retained; premise failures cannot become partial success', async () => {
-  const f = await setup(1);
-  let failPremises = false;
-  const restore = mockFetch((_url, init) => {
-    const body = JSON.parse(String(init?.body));
-    const instructions = Object.values<any>(body.questions)[0].instructions;
-    const premise = instructions.includes('necessary premise');
-    const document = instructions.includes('Could this document');
-    const planning = instructions.includes('Does the query require');
-    if (premise) {
-      assert.equal(Object.keys(body.state.candidates).length, 1);
-      assert.ok(Object.values<string>(body.state.candidates).every(text => !text.includes('Source: bus0')));
-      if (failPremises) return new Response('unavailable', { status: 500 });
-    }
-    return Response.json({ model: 'jev-1.14.0', usage: { input_tokens: 10, output_tokens: 2 },
-      answers: Object.fromEntries(Object.entries<string>(body.state.candidates).map(([id, text]) => [id,
-        { type: 'noul', noul: document || planning || (premise ? text.includes('Source: population') : text.includes('Source: bus0')) ? 0.9 : 0.1 },
-      ])),
-    });
-  });
-  try {
-    const response = await f.request({ query: '対応の割合を計算するための根拠は？' });
-    assert.equal(response.status, 200);
-    const data: any = await response.json();
-    assert.deepEqual(data.evidence.map((p: any) => p.source_id), ['bus0', 'population']);
-    assert.ok(data.trace.some((t: any) => t.stage === 'premise_scoring'));
-    failPremises = true;
-    const failed = await f.request({ query: '対応の割合を計算するための根拠は？' });
-    assert.equal(failed.status, 502);
-    assert.equal((await failed.json() as any).hit_count, undefined);
-  } finally { restore(); f.sqlite.close(); }
-});
-
 test('real WASM sends the original question and shared candidates to Jev; cursors reuse decisions', async () => {
   const f = await setup();
   const queries: string[] = [];
@@ -185,15 +152,11 @@ test('empty-result expansion reuses document decisions and still returns a legit
   const f = await setup();
   let screenedDocuments = 0;
   let scoredPassages = 0;
-  let scoredPremises = 0;
-  let plannedQueries = 0;
   const restore = mockFetch((_url, init) => {
     const body = JSON.parse(String(init?.body));
     const entries = Object.keys(body.state.candidates);
     const documentStage = Object.values<any>(body.questions)[0].instructions.includes('Could this document');
     if (documentStage) screenedDocuments += entries.length;
-    else if (Object.values<any>(body.questions)[0].instructions.includes('Does the query require')) plannedQueries += entries.length;
-    else if (Object.values<any>(body.questions)[0].instructions.includes('necessary premise')) scoredPremises += entries.length;
     else scoredPassages += entries.length;
     return Response.json({ model: 'jev-1.14.0', answers: Object.fromEntries(entries.map(id => [id, { type: 'noul', noul: 0.01 }])), usage: { input_tokens: 10, output_tokens: 1 } });
   });
@@ -205,8 +168,6 @@ test('empty-result expansion reuses document decisions and still returns a legit
     assert.equal(result.hit_count, 0);
     assert.equal(screenedDocuments, 43, 'Each document must be screened only once');
     assert.equal(scoredPassages, 30 + 43, 'The wider passage scan must actually run');
-    assert.equal(scoredPremises, 0, 'An unrelated query must not collect measurement premises');
-    assert.equal(plannedQueries, 1, 'Expansion must reuse the query plan');
     assert.equal(result.trace.filter((t: any) => t.stage === 'document_screening').length, 1);
   } finally { restore(); f.sqlite.close(); }
 });
