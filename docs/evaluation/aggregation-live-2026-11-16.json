@@ -1,0 +1,617 @@
+{
+  "preview": "https://33094881-trainlcd-decision-rag.catwalk8205.workers.dev",
+  "commit": "989091752f6c5cb1a4b0d24858d9afb629fd2353",
+  "recorded_at": "2026-11-15T15:23:34Z",
+  "scope": "Live public-index smoke, four cases, single run each; not a fixed-corpus accuracy benchmark or actual nationwide calculation. API usage estimate excludes infrastructure and unreported failed-attempt usage.",
+  "pricing_source": "https://help.typesafe.ai/articles/5187202169-how-much-does-jev-cost",
+  "results": [
+    {
+      "query": "バス対応の網羅率",
+      "expected": "needs_clarification",
+      "actual": "needs_clarification",
+      "events": [
+        "sources",
+        "result"
+      ],
+      "wall_ms": 23609,
+      "elapsed_ms": 14518,
+      "hits": 38,
+      "aggregation": {
+        "available_metrics": [
+          {
+            "definition": "日本国内で公開GTFSを提供するバス事業者のうち、同じ基準日時点でTrainLCDの本番StationAPIから配信されている事業者の割合",
+            "id": "public_gtfs_operators_production_ratio"
+          }
+        ],
+        "denominator": null,
+        "metric_id": null,
+        "missing_requirements": [
+          "supported_metric_unit_scope_and_support_definition"
+        ],
+        "numerator": null,
+        "source_refs": [],
+        "status": "needs_clarification",
+        "value": null
+      },
+      "answer": "集計対象の単位・範囲・対応の定義を確認してください。現在の指標は「日本国内の公開GTFS提供バス事業者のうち、本番配信中の事業者の割合」です。",
+      "calls": 270,
+      "input_tokens": 1900315,
+      "estimated_jev_usd": 0.07981323000000001,
+      "trace": [
+        {
+          "calls": 0,
+          "candidates": 3382,
+          "elapsed_ms": 3159,
+          "input_tokens": 0,
+          "local_ms": 0,
+          "model": [
+            "rust-rules-v1"
+          ],
+          "output_tokens": 0,
+          "selected": [],
+          "stage": "document_loading",
+          "storage_ms": 3159
+        },
+        {
+          "calls": 219,
+          "candidates": 3382,
+          "elapsed_ms": 8168,
+          "input_tokens": 1567466,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 59781,
+          "selected": [
+            "TrainLCD/StationAPI:docs/architecture.md",
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md",
+            "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md",
+            "TrainLCD/Website#186",
+            "TrainLCD/gRPCProto#23",
+            "TrainLCD/BFF#15",
+            "TrainLCD/BFF#14",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0181_kan_etsu_transportation.md",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0179_gunma_bus.md",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0182_joshin_kanko_bus.md",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0191_takasaki_yoshii_bus.md"
+          ],
+          "stage": "document_screening"
+        },
+        {
+          "calls": 1,
+          "candidates": 1,
+          "elapsed_ms": 72,
+          "input_tokens": 417,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 21,
+          "selected": [
+            "collection"
+          ],
+          "stage": "query_collection"
+        },
+        {
+          "calls": 35,
+          "candidates": 352,
+          "elapsed_ms": 1311,
+          "input_tokens": 245788,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 6146,
+          "selected": [
+            "73",
+            "156",
+            "62",
+            "74",
+            "171",
+            "78",
+            "297",
+            "302",
+            "143",
+            "144",
+            "146",
+            "299"
+          ],
+          "stage": "collection_subject"
+        },
+        {
+          "calls": 12,
+          "candidates": 97,
+          "elapsed_ms": 398,
+          "input_tokens": 85310,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 1701,
+          "passages": 87,
+          "selected": [
+            "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:2",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md:0",
+            "TrainLCD/StationAPI:docs/architecture.md:11",
+            "TrainLCD/Website#186:0",
+            "TrainLCD/StationAPI:README.md:2",
+            "TrainLCD/StationAPI:docs/architecture.md:2",
+            "TrainLCD/StationAPI:docs/architecture.md:3",
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0",
+            "TrainLCD/StationAPI:CONTRIBUTING.md:0",
+            "TrainLCD/StationAPI:README.md:1",
+            "TrainLCD/StationAPI:docs/architecture.md:12",
+            "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:0"
+          ],
+          "stage": "collection_evidence"
+        },
+        {
+          "calls": 1,
+          "candidates": 1,
+          "elapsed_ms": 64,
+          "input_tokens": 401,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 21,
+          "selected": [
+            "aggregation"
+          ],
+          "stage": "query_aggregation"
+        },
+        {
+          "calls": 1,
+          "candidates": 1,
+          "elapsed_ms": 124,
+          "input_tokens": 469,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 21,
+          "selected": [
+            "public_gtfs_operators_production_ratio"
+          ],
+          "stage": "metric_selection"
+        },
+        {
+          "calls": 1,
+          "candidates": 1,
+          "elapsed_ms": 80,
+          "input_tokens": 464,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 21,
+          "selected": [
+            "public_gtfs_operators_production_ratio"
+          ],
+          "stage": "metric_domain"
+        }
+      ],
+      "error": null,
+      "transport_exit": 0,
+      "passed": true
+    },
+    {
+      "query": "日本国内で公開GTFSを提供するバス事業者のうち、現在TrainLCDの本番StationAPIから配信されている事業者の割合は？",
+      "expected": "missing_population",
+      "actual": "missing_population",
+      "events": [
+        "sources",
+        "result"
+      ],
+      "wall_ms": 20529,
+      "elapsed_ms": 13654,
+      "hits": 24,
+      "aggregation": {
+        "as_of": null,
+        "definition": "日本国内で公開GTFSを提供するバス事業者のうち、同じ基準日時点でTrainLCDの本番StationAPIから配信されている事業者の割合",
+        "denominator": null,
+        "metric_id": "public_gtfs_operators_production_ratio",
+        "missing_requirements": [
+          "complete_current_population_with_provenance",
+          "complete_current_production_set_with_provenance"
+        ],
+        "numerator": null,
+        "rounding": "nearest_0.01_percent_half_up",
+        "scope": "JP:public-bus-gtfs",
+        "source_refs": [],
+        "status": "missing_population",
+        "support_definition": "production_served",
+        "unit": "operator",
+        "value": null
+      },
+      "answer": "公開GTFS提供バス事業者の完全な母集団が確定していないため、対応率は算出できません。同一基準日時点の本番配信事業者集合と共通の事業者IDも必要です。検索結果数やフィード数は事業者数の代わりになりません。",
+      "calls": 263,
+      "input_tokens": 1841295,
+      "estimated_jev_usd": 0.07733439,
+      "trace": [
+        {
+          "calls": 0,
+          "candidates": 3382,
+          "elapsed_ms": 2170,
+          "input_tokens": 0,
+          "local_ms": 0,
+          "model": [
+            "rust-rules-v1"
+          ],
+          "output_tokens": 0,
+          "selected": [],
+          "stage": "document_loading",
+          "storage_ms": 2170
+        },
+        {
+          "calls": 220,
+          "candidates": 3382,
+          "elapsed_ms": 8314,
+          "input_tokens": 1577187,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 59775,
+          "selected": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md",
+            "TrainLCD/StationAPI:docs/architecture.md",
+            "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md",
+            "TrainLCD/StationAPI:scripts/README.md",
+            "TrainLCD/StationAPI:README.md",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0181_kan_etsu_transportation.md",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0179_gunma_bus.md",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0180_gunma_chuo_bus.md",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0182_joshin_kanko_bus.md",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0191_takasaki_yoshii_bus.md",
+            "TrainLCD/StationAPI:data/gtfs-feeds/README.md"
+          ],
+          "stage": "document_screening"
+        },
+        {
+          "calls": 1,
+          "candidates": 1,
+          "elapsed_ms": 93,
+          "input_tokens": 503,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 21,
+          "selected": [
+            "collection"
+          ],
+          "stage": "query_collection"
+        },
+        {
+          "calls": 34,
+          "candidates": 330,
+          "elapsed_ms": 1165,
+          "input_tokens": 227993,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 5764,
+          "selected": [
+            "164",
+            "76",
+            "91",
+            "75",
+            "87",
+            "88",
+            "163",
+            "166",
+            "89",
+            "92",
+            "108",
+            "162"
+          ],
+          "stage": "collection_subject"
+        },
+        {
+          "calls": 6,
+          "candidates": 43,
+          "elapsed_ms": 246,
+          "input_tokens": 34613,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 755,
+          "passages": 91,
+          "selected": [
+            "TrainLCD/StationAPI:README.md:1",
+            "TrainLCD/StationAPI:README.md:2",
+            "TrainLCD/StationAPI:docs/architecture.md:2",
+            "TrainLCD/StationAPI:docs/architecture.md:11",
+            "TrainLCD/StationAPI:AGENTS.md:11",
+            "TrainLCD/StationAPI:docs/architecture.md:12",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md:0",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0181_kan_etsu_transportation.md:0",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0179_gunma_bus.md:0",
+            "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:2",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0180_gunma_chuo_bus.md:0",
+            "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0182_joshin_kanko_bus.md:0"
+          ],
+          "stage": "collection_evidence"
+        },
+        {
+          "calls": 1,
+          "candidates": 1,
+          "elapsed_ms": 112,
+          "input_tokens": 487,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 21,
+          "selected": [
+            "aggregation"
+          ],
+          "stage": "query_aggregation"
+        },
+        {
+          "calls": 1,
+          "candidates": 1,
+          "elapsed_ms": 117,
+          "input_tokens": 512,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 21,
+          "selected": [
+            "public_gtfs_operators_production_ratio"
+          ],
+          "stage": "metric_selection"
+        }
+      ],
+      "error": null,
+      "transport_exit": 0,
+      "passed": true
+    },
+    {
+      "query": "TrainLCDのIssueは全部で何件ありますか？",
+      "expected": "unsupported_metric",
+      "actual": "retrieval_budget_error",
+      "events": [],
+      "wall_ms": 25782,
+      "elapsed_ms": null,
+      "hits": null,
+      "aggregation": null,
+      "answer": null,
+      "calls": null,
+      "input_tokens": null,
+      "estimated_jev_usd": null,
+      "trace": [],
+      "error": {
+        "error": "decision_budget_exceeded"
+      },
+      "transport_exit": 0,
+      "passed": false,
+      "reproduction_http_status": 422,
+      "note": "The initial probe did not preserve the non-SSE body. An identical read-only request reproduced HTTP 422 decision_budget_exceeded. Metric selection was not reached; keep this case failed rather than relabeling it as a classification success."
+    },
+    {
+      "query": "Apple Watchの乗換候補に表示される鉄道駅の総数は？",
+      "expected": "unsupported_metric",
+      "actual": "unsupported_metric",
+      "events": [
+        "sources",
+        "result"
+      ],
+      "wall_ms": 19975,
+      "elapsed_ms": 13581,
+      "hits": 3,
+      "aggregation": {
+        "denominator": null,
+        "metric_id": null,
+        "missing_requirements": [
+          "registered_metric_for_requested_unit_scope_and_operation"
+        ],
+        "numerator": null,
+        "source_refs": [],
+        "status": "unsupported_metric",
+        "value": null
+      },
+      "answer": "この質問の単位・範囲・演算に対応した集計指標は未登録です。検索で取得した関連資料は表示しますが、検索結果数から集計値を推測しません。",
+      "calls": 285,
+      "input_tokens": 1956400,
+      "estimated_jev_usd": 0.0821688,
+      "trace": [
+        {
+          "calls": 0,
+          "candidates": 3382,
+          "elapsed_ms": 1815,
+          "input_tokens": 0,
+          "local_ms": 0,
+          "model": [
+            "rust-rules-v1"
+          ],
+          "output_tokens": 0,
+          "selected": [],
+          "stage": "document_loading",
+          "storage_ms": 1815
+        },
+        {
+          "calls": 219,
+          "candidates": 3382,
+          "elapsed_ms": 7663,
+          "input_tokens": 1570522,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 59776,
+          "selected": [
+            "TrainLCD/StationAPI#878",
+            "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/stops.txt",
+            "TrainLCD/StationAPI#307",
+            "TrainLCD/StationAPI#312",
+            "TrainLCD/StationAPI#391",
+            "TrainLCD/StationAPI#315",
+            "TrainLCD/Migration#10",
+            "TrainLCD/StationAPI#385",
+            "TrainLCD/StationAPI#407",
+            "TrainLCD/StationAPI#882",
+            "TrainLCD/MobileApp#365",
+            "TrainLCD/StationAPI#386"
+          ],
+          "stage": "document_screening"
+        },
+        {
+          "calls": 1,
+          "candidates": 1,
+          "elapsed_ms": 86,
+          "input_tokens": 445,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 21,
+          "selected": [
+            "collection"
+          ],
+          "stage": "query_collection"
+        },
+        {
+          "calls": 5,
+          "candidates": 40,
+          "elapsed_ms": 280,
+          "input_tokens": 34233,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 701,
+          "selected": [
+            "30",
+            "24",
+            "27",
+            "21",
+            "22",
+            "29",
+            "15",
+            "23",
+            "28",
+            "11",
+            "14",
+            "19"
+          ],
+          "stage": "collection_subject"
+        },
+        {
+          "calls": 3,
+          "candidates": 22,
+          "elapsed_ms": 106,
+          "input_tokens": 13138,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 387,
+          "passages": 35,
+          "selected": [
+            "TrainLCD/StationAPI#459:0",
+            "TrainLCD/StationAPI#385:0",
+            "TrainLCD/StationAPI#407:0",
+            "TrainLCD/StationAPI#44:0",
+            "TrainLCD/StationAPI#314:0",
+            "TrainLCD/StationAPI#403:0",
+            "TrainLCD/StationAPI#878:0",
+            "TrainLCD/MobileApp#365:0",
+            "TrainLCD/StationAPI#386:0",
+            "TrainLCD/StationAPI#318:0",
+            "TrainLCD/StationAPI#429:0",
+            "TrainLCD/StationAPI#391:0"
+          ],
+          "stage": "collection_evidence"
+        },
+        {
+          "calls": 41,
+          "candidates": 405,
+          "elapsed_ms": 1389,
+          "input_tokens": 261812,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 7068,
+          "selected": [
+            "203",
+            "211",
+            "209",
+            "137",
+            "189",
+            "187",
+            "197",
+            "144",
+            "208",
+            "212",
+            "116",
+            "195"
+          ],
+          "stage": "collection_subject"
+        },
+        {
+          "calls": 13,
+          "candidates": 129,
+          "elapsed_ms": 464,
+          "input_tokens": 74860,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 2252,
+          "passages": 184,
+          "selected": [
+            "TrainLCD/StationAPI:docs/architecture.md:4",
+            "TrainLCD/StationAPI:docs/architecture.md:1",
+            "TrainLCD/StationAPI:docs/architecture.md:5",
+            "TrainLCD/StationAPI#959:0",
+            "TrainLCD/StationAPI:README.md:1",
+            "TrainLCD/Migration#33:0",
+            "TrainLCD/StationAPI#307:0",
+            "TrainLCD/StationAPI#965:0",
+            "TrainLCD/Migration#35:0",
+            "TrainLCD/StationAPI#878:0",
+            "TrainLCD/StationAPI#884:0",
+            "TrainLCD/StationAPI:docs/architecture.md:0"
+          ],
+          "stage": "collection_evidence"
+        },
+        {
+          "calls": 1,
+          "candidates": 1,
+          "elapsed_ms": 118,
+          "input_tokens": 429,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 21,
+          "selected": [
+            "aggregation"
+          ],
+          "stage": "query_aggregation"
+        },
+        {
+          "calls": 1,
+          "candidates": 1,
+          "elapsed_ms": 78,
+          "input_tokens": 483,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 21,
+          "selected": [
+            "public_gtfs_operators_production_ratio"
+          ],
+          "stage": "metric_selection"
+        },
+        {
+          "calls": 1,
+          "candidates": 1,
+          "elapsed_ms": 70,
+          "input_tokens": 478,
+          "model": [
+            "jev-1.14.0"
+          ],
+          "output_tokens": 21,
+          "selected": [
+            "public_gtfs_operators_production_ratio"
+          ],
+          "stage": "metric_domain"
+        }
+      ],
+      "error": null,
+      "transport_exit": 0,
+      "non_sse_response": null,
+      "passed": true
+    }
+  ],
+  "all_classification_cases_passed": false
+}
