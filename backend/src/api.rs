@@ -186,13 +186,6 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
     {
         return Err(Error::new(409, "search_results_changed"));
     }
-    if semantic
-        && previous
-            .as_ref()
-            .is_some_and(|p| p["answer_mode"].as_bool().unwrap_or(false) != (path == "/answer"))
-    {
-        return Err(Error::new(409, "search_results_changed"));
-    }
     let semantic_judge = if semantic {
         Some(judge::Judge::new(h, c)?)
     } else {
@@ -334,8 +327,11 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
         storage::rank(query, &passages, &page, &vocabulary, &mut traces)?
     };
     let hit_count = if semantic { all.len() } else { evidence.len() };
-    let aggregation = if let Some(previous) = &previous {
-        previous["aggregation"].clone()
+    let aggregation_resolved = previous
+        .as_ref()
+        .is_some_and(|p| p["aggregation_resolved"] == true);
+    let aggregation = if aggregation_resolved {
+        previous.as_ref().unwrap()["aggregation"].clone()
     } else if path == "/answer" {
         if let Some(judge) = &semantic_judge {
             crate::aggregate::resolve(judge, scope.as_ref(), query, &mut traces).await?
@@ -345,10 +341,11 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
     } else {
         Value::Null
     };
+    let aggregation_resolved = aggregation_resolved || (path == "/answer" && semantic);
     let mut pagination = Value::Null;
     if paginated {
         let next = if offset + size < all.len() {
-            json!(cursor::encode(h,&json!({"query":query,"scope":scope_key,"ids":ids,"offset":offset+size,"revision":revision,"engine":engine,"results":frozen,"aggregation":aggregation,"answer_mode":path == "/answer","expires":previous.as_ref().map(|p|p["expires"].clone()).unwrap_or(json!(now()+15.*60000.))}),&c.api_token).await?)
+            json!(cursor::encode(h,&json!({"query":query,"scope":scope_key,"ids":ids,"offset":offset+size,"revision":revision,"engine":engine,"results":frozen,"aggregation":aggregation,"aggregation_resolved":aggregation_resolved,"expires":previous.as_ref().map(|p|p["expires"].clone()).unwrap_or(json!(now()+15.*60000.))}),&c.api_token).await?)
         } else {
             Value::Null
         };
@@ -364,7 +361,7 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
             p["text_html"] = json!(markup);
         }
     }
-    let mut state = json!({"query":query,"aggregation":aggregation,"evidence":evidence,"hit_count":hit_count,"retrieval":engine,"retrieval_details":{"engine":engine,"coverage":"bounded","cached":previous.is_some()},"pagination":pagination,"trace":traces,"start":start,"timings":{"scope_ms":scope_ms,"storage_ms":storage_ms.max(0.),"model_ms":0,"generation_ms":0,"retrieval_ms":now()-start}});
+    let mut state = json!({"query":query,"aggregation":if path == "/answer" { aggregation } else { Value::Null },"evidence":evidence,"hit_count":hit_count,"retrieval":engine,"retrieval_details":{"engine":engine,"coverage":"bounded","cached":previous.is_some()},"pagination":pagination,"trace":traces,"start":start,"timings":{"scope_ms":scope_ms,"storage_ms":storage_ms.max(0.),"model_ms":0,"generation_ms":0,"retrieval_ms":now()-start}});
     if path == "/answer" && s(&request["headers"], "accept").contains("text/event-stream") {
         return Ok(
             json!({"stream":true,"state":state,"status":200,"headers":{"Content-Type":"text/event-stream; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}}),

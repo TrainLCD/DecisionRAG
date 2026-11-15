@@ -284,7 +284,7 @@ test('aggregation cannot turn retrieved feeds into an operator denominator; JSON
   } finally {restore(); f.sqlite.close();}
 });
 
-test('aggregation survives continuation without model calls and cannot cross endpoints', async () => {
+test('aggregation survives continuation without model calls and preserves search-only responses', async () => {
   const f = await setup(); let calls = 0;
   const restore = mockFetch((_url, init) => {calls++; return Response.json(aggregationDecisions(JSON.parse(String(init?.body))));});
   try {
@@ -296,7 +296,11 @@ test('aggregation survives continuation without model calls and cannot cross end
     assert.equal(calls, initialCalls);
     assert.equal(second.hit_count, 42);
     const wrong = await f.request({query,paginated:true,cursor:first.pagination.next_cursor}, '/search');
-    assert.equal(wrong.status, 409);
+    assert.equal(wrong.status, 200);
+    const searchPage: any = await wrong.json();
+    assert.equal(searchPage.status, 'retrieved');
+    assert.equal(searchPage.aggregation, undefined);
+    assert.equal(calls, initialCalls);
   } finally {restore(); f.sqlite.close();}
 });
 
@@ -346,5 +350,22 @@ test('unsupported quantitative domains do not silently become bus coverage', asy
     assert.equal(response.aggregation.status, 'unsupported_metric');
     assert.equal(response.aggregation.value, null);
     assert.match(response.answer, /未登録/);
+  } finally {restore(); f.sqlite.close();}
+});
+
+test('search cursor can enter answer mode once and then freezes metric decisions', async () => {
+  const f = await setup(61); let calls = 0;
+  const restore = mockFetch((_url, init) => {calls++; return Response.json(aggregationDecisions(JSON.parse(String(init?.body))));});
+  try {
+    const query = '公開GTFSの本番対応事業者の割合';
+    const search: any = await (await f.request({query,paginated:true}, '/search')).json();
+    const before = calls;
+    const answer: any = await (await f.request({query,paginated:true,cursor:search.pagination.next_cursor}, '/answer')).json();
+    assert.equal(answer.aggregation.status, 'missing_population');
+    assert.equal(calls-before,2, 'Only the first answer classifies the metric; retrieval is frozen');
+    const classified=calls;
+    const next: any = await (await f.request({query,paginated:true,cursor:answer.pagination.next_cursor}, '/answer')).json();
+    assert.deepEqual(next.aggregation, answer.aggregation);
+    assert.equal(calls,classified);
   } finally {restore(); f.sqlite.close();}
 });
