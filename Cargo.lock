@@ -134,6 +134,7 @@ dependencies = [
  "aes-gcm",
  "base64",
  "decision-rag-core",
+ "futures-util",
  "hmac",
  "js-sys",
  "pulldown-cmark",

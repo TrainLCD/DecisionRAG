@@ -1,0 +1,4659 @@
+{
+  "version": 1,
+  "model_mode": "real",
+  "commit": "0166ff399ab0c7722050a99b537ad0787ab26b29",
+  "corpus_sha256": "980b2f9b3f3ff11d465bf3cd84c41c6fc3c3dddee9d50b36baccebe7c8dc2319",
+  "questions_sha256": "a8e1623b907bf72047ddaa511ddf75d8e79346e129f5973bd9f508c9f48e81f3",
+  "split": "evaluation",
+  "expected_question_ids": [
+    "A13",
+    "A14",
+    "A15",
+    "A16",
+    "B13",
+    "B14",
+    "B15",
+    "B16",
+    "C13",
+    "C14",
+    "C15",
+    "C16",
+    "D13",
+    "D14",
+    "D15",
+    "D16",
+    "E13",
+    "E14",
+    "E15",
+    "E16"
+  ],
+  "source": "GitHub Actions run 43678314017 job 132703227257; full logged records",
+  "results": [
+    {
+      "id": "A13",
+      "group": "A",
+      "split": "evaluation",
+      "query": "現在地を利用者が手動で更新し直す機能は提案・実装されている？",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 67.164008,
+      "hits": 0,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#761:0"
+          ],
+          "stage": "passage_scoring"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#764:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "A13",
+      "group": "A",
+      "split": "evaluation",
+      "query": "現在地を利用者が手動で更新し直す機能は提案・実装されている？",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 325.5960779999999,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#761:0"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#764:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "A13",
+      "group": "A",
+      "split": "evaluation",
+      "query": "現在地を利用者が手動で更新し直す機能は提案・実装されている？",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 22.149070999999935,
+      "hits": 0,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#761:0"
+          ],
+          "stage": "passage_scoring"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#764:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "A13",
+      "group": "A",
+      "split": "evaluation",
+      "query": "現在地を利用者が手動で更新し直す機能は提案・実装されている？",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 338.639406,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#761:0"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#764:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "A13",
+      "group": "A",
+      "split": "evaluation",
+      "query": "現在地を利用者が手動で更新し直す機能は提案・実装されている？",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 14.83579199999997,
+      "hits": 0,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#761:0"
+          ],
+          "stage": "passage_scoring"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#764:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "A13",
+      "group": "A",
+      "split": "evaluation",
+      "query": "現在地を利用者が手動で更新し直す機能は提案・実装されている？",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 100.42247500000008,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#761:0"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#764:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "A14",
+      "group": "A",
+      "split": "evaluation",
+      "query": "ホーム画面で駅の番号を表示する仕組み",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 21.83522499999981,
+      "hits": 2,
+      "ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3"
+      ],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:1"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0.5,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "A14",
+      "group": "A",
+      "split": "evaluation",
+      "query": "ホーム画面で駅の番号を表示する仕組み",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 98.713299,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:1"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "A14",
+      "group": "A",
+      "split": "evaluation",
+      "query": "ホーム画面で駅の番号を表示する仕組み",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 18.011253000000124,
+      "hits": 2,
+      "ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3"
+      ],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:1"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0.5,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "A14",
+      "group": "A",
+      "split": "evaluation",
+      "query": "ホーム画面で駅の番号を表示する仕組み",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 138.0405139999998,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:1"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "A14",
+      "group": "A",
+      "split": "evaluation",
+      "query": "ホーム画面で駅の番号を表示する仕組み",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 18.39665500000001,
+      "hits": 2,
+      "ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3"
+      ],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:1"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0.5,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "A14",
+      "group": "A",
+      "split": "evaluation",
+      "query": "ホーム画面で駅の番号を表示する仕組み",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 114.95602500000018,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:1"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "A15",
+      "group": "A",
+      "split": "evaluation",
+      "query": "ほぼ正方形の端末で使う走行画面レイアウト",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 15.798878999999943,
+      "hits": 0,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "A15",
+      "group": "A",
+      "split": "evaluation",
+      "query": "ほぼ正方形の端末で使う走行画面レイアウト",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 137.76624100000004,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "A15",
+      "group": "A",
+      "split": "evaluation",
+      "query": "ほぼ正方形の端末で使う走行画面レイアウト",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 15.941497000000027,
+      "hits": 0,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "A15",
+      "group": "A",
+      "split": "evaluation",
+      "query": "ほぼ正方形の端末で使う走行画面レイアウト",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 98.3583329999999,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "A15",
+      "group": "A",
+      "split": "evaluation",
+      "query": "ほぼ正方形の端末で使う走行画面レイアウト",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 15.739582000000155,
+      "hits": 0,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "A15",
+      "group": "A",
+      "split": "evaluation",
+      "query": "ほぼ正方形の端末で使う走行画面レイアウト",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 106.01466600000003,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "A16",
+      "group": "A",
+      "split": "evaluation",
+      "query": "アプリを背景にした後の測位を調べる診断機能",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 27.577148999999963,
+      "hits": 14,
+      "ids": [
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+        "TrainLCD/MobileApp:docs/changelog.md:2",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+        "TrainLCD/MobileApp:docs/location-simulation.md:2",
+        "TrainLCD/MobileApp:docs/location-simulation.md:4",
+        "TrainLCD/MobileApp:docs/location-simulation.md:6",
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:2",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3"
+      ],
+      "required_count": 1,
+      "recalled_count": 1,
+      "missing": [],
+      "unrelated_at_10": 0.7,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/changelog.md:2",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+        "TrainLCD/MobileApp:docs/location-simulation.md:2",
+        "TrainLCD/MobileApp:docs/location-simulation.md:4"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "A16",
+      "group": "A",
+      "split": "evaluation",
+      "query": "アプリを背景にした後の測位を調べる診断機能",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 118.781747,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "A16",
+      "group": "A",
+      "split": "evaluation",
+      "query": "アプリを背景にした後の測位を調べる診断機能",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 26.54188000000022,
+      "hits": 14,
+      "ids": [
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+        "TrainLCD/MobileApp:docs/changelog.md:2",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+        "TrainLCD/MobileApp:docs/location-simulation.md:2",
+        "TrainLCD/MobileApp:docs/location-simulation.md:4",
+        "TrainLCD/MobileApp:docs/location-simulation.md:6",
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:2",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3"
+      ],
+      "required_count": 1,
+      "recalled_count": 1,
+      "missing": [],
+      "unrelated_at_10": 0.7,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/changelog.md:2",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+        "TrainLCD/MobileApp:docs/location-simulation.md:2",
+        "TrainLCD/MobileApp:docs/location-simulation.md:4"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "A16",
+      "group": "A",
+      "split": "evaluation",
+      "query": "アプリを背景にした後の測位を調べる診断機能",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 83.72035800000003,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "A16",
+      "group": "A",
+      "split": "evaluation",
+      "query": "アプリを背景にした後の測位を調べる診断機能",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 26.086402000000362,
+      "hits": 14,
+      "ids": [
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+        "TrainLCD/MobileApp:docs/changelog.md:2",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+        "TrainLCD/MobileApp:docs/location-simulation.md:2",
+        "TrainLCD/MobileApp:docs/location-simulation.md:4",
+        "TrainLCD/MobileApp:docs/location-simulation.md:6",
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:2",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3"
+      ],
+      "required_count": 1,
+      "recalled_count": 1,
+      "missing": [],
+      "unrelated_at_10": 0.7,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/changelog.md:2",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+        "TrainLCD/MobileApp:docs/location-simulation.md:2",
+        "TrainLCD/MobileApp:docs/location-simulation.md:4"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "A16",
+      "group": "A",
+      "split": "evaluation",
+      "query": "アプリを背景にした後の測位を調べる診断機能",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 77.59217699999999,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "B13",
+      "group": "B",
+      "split": "evaluation",
+      "query": "日本全国のバス対応の割合を知りたい。対応している範囲を確認できる資料は？",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 18.52516800000012,
+      "hits": 0,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/architecture.md:3"
+          ],
+          "stage": "passage_scoring"
+        },
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "B13",
+      "group": "B",
+      "split": "evaluation",
+      "query": "日本全国のバス対応の割合を知りたい。対応している範囲を確認できる資料は？",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 93.92368699999997,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/architecture.md:3"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "B13",
+      "group": "B",
+      "split": "evaluation",
+      "query": "日本全国のバス対応の割合を知りたい。対応している範囲を確認できる資料は？",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 18.537147000000004,
+      "hits": 0,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/architecture.md:3"
+          ],
+          "stage": "passage_scoring"
+        },
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "B13",
+      "group": "B",
+      "split": "evaluation",
+      "query": "日本全国のバス対応の割合を知りたい。対応している範囲を確認できる資料は？",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 111.39477999999963,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/architecture.md:3"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "B13",
+      "group": "B",
+      "split": "evaluation",
+      "query": "日本全国のバス対応の割合を知りたい。対応している範囲を確認できる資料は？",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 18.227171,
+      "hits": 0,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/architecture.md:3"
+          ],
+          "stage": "passage_scoring"
+        },
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "B13",
+      "group": "B",
+      "split": "evaluation",
+      "query": "日本全国のバス対応の割合を知りたい。対応している範囲を確認できる資料は？",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 78.35465700000032,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/architecture.md:3"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "B14",
+      "group": "B",
+      "split": "evaluation",
+      "query": "対応済みバスの全体に対する比率を調べるための根拠は？",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 23.460888999999952,
+      "hits": 3,
+      "ids": [
+        "TrainLCD/BFF#15:0",
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+        "TrainLCD/StationAPI:docs/architecture.md:7"
+      ],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/architecture.md:3"
+          ],
+          "stage": "passage_scoring"
+        },
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0.3333333333333333,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "B14",
+      "group": "B",
+      "split": "evaluation",
+      "query": "対応済みバスの全体に対する比率を調べるための根拠は？",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 84.02061800000001,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/architecture.md:3"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "B14",
+      "group": "B",
+      "split": "evaluation",
+      "query": "対応済みバスの全体に対する比率を調べるための根拠は？",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 24.124233999999888,
+      "hits": 3,
+      "ids": [
+        "TrainLCD/BFF#15:0",
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+        "TrainLCD/StationAPI:docs/architecture.md:7"
+      ],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/architecture.md:3"
+          ],
+          "stage": "passage_scoring"
+        },
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0.3333333333333333,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "B14",
+      "group": "B",
+      "split": "evaluation",
+      "query": "対応済みバスの全体に対する比率を調べるための根拠は？",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 105.78082399999994,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/architecture.md:3"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "B14",
+      "group": "B",
+      "split": "evaluation",
+      "query": "対応済みバスの全体に対する比率を調べるための根拠は？",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 22.948906999999963,
+      "hits": 3,
+      "ids": [
+        "TrainLCD/BFF#15:0",
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+        "TrainLCD/StationAPI:docs/architecture.md:7"
+      ],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/architecture.md:3"
+          ],
+          "stage": "passage_scoring"
+        },
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0.3333333333333333,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "B14",
+      "group": "B",
+      "split": "evaluation",
+      "query": "対応済みバスの全体に対する比率を調べるための根拠は？",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 97.76889900000015,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/architecture.md:3"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "B15",
+      "group": "B",
+      "split": "evaluation",
+      "query": "iOSに保存したウィジェット時刻をAndroidの単位へ直す倍率は？",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 21.10341100000005,
+      "hits": 6,
+      "ids": [
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:2",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1"
+      ],
+      "required_count": 1,
+      "recalled_count": 1,
+      "missing": [],
+      "unrelated_at_10": 0.8333333333333334,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "B15",
+      "group": "B",
+      "split": "evaluation",
+      "query": "iOSに保存したウィジェット時刻をAndroidの単位へ直す倍率は？",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 93.17011300000013,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:2"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "B15",
+      "group": "B",
+      "split": "evaluation",
+      "query": "iOSに保存したウィジェット時刻をAndroidの単位へ直す倍率は？",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 21.09183299999995,
+      "hits": 6,
+      "ids": [
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:2",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1"
+      ],
+      "required_count": 1,
+      "recalled_count": 1,
+      "missing": [],
+      "unrelated_at_10": 0.8333333333333334,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "B15",
+      "group": "B",
+      "split": "evaluation",
+      "query": "iOSに保存したウィジェット時刻をAndroidの単位へ直す倍率は？",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 52.17195199999969,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:2"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "B15",
+      "group": "B",
+      "split": "evaluation",
+      "query": "iOSに保存したウィジェット時刻をAndroidの単位へ直す倍率は？",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 21.164891000000353,
+      "hits": 6,
+      "ids": [
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:2",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1"
+      ],
+      "required_count": 1,
+      "recalled_count": 1,
+      "missing": [],
+      "unrelated_at_10": 0.8333333333333334,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "B15",
+      "group": "B",
+      "split": "evaluation",
+      "query": "iOSに保存したウィジェット時刻をAndroidの単位へ直す倍率は？",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 91.748967,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:2"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "B16",
+      "group": "B",
+      "split": "evaluation",
+      "query": "測位の診断に残るイベント数と受信・配信履歴の上限を比べたい",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 22.216343999999935,
+      "hits": 4,
+      "ids": [
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:3"
+      ],
+      "required_count": 2,
+      "recalled_count": 2,
+      "missing": [],
+      "unrelated_at_10": 0.5,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:3"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "B16",
+      "group": "B",
+      "split": "evaluation",
+      "query": "測位の診断に残るイベント数と受信・配信履歴の上限を比べたい",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 44.10129199999983,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "B16",
+      "group": "B",
+      "split": "evaluation",
+      "query": "測位の診断に残るイベント数と受信・配信履歴の上限を比べたい",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 22.958642999999938,
+      "hits": 4,
+      "ids": [
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:3"
+      ],
+      "required_count": 2,
+      "recalled_count": 2,
+      "missing": [],
+      "unrelated_at_10": 0.5,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:3"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "B16",
+      "group": "B",
+      "split": "evaluation",
+      "query": "測位の診断に残るイベント数と受信・配信履歴の上限を比べたい",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 90.51198299999987,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "B16",
+      "group": "B",
+      "split": "evaluation",
+      "query": "測位の診断に残るイベント数と受信・配信履歴の上限を比べたい",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 22.357641000000058,
+      "hits": 4,
+      "ids": [
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:3"
+      ],
+      "required_count": 2,
+      "recalled_count": 2,
+      "missing": [],
+      "unrelated_at_10": 0.5,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:3"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "B16",
+      "group": "B",
+      "split": "evaluation",
+      "query": "測位の診断に残るイベント数と受信・配信履歴の上限を比べたい",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 65.02775400000019,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "C13",
+      "group": "C",
+      "split": "evaluation",
+      "query": "MobileAppの420番で報告された追跡停止の内容と対応したPRを見せて",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 17.661101000000144,
+      "hits": 0,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#420:0"
+          ],
+          "stage": "passage_scoring"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#423:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "C13",
+      "group": "C",
+      "split": "evaluation",
+      "query": "MobileAppの420番で報告された追跡停止の内容と対応したPRを見せて",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 101.59818600000017,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#420:0"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#423:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "C13",
+      "group": "C",
+      "split": "evaluation",
+      "query": "MobileAppの420番で報告された追跡停止の内容と対応したPRを見せて",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 17.742781000000377,
+      "hits": 0,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#420:0"
+          ],
+          "stage": "passage_scoring"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#423:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "C13",
+      "group": "C",
+      "split": "evaluation",
+      "query": "MobileAppの420番で報告された追跡停止の内容と対応したPRを見せて",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 91.77364299999999,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#420:0"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#423:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "C13",
+      "group": "C",
+      "split": "evaluation",
+      "query": "MobileAppの420番で報告された追跡停止の内容と対応したPRを見せて",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 18.005495999999766,
+      "hits": 0,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#420:0"
+          ],
+          "stage": "passage_scoring"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#423:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "C13",
+      "group": "C",
+      "split": "evaluation",
+      "query": "MobileAppの420番で報告された追跡停止の内容と対応したPRを見せて",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 69.18659500000012,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#420:0"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#423:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "C14",
+      "group": "C",
+      "split": "evaluation",
+      "query": "Android版ホーム画面ウィジェットのサイズを変更できる仕様か知りたい",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 18.65659199999982,
+      "hits": 4,
+      "ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:2"
+      ],
+      "required_count": 1,
+      "recalled_count": 1,
+      "missing": [],
+      "unrelated_at_10": 0.25,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "C14",
+      "group": "C",
+      "split": "evaluation",
+      "query": "Android版ホーム画面ウィジェットのサイズを変更できる仕様か知りたい",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 85.32575799999995,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:2"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "C14",
+      "group": "C",
+      "split": "evaluation",
+      "query": "Android版ホーム画面ウィジェットのサイズを変更できる仕様か知りたい",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 17.798061999999845,
+      "hits": 4,
+      "ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:2"
+      ],
+      "required_count": 1,
+      "recalled_count": 1,
+      "missing": [],
+      "unrelated_at_10": 0.25,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "C14",
+      "group": "C",
+      "split": "evaluation",
+      "query": "Android版ホーム画面ウィジェットのサイズを変更できる仕様か知りたい",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 113.8858239999995,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:2"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "C14",
+      "group": "C",
+      "split": "evaluation",
+      "query": "Android版ホーム画面ウィジェットのサイズを変更できる仕様か知りたい",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 18.712123000000247,
+      "hits": 4,
+      "ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:2"
+      ],
+      "required_count": 1,
+      "recalled_count": 1,
+      "missing": [],
+      "unrelated_at_10": 0.25,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "C14",
+      "group": "C",
+      "split": "evaluation",
+      "query": "Android版ホーム画面ウィジェットのサイズを変更できる仕様か知りたい",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 142.71113499999956,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:2"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "C15",
+      "group": "C",
+      "split": "evaluation",
+      "query": "正方形の走行画面で到着予測の一部または全部が欠けるとどうなる？",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 14.073057000000517,
+      "hits": 0,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "C15",
+      "group": "C",
+      "split": "evaluation",
+      "query": "正方形の走行画面で到着予測の一部または全部が欠けるとどうなる？",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 98.91226600000027,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "C15",
+      "group": "C",
+      "split": "evaluation",
+      "query": "正方形の走行画面で到着予測の一部または全部が欠けるとどうなる？",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 14.463740000000143,
+      "hits": 0,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "C15",
+      "group": "C",
+      "split": "evaluation",
+      "query": "正方形の走行画面で到着予測の一部または全部が欠けるとどうなる？",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 59.75339499999973,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "C15",
+      "group": "C",
+      "split": "evaluation",
+      "query": "正方形の走行画面で到着予測の一部または全部が欠けるとどうなる？",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 14.660208000000239,
+      "hits": 0,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "C15",
+      "group": "C",
+      "split": "evaluation",
+      "query": "正方形の走行画面で到着予測の一部または全部が欠けるとどうなる？",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 49.3905020000002,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "C16",
+      "group": "C",
+      "split": "evaluation",
+      "query": "背景測位診断の取得に失敗すると、診断情報のコピー全体が使えなくなる？",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 24.831271000000015,
+      "hits": 6,
+      "ids": [
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/MobileApp:docs/changelog.md:2"
+      ],
+      "required_count": 1,
+      "recalled_count": 1,
+      "missing": [],
+      "unrelated_at_10": 0.6666666666666666,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/MobileApp:docs/changelog.md:2"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "C16",
+      "group": "C",
+      "split": "evaluation",
+      "query": "背景測位診断の取得に失敗すると、診断情報のコピー全体が使えなくなる？",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 93.81480800000008,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "C16",
+      "group": "C",
+      "split": "evaluation",
+      "query": "背景測位診断の取得に失敗すると、診断情報のコピー全体が使えなくなる？",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 24.755709999999453,
+      "hits": 6,
+      "ids": [
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/MobileApp:docs/changelog.md:2"
+      ],
+      "required_count": 1,
+      "recalled_count": 1,
+      "missing": [],
+      "unrelated_at_10": 0.6666666666666666,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/MobileApp:docs/changelog.md:2"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "C16",
+      "group": "C",
+      "split": "evaluation",
+      "query": "背景測位診断の取得に失敗すると、診断情報のコピー全体が使えなくなる？",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 109.53668299999936,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "C16",
+      "group": "C",
+      "split": "evaluation",
+      "query": "背景測位診断の取得に失敗すると、診断情報のコピー全体が使えなくなる？",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 24.421900000000278,
+      "hits": 6,
+      "ids": [
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/MobileApp:docs/changelog.md:2"
+      ],
+      "required_count": 1,
+      "recalled_count": 1,
+      "missing": [],
+      "unrelated_at_10": 0.6666666666666666,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:1",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/MobileApp:docs/changelog.md:2"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "C16",
+      "group": "C",
+      "split": "evaluation",
+      "query": "背景測位診断の取得に失敗すると、診断情報のコピー全体が使えなくなる？",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 43.54488600000059,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "D13",
+      "group": "D",
+      "split": "evaluation",
+      "query": "1138番に書かれた地下鉄の位置異常の仮説と、1145番の対応内容を比較して",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 15.474994000000152,
+      "hits": 0,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#1138:0"
+          ],
+          "stage": "passage_scoring"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#1145:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "D13",
+      "group": "D",
+      "split": "evaluation",
+      "query": "1138番に書かれた地下鉄の位置異常の仮説と、1145番の対応内容を比較して",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 49.39344600000004,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#1138:0"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#1145:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "D13",
+      "group": "D",
+      "split": "evaluation",
+      "query": "1138番に書かれた地下鉄の位置異常の仮説と、1145番の対応内容を比較して",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 15.40602299999955,
+      "hits": 0,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#1138:0"
+          ],
+          "stage": "passage_scoring"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#1145:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "D13",
+      "group": "D",
+      "split": "evaluation",
+      "query": "1138番に書かれた地下鉄の位置異常の仮説と、1145番の対応内容を比較して",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 39.67652100000032,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#1138:0"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#1145:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "D13",
+      "group": "D",
+      "split": "evaluation",
+      "query": "1138番に書かれた地下鉄の位置異常の仮説と、1145番の対応内容を比較して",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 15.518407999999908,
+      "hits": 0,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#1138:0"
+          ],
+          "stage": "passage_scoring"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#1145:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "D13",
+      "group": "D",
+      "split": "evaluation",
+      "query": "1138番に書かれた地下鉄の位置異常の仮説と、1145番の対応内容を比較して",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 107.79260599999998,
+      "hits": null,
+      "ids": [],
+      "required_count": 2,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp#1138:0"
+          ],
+          "stage": "document_selection"
+        },
+        {
+          "ids": [
+            "TrainLCD/MobileApp#1145:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "D14",
+      "group": "D",
+      "split": "evaluation",
+      "query": "駅番号フィールドがなかった世代のウィジェット保存データも読み込める？",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 14.354107999999542,
+      "hits": 3,
+      "ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3"
+      ],
+      "required_count": 1,
+      "recalled_count": 1,
+      "missing": [],
+      "unrelated_at_10": 0.3333333333333333,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "D14",
+      "group": "D",
+      "split": "evaluation",
+      "query": "駅番号フィールドがなかった世代のウィジェット保存データも読み込める？",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 135.828708,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:1"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "D14",
+      "group": "D",
+      "split": "evaluation",
+      "query": "駅番号フィールドがなかった世代のウィジェット保存データも読み込める？",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 14.36859000000004,
+      "hits": 3,
+      "ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3"
+      ],
+      "required_count": 1,
+      "recalled_count": 1,
+      "missing": [],
+      "unrelated_at_10": 0.3333333333333333,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "D14",
+      "group": "D",
+      "split": "evaluation",
+      "query": "駅番号フィールドがなかった世代のウィジェット保存データも読み込める？",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 119.39069100000052,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:1"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "D14",
+      "group": "D",
+      "split": "evaluation",
+      "query": "駅番号フィールドがなかった世代のウィジェット保存データも読み込める？",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 14.460065000000213,
+      "hits": 3,
+      "ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3"
+      ],
+      "required_count": 1,
+      "recalled_count": 1,
+      "missing": [],
+      "unrelated_at_10": 0.3333333333333333,
+      "unrelated_ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+      ],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "D14",
+      "group": "D",
+      "split": "evaluation",
+      "query": "駅番号フィールドがなかった世代のウィジェット保存データも読み込める？",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 119.21266000000014,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/home-screen-widgets.md:1"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "D15",
+      "group": "D",
+      "split": "evaluation",
+      "query": "GTFS用の専用テーブル案は、そのまま実装されたのか確認したい",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 18.05403699999988,
+      "hits": 0,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "D15",
+      "group": "D",
+      "split": "evaluation",
+      "query": "GTFS用の専用テーブル案は、そのまま実装されたのか確認したい",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 47.606424999999945,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "D15",
+      "group": "D",
+      "split": "evaluation",
+      "query": "GTFS用の専用テーブル案は、そのまま実装されたのか確認したい",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 17.936415000000125,
+      "hits": 0,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "D15",
+      "group": "D",
+      "split": "evaluation",
+      "query": "GTFS用の専用テーブル案は、そのまま実装されたのか確認したい",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 96.23776300000009,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "D15",
+      "group": "D",
+      "split": "evaluation",
+      "query": "GTFS用の専用テーブル案は、そのまま実装されたのか確認したい",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 17.933791000000383,
+      "hits": 0,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "D15",
+      "group": "D",
+      "split": "evaluation",
+      "query": "GTFS用の専用テーブル案は、そのまま実装されたのか確認したい",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 40.63777000000027,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "D16",
+      "group": "D",
+      "split": "evaluation",
+      "query": "11月3日に復活した距離フィルターはiOSとAndroidの両方に適用される？",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 17.529317999999876,
+      "hits": 0,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/changelog.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "D16",
+      "group": "D",
+      "split": "evaluation",
+      "query": "11月3日に復活した距離フィルターはiOSとAndroidの両方に適用される？",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 52.01357100000041,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/changelog.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "D16",
+      "group": "D",
+      "split": "evaluation",
+      "query": "11月3日に復活した距離フィルターはiOSとAndroidの両方に適用される？",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 17.619619999999486,
+      "hits": 0,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/changelog.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "D16",
+      "group": "D",
+      "split": "evaluation",
+      "query": "11月3日に復活した距離フィルターはiOSとAndroidの両方に適用される？",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 41.2168700000002,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/changelog.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "D16",
+      "group": "D",
+      "split": "evaluation",
+      "query": "11月3日に復活した距離フィルターはiOSとAndroidの両方に適用される？",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 17.783761000000595,
+      "hits": 0,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/changelog.md:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "D16",
+      "group": "D",
+      "split": "evaluation",
+      "query": "11月3日に復活した距離フィルターはiOSとAndroidの両方に適用される？",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 96.62258800000018,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/MobileApp:docs/changelog.md:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "E13",
+      "group": "E",
+      "split": "evaluation",
+      "query": "鎌倉幕府の成立年をめぐる歴史学の議論を比較して",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 14.27677500000027,
+      "hits": 0,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "E13",
+      "group": "E",
+      "split": "evaluation",
+      "query": "鎌倉幕府の成立年をめぐる歴史学の議論を比較して",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 99.7726189999994,
+      "hits": null,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "E13",
+      "group": "E",
+      "split": "evaluation",
+      "query": "鎌倉幕府の成立年をめぐる歴史学の議論を比較して",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 14.062291000000187,
+      "hits": 0,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "E13",
+      "group": "E",
+      "split": "evaluation",
+      "query": "鎌倉幕府の成立年をめぐる歴史学の議論を比較して",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 132.44852899999933,
+      "hits": null,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "E13",
+      "group": "E",
+      "split": "evaluation",
+      "query": "鎌倉幕府の成立年をめぐる歴史学の議論を比較して",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 13.991697999999815,
+      "hits": 0,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "E13",
+      "group": "E",
+      "split": "evaluation",
+      "query": "鎌倉幕府の成立年をめぐる歴史学の議論を比較して",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 51.135131,
+      "hits": null,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "E14",
+      "group": "E",
+      "split": "evaluation",
+      "query": "星雲モノレールの開業予定日を教えて",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 14.91244800000004,
+      "hits": 0,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "E14",
+      "group": "E",
+      "split": "evaluation",
+      "query": "星雲モノレールの開業予定日を教えて",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 52.50460100000055,
+      "hits": null,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "E14",
+      "group": "E",
+      "split": "evaluation",
+      "query": "星雲モノレールの開業予定日を教えて",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 14.75043100000039,
+      "hits": 0,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "E14",
+      "group": "E",
+      "split": "evaluation",
+      "query": "星雲モノレールの開業予定日を教えて",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 119.6220600000006,
+      "hits": null,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "E14",
+      "group": "E",
+      "split": "evaluation",
+      "query": "星雲モノレールの開業予定日を教えて",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 14.571497999999337,
+      "hits": 0,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "E14",
+      "group": "E",
+      "split": "evaluation",
+      "query": "星雲モノレールの開業予定日を教えて",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 44.53988599999957,
+      "hits": null,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": true,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "E15",
+      "group": "E",
+      "split": "evaluation",
+      "query": "蒼海という架空地域にある4社の記録は、日本全国の母集団を証明する？",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 17.804911999999604,
+      "hits": 0,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/EvaluationPublic:population:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "E15",
+      "group": "E",
+      "split": "evaluation",
+      "query": "蒼海という架空地域にある4社の記録は、日本全国の母集団を証明する？",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 104.77736100000038,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/EvaluationPublic:population:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "E15",
+      "group": "E",
+      "split": "evaluation",
+      "query": "蒼海という架空地域にある4社の記録は、日本全国の母集団を証明する？",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 17.69350899999972,
+      "hits": 0,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/EvaluationPublic:population:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "E15",
+      "group": "E",
+      "split": "evaluation",
+      "query": "蒼海という架空地域にある4社の記録は、日本全国の母集団を証明する？",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 131.08922400000029,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/EvaluationPublic:population:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "E15",
+      "group": "E",
+      "split": "evaluation",
+      "query": "蒼海という架空地域にある4社の記録は、日本全国の母集団を証明する？",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 17.754227999999785,
+      "hits": 0,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/EvaluationPublic:population:0"
+          ],
+          "stage": "passage_scoring"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "E15",
+      "group": "E",
+      "split": "evaluation",
+      "query": "蒼海という架空地域にある4社の記録は、日本全国の母集団を証明する？",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "decision_upstream_error",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 41.66924399999971,
+      "hits": null,
+      "ids": [],
+      "required_count": 1,
+      "recalled_count": 0,
+      "missing": [
+        {
+          "ids": [
+            "TrainLCD/EvaluationPublic:population:0"
+          ],
+          "stage": "document_selection"
+        }
+      ],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": true,
+      "mandatory": false,
+      "mode": "normal",
+      "control_pass": null,
+      "provider_calls": 4,
+      "usage_unknown_calls": 4,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "E16",
+      "group": "E",
+      "split": "evaluation",
+      "query": "対応しているバスの割合を検索して",
+      "run": 1,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 16.768520999999964,
+      "hits": 0,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": true,
+      "mode": "malformed",
+      "control_pass": false,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "E16",
+      "group": "E",
+      "split": "evaluation",
+      "query": "対応しているバスの割合を検索して",
+      "run": 1,
+      "engine": "jev",
+      "status": 502,
+      "error": "invalid_jev_answers",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 7.842094999999972,
+      "hits": null,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": true,
+      "mode": "malformed",
+      "control_pass": true,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "E16",
+      "group": "E",
+      "split": "evaluation",
+      "query": "対応しているバスの割合を検索して",
+      "run": 2,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 16.52320200000031,
+      "hits": 0,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": true,
+      "mode": "malformed",
+      "control_pass": false,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "E16",
+      "group": "E",
+      "split": "evaluation",
+      "query": "対応しているバスの割合を検索して",
+      "run": 2,
+      "engine": "jev",
+      "status": 502,
+      "error": "invalid_jev_answers",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 7.3987749999996595,
+      "hits": null,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": true,
+      "mode": "malformed",
+      "control_pass": true,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "E16",
+      "group": "E",
+      "split": "evaluation",
+      "query": "対応しているバスの割合を検索して",
+      "run": 3,
+      "engine": "rust-rules-v1",
+      "status": 200,
+      "error": null,
+      "model_calls": 0,
+      "leaked": false,
+      "elapsed_ms": 16.585142000000815,
+      "hits": 0,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": true,
+      "mode": "malformed",
+      "control_pass": false,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    {
+      "id": "E16",
+      "group": "E",
+      "split": "evaluation",
+      "query": "対応しているバスの割合を検索して",
+      "run": 3,
+      "engine": "jev",
+      "status": 502,
+      "error": "invalid_jev_answers",
+      "model_calls": 4,
+      "leaked": false,
+      "elapsed_ms": 7.849675999999818,
+      "hits": null,
+      "ids": [],
+      "required_count": 0,
+      "recalled_count": 0,
+      "missing": [],
+      "unrelated_at_10": 0,
+      "unrelated_ids": [],
+      "empty_with_evidence": false,
+      "mandatory": true,
+      "mode": "malformed",
+      "control_pass": true,
+      "provider_calls": 0,
+      "usage_unknown_calls": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    }
+  ]
+}

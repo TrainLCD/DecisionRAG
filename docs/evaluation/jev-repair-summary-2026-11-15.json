@@ -1,0 +1,2432 @@
+{
+  "regression": {
+    "split": "all",
+    "commit": "56bd28eb237641c7e16d5c97fbd881febc9da2ce",
+    "corpus_sha256": "980b2f9b3f3ff11d465bf3cd84c41c6fc3c3dddee9d50b36baccebe7c8dc2319",
+    "questions_sha256": "4251bdc1bacf208ade9deb2c48f2a13ce847cb95e4766489c2a04004121997ea",
+    "baseline": {
+      "runs": 300,
+      "normal_runs": 285,
+      "top10_returned": 573,
+      "top10_unrelated": 267,
+      "precision_micro_at10": 0.5340314136125655,
+      "errors": 0,
+      "required_facts": 354,
+      "recalled_facts": 195,
+      "fact_recall": 0.5508474576271186,
+      "unrelated_at_10": 0.19522974101921473,
+      "false_zero": 87,
+      "negative_false_positive": 0,
+      "leaks": 0,
+      "mandatory_failures": [
+        {
+          "id": "B1",
+          "run": 1,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B1",
+          "run": 2,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B1",
+          "run": 3,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B5",
+          "run": 1,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B5",
+          "run": 2,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B5",
+          "run": 3,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B6",
+          "run": 1,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/EvaluationPublic:population:0"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/EvaluationPublic:supported:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B6",
+          "run": 2,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/EvaluationPublic:population:0"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/EvaluationPublic:supported:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B6",
+          "run": 3,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/EvaluationPublic:population:0"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/EvaluationPublic:supported:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B12",
+          "run": 1,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B12",
+          "run": 2,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B12",
+          "run": 3,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B13",
+          "run": 1,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B13",
+          "run": 2,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B13",
+          "run": 3,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B14",
+          "run": 1,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 3,
+          "status": 200
+        },
+        {
+          "id": "B14",
+          "run": 2,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 3,
+          "status": 200
+        },
+        {
+          "id": "B14",
+          "run": 3,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 3,
+          "status": 200
+        },
+        {
+          "id": "B17",
+          "run": 1,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B17",
+          "run": 2,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B17",
+          "run": 3,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B18",
+          "run": 1,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B18",
+          "run": 2,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B18",
+          "run": 3,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        }
+      ],
+      "fault_control_failures": null,
+      "p50_ms": 16.613243999992847,
+      "p95_ms": 23.452747999996063,
+      "model_calls": 0,
+      "usage_unknown_runs": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    "jev": {
+      "runs": 300,
+      "normal_runs": 285,
+      "top10_returned": 686,
+      "top10_unrelated": 73,
+      "precision_micro_at10": 0.8935860058309038,
+      "errors": 0,
+      "required_facts": 354,
+      "recalled_facts": 338,
+      "fact_recall": 0.9548022598870056,
+      "unrelated_at_10": 0.07726817042606514,
+      "false_zero": 0,
+      "negative_false_positive": 0,
+      "leaks": 0,
+      "mandatory_failures": [],
+      "fault_control_failures": 0,
+      "p50_ms": 1210.9946399999899,
+      "p95_ms": 2403.4458030000096,
+      "model_calls": 10030,
+      "usage_unknown_runs": 0,
+      "observed_input_tokens": 66065861,
+      "observed_output_tokens": 1619116,
+      "input_tokens": 66065861,
+      "output_tokens": 1619116
+    },
+    "groups": {
+      "A": {
+        "baseline": {
+          "runs": 60,
+          "normal_runs": 60,
+          "top10_returned": 207,
+          "top10_unrelated": 141,
+          "precision_micro_at10": 0.3188405797101449,
+          "errors": 0,
+          "required_facts": 69,
+          "recalled_facts": 42,
+          "fact_recall": 0.6086956521739131,
+          "unrelated_at_10": 0.48750000000000004,
+          "false_zero": 12,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": null,
+          "p50_ms": 17.431140000000596,
+          "p95_ms": 24.612928000016836,
+          "model_calls": 0,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 0,
+          "observed_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "jev": {
+          "runs": 60,
+          "normal_runs": 60,
+          "top10_returned": 104,
+          "top10_unrelated": 21,
+          "precision_micro_at10": 0.7980769230769231,
+          "errors": 0,
+          "required_facts": 69,
+          "recalled_facts": 69,
+          "fact_recall": 1,
+          "unrelated_at_10": 0.1134126984126984,
+          "false_zero": 0,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": 0,
+          "p50_ms": 1201.0395669999998,
+          "p95_ms": 1662.2530410000008,
+          "model_calls": 1919,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 12685046,
+          "observed_output_tokens": 306165,
+          "input_tokens": 12685046,
+          "output_tokens": 306165
+        }
+      },
+      "B": {
+        "baseline": {
+          "runs": 60,
+          "normal_runs": 60,
+          "top10_returned": 111,
+          "top10_unrelated": 42,
+          "precision_micro_at10": 0.6216216216216216,
+          "errors": 0,
+          "required_facts": 105,
+          "recalled_facts": 45,
+          "fact_recall": 0.42857142857142855,
+          "unrelated_at_10": 0.16583333333333333,
+          "false_zero": 30,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [
+            {
+              "id": "B1",
+              "run": 1,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B1",
+              "run": 2,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B1",
+              "run": 3,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B5",
+              "run": 1,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B5",
+              "run": 2,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B5",
+              "run": 3,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B6",
+              "run": 1,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/EvaluationPublic:population:0"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/EvaluationPublic:supported:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B6",
+              "run": 2,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/EvaluationPublic:population:0"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/EvaluationPublic:supported:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B6",
+              "run": 3,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/EvaluationPublic:population:0"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/EvaluationPublic:supported:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B12",
+              "run": 1,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B12",
+              "run": 2,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B12",
+              "run": 3,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B13",
+              "run": 1,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B13",
+              "run": 2,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B13",
+              "run": 3,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B14",
+              "run": 1,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 3,
+              "status": 200
+            },
+            {
+              "id": "B14",
+              "run": 2,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 3,
+              "status": 200
+            },
+            {
+              "id": "B14",
+              "run": 3,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 3,
+              "status": 200
+            },
+            {
+              "id": "B17",
+              "run": 1,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B17",
+              "run": 2,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B17",
+              "run": 3,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B18",
+              "run": 1,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B18",
+              "run": 2,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B18",
+              "run": 3,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            }
+          ],
+          "fault_control_failures": null,
+          "p50_ms": 17.37359999999171,
+          "p95_ms": 22.011930000000575,
+          "model_calls": 0,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 0,
+          "observed_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "jev": {
+          "runs": 60,
+          "normal_runs": 60,
+          "top10_returned": 297,
+          "top10_unrelated": 11,
+          "precision_micro_at10": 0.9629629629629629,
+          "errors": 0,
+          "required_facts": 105,
+          "recalled_facts": 99,
+          "fact_recall": 0.9428571428571428,
+          "unrelated_at_10": 0.04805555555555555,
+          "false_zero": 0,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": 0,
+          "p50_ms": 1226.8649710000027,
+          "p95_ms": 1642.7559469999978,
+          "model_calls": 1955,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 12949476,
+          "observed_output_tokens": 314834,
+          "input_tokens": 12949476,
+          "output_tokens": 314834
+        }
+      },
+      "C": {
+        "baseline": {
+          "runs": 60,
+          "normal_runs": 60,
+          "top10_returned": 123,
+          "top10_unrelated": 45,
+          "precision_micro_at10": 0.6341463414634146,
+          "errors": 0,
+          "required_facts": 81,
+          "recalled_facts": 57,
+          "fact_recall": 0.7037037037037037,
+          "unrelated_at_10": 0.13055555555555556,
+          "false_zero": 15,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": null,
+          "p50_ms": 16.05681400001049,
+          "p95_ms": 21.10183799999504,
+          "model_calls": 0,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 0,
+          "observed_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "jev": {
+          "runs": 60,
+          "normal_runs": 60,
+          "top10_returned": 95,
+          "top10_unrelated": 5,
+          "precision_micro_at10": 0.9473684210526315,
+          "errors": 0,
+          "required_facts": 81,
+          "recalled_facts": 78,
+          "fact_recall": 0.9629629629629629,
+          "unrelated_at_10": 0.03611111111111111,
+          "false_zero": 0,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": 0,
+          "p50_ms": 1100.7628359999799,
+          "p95_ms": 1377.4068620000035,
+          "model_calls": 1720,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 11339860,
+          "observed_output_tokens": 263405,
+          "input_tokens": 11339860,
+          "output_tokens": 263405
+        }
+      },
+      "D": {
+        "baseline": {
+          "runs": 60,
+          "normal_runs": 60,
+          "top10_returned": 126,
+          "top10_unrelated": 39,
+          "precision_micro_at10": 0.6904761904761905,
+          "errors": 0,
+          "required_facts": 87,
+          "recalled_facts": 45,
+          "fact_recall": 0.5172413793103449,
+          "unrelated_at_10": 0.14345238095238097,
+          "false_zero": 24,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": null,
+          "p50_ms": 17.24401600001147,
+          "p95_ms": 22.894997999974294,
+          "model_calls": 0,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 0,
+          "observed_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "jev": {
+          "runs": 60,
+          "normal_runs": 60,
+          "top10_returned": 153,
+          "top10_unrelated": 20,
+          "precision_micro_at10": 0.869281045751634,
+          "errors": 0,
+          "required_facts": 87,
+          "recalled_facts": 80,
+          "fact_recall": 0.9195402298850575,
+          "unrelated_at_10": 0.1027777777777778,
+          "false_zero": 0,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": 0,
+          "p50_ms": 1186.1044140000013,
+          "p95_ms": 1710.5114579999936,
+          "model_calls": 1956,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 12891044,
+          "observed_output_tokens": 313187,
+          "input_tokens": 12891044,
+          "output_tokens": 313187
+        }
+      },
+      "E": {
+        "baseline": {
+          "runs": 60,
+          "normal_runs": 45,
+          "top10_returned": 6,
+          "top10_unrelated": 0,
+          "precision_micro_at10": 1,
+          "errors": 0,
+          "required_facts": 12,
+          "recalled_facts": 6,
+          "fact_recall": 0.5,
+          "unrelated_at_10": 0,
+          "false_zero": 6,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": null,
+          "p50_ms": 14.25705499999458,
+          "p95_ms": 19.2486659999704,
+          "model_calls": 0,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 0,
+          "observed_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "jev": {
+          "runs": 60,
+          "normal_runs": 45,
+          "top10_returned": 37,
+          "top10_unrelated": 16,
+          "precision_micro_at10": 0.5675675675675675,
+          "errors": 0,
+          "required_facts": 12,
+          "recalled_facts": 12,
+          "fact_recall": 1,
+          "unrelated_at_10": 0.08888888888888889,
+          "false_zero": 0,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": 0,
+          "p50_ms": 2043.7597319999913,
+          "p95_ms": 2805.424485000025,
+          "model_calls": 2480,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 16200435,
+          "observed_output_tokens": 421525,
+          "input_tokens": 16200435,
+          "output_tokens": 421525
+        }
+      }
+    },
+    "gates": {
+      "complete": true,
+      "normal_requests_succeed": true,
+      "mandatory_recall": true,
+      "no_leaks": true,
+      "no_error_as_empty": true,
+      "recall_not_worse": true,
+      "unrelated_within_five_points": true
+    },
+    "pass": true
+  },
+  "heldout": {
+    "split": "evaluation",
+    "commit": "bc9894a4b4993317d923bc8613c2ccf027ec189e",
+    "corpus_sha256": "980b2f9b3f3ff11d465bf3cd84c41c6fc3c3dddee9d50b36baccebe7c8dc2319",
+    "questions_sha256": "b1afe221aac073b8f86189eb943b6d6ab83e8cbfc73e793cbae91fdeab900de8",
+    "baseline": {
+      "runs": 60,
+      "normal_runs": 57,
+      "top10_returned": 48,
+      "top10_unrelated": 30,
+      "precision_micro_at10": 0.375,
+      "errors": 0,
+      "required_facts": 63,
+      "recalled_facts": 12,
+      "fact_recall": 0.19047619047619047,
+      "unrelated_at_10": 0.09064327485380118,
+      "false_zero": 36,
+      "negative_false_positive": 0,
+      "leaks": 0,
+      "mandatory_failures": [
+        {
+          "id": "B21",
+          "run": 1,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B21",
+          "run": 2,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B21",
+          "run": 3,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B22",
+          "run": 1,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B22",
+          "run": 2,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B22",
+          "run": 3,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        }
+      ],
+      "fault_control_failures": null,
+      "p50_ms": 18.44882299999881,
+      "p95_ms": 25.94005599999946,
+      "model_calls": 0,
+      "usage_unknown_runs": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    "jev": {
+      "runs": 60,
+      "normal_runs": 57,
+      "top10_returned": 165,
+      "top10_unrelated": 36,
+      "precision_micro_at10": 0.7818181818181819,
+      "errors": 0,
+      "required_facts": 63,
+      "recalled_facts": 63,
+      "fact_recall": 1,
+      "unrelated_at_10": 0.13450292397660815,
+      "false_zero": 0,
+      "negative_false_positive": 0,
+      "leaks": 0,
+      "mandatory_failures": [],
+      "fault_control_failures": 0,
+      "p50_ms": 1762.2081559999988,
+      "p95_ms": 2916.8461559999996,
+      "model_calls": 2186,
+      "usage_unknown_runs": 0,
+      "observed_input_tokens": 14465297,
+      "observed_output_tokens": 361753,
+      "input_tokens": 14465297,
+      "output_tokens": 361753
+    },
+    "groups": {
+      "A": {
+        "baseline": {
+          "runs": 12,
+          "normal_runs": 12,
+          "top10_returned": 27,
+          "top10_unrelated": 24,
+          "precision_micro_at10": 0.1111111111111111,
+          "errors": 0,
+          "required_facts": 12,
+          "recalled_facts": 3,
+          "fact_recall": 0.25,
+          "unrelated_at_10": 0.2222222222222222,
+          "false_zero": 9,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": null,
+          "p50_ms": 19.344829000000573,
+          "p95_ms": 77.09720999999999,
+          "model_calls": 0,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 0,
+          "observed_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "jev": {
+          "runs": 12,
+          "normal_runs": 12,
+          "top10_returned": 15,
+          "top10_unrelated": 3,
+          "precision_micro_at10": 0.8,
+          "errors": 0,
+          "required_facts": 12,
+          "recalled_facts": 12,
+          "fact_recall": 1,
+          "unrelated_at_10": 0.125,
+          "false_zero": 0,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": 0,
+          "p50_ms": 1711.157744,
+          "p95_ms": 2097.1755310000003,
+          "model_calls": 403,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 2687712,
+          "observed_output_tokens": 66890,
+          "input_tokens": 2687712,
+          "output_tokens": 66890
+        }
+      },
+      "B": {
+        "baseline": {
+          "runs": 12,
+          "normal_runs": 12,
+          "top10_returned": 0,
+          "top10_unrelated": 0,
+          "precision_micro_at10": null,
+          "errors": 0,
+          "required_facts": 18,
+          "recalled_facts": 0,
+          "fact_recall": 0,
+          "unrelated_at_10": 0,
+          "false_zero": 12,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [
+            {
+              "id": "B21",
+              "run": 1,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B21",
+              "run": 2,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B21",
+              "run": 3,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B22",
+              "run": 1,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B22",
+              "run": 2,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B22",
+              "run": 3,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            }
+          ],
+          "fault_control_failures": null,
+          "p50_ms": 16.123227999996743,
+          "p95_ms": 18.931985999999597,
+          "model_calls": 0,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 0,
+          "observed_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "jev": {
+          "runs": 12,
+          "normal_runs": 12,
+          "top10_returned": 66,
+          "top10_unrelated": 0,
+          "precision_micro_at10": 1,
+          "errors": 0,
+          "required_facts": 18,
+          "recalled_facts": 18,
+          "fact_recall": 1,
+          "unrelated_at_10": 0,
+          "false_zero": 0,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": 0,
+          "p50_ms": 1851.1080430000038,
+          "p95_ms": 2166.2416599999997,
+          "model_calls": 449,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 2979687,
+          "observed_output_tokens": 74252,
+          "input_tokens": 2979687,
+          "output_tokens": 74252
+        }
+      },
+      "C": {
+        "baseline": {
+          "runs": 12,
+          "normal_runs": 12,
+          "top10_returned": 3,
+          "top10_unrelated": 0,
+          "precision_micro_at10": 1,
+          "errors": 0,
+          "required_facts": 15,
+          "recalled_facts": 3,
+          "fact_recall": 0.2,
+          "unrelated_at_10": 0,
+          "false_zero": 9,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": null,
+          "p50_ms": 18.381141999998363,
+          "p95_ms": 19.67646899999818,
+          "model_calls": 0,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 0,
+          "observed_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "jev": {
+          "runs": 12,
+          "normal_runs": 12,
+          "top10_returned": 29,
+          "top10_unrelated": 11,
+          "precision_micro_at10": 0.6206896551724138,
+          "errors": 0,
+          "required_facts": 15,
+          "recalled_facts": 15,
+          "fact_recall": 1,
+          "unrelated_at_10": 0.26666666666666666,
+          "false_zero": 0,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": 0,
+          "p50_ms": 1578.0531249999985,
+          "p95_ms": 1997.964380000005,
+          "model_calls": 385,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 2572354,
+          "observed_output_tokens": 60321,
+          "input_tokens": 2572354,
+          "output_tokens": 60321
+        }
+      },
+      "D": {
+        "baseline": {
+          "runs": 12,
+          "normal_runs": 12,
+          "top10_returned": 18,
+          "top10_unrelated": 6,
+          "precision_micro_at10": 0.6666666666666666,
+          "errors": 0,
+          "required_facts": 15,
+          "recalled_facts": 6,
+          "fact_recall": 0.4,
+          "unrelated_at_10": 0.20833333333333334,
+          "false_zero": 3,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": null,
+          "p50_ms": 19.82973199999833,
+          "p95_ms": 24.78744600000209,
+          "model_calls": 0,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 0,
+          "observed_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "jev": {
+          "runs": 12,
+          "normal_runs": 12,
+          "top10_returned": 45,
+          "top10_unrelated": 18,
+          "precision_micro_at10": 0.6,
+          "errors": 0,
+          "required_facts": 15,
+          "recalled_facts": 15,
+          "fact_recall": 1,
+          "unrelated_at_10": 0.15,
+          "false_zero": 0,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": 0,
+          "p50_ms": 1705.7673099999956,
+          "p95_ms": 2049.8713829999906,
+          "model_calls": 437,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 2897590,
+          "observed_output_tokens": 72437,
+          "input_tokens": 2897590,
+          "output_tokens": 72437
+        }
+      },
+      "E": {
+        "baseline": {
+          "runs": 12,
+          "normal_runs": 9,
+          "top10_returned": 0,
+          "top10_unrelated": 0,
+          "precision_micro_at10": null,
+          "errors": 0,
+          "required_facts": 3,
+          "recalled_facts": 0,
+          "fact_recall": 0,
+          "unrelated_at_10": 0,
+          "false_zero": 3,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": null,
+          "p50_ms": 15.047044999999343,
+          "p95_ms": 18.996060999998008,
+          "model_calls": 0,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 0,
+          "observed_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "jev": {
+          "runs": 12,
+          "normal_runs": 9,
+          "top10_returned": 10,
+          "top10_unrelated": 4,
+          "precision_micro_at10": 0.6,
+          "errors": 0,
+          "required_facts": 3,
+          "recalled_facts": 3,
+          "fact_recall": 1,
+          "unrelated_at_10": 0.12962962962962962,
+          "false_zero": 0,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": 0,
+          "p50_ms": 2891.6635759999917,
+          "p95_ms": 3000.598741000009,
+          "model_calls": 512,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 3327954,
+          "observed_output_tokens": 87853,
+          "input_tokens": 3327954,
+          "output_tokens": 87853
+        }
+      }
+    },
+    "gates": {
+      "complete": true,
+      "normal_requests_succeed": true,
+      "mandatory_recall": true,
+      "no_leaks": true,
+      "no_error_as_empty": true,
+      "recall_not_worse": true,
+      "unrelated_within_five_points": true
+    },
+    "pass": true
+  },
+  "fresh": {
+    "split": "evaluation",
+    "commit": "bc9894a4b4993317d923bc8613c2ccf027ec189e",
+    "corpus_sha256": "980b2f9b3f3ff11d465bf3cd84c41c6fc3c3dddee9d50b36baccebe7c8dc2319",
+    "questions_sha256": "4f09939c1416fd98a794eb6055ba4cfddb461664f6f1223ca0bb9e77ad3f54e8",
+    "baseline": {
+      "runs": 60,
+      "normal_runs": 57,
+      "top10_returned": 69,
+      "top10_unrelated": 45,
+      "precision_micro_at10": 0.34782608695652173,
+      "errors": 0,
+      "required_facts": 63,
+      "recalled_facts": 15,
+      "fact_recall": 0.23809523809523808,
+      "unrelated_at_10": 0.1538220551378446,
+      "false_zero": 33,
+      "negative_false_positive": 0,
+      "leaks": 0,
+      "mandatory_failures": [
+        {
+          "id": "B25",
+          "run": 1,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B25",
+          "run": 2,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B25",
+          "run": 3,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B26",
+          "run": 1,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B26",
+          "run": 2,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        },
+        {
+          "id": "B26",
+          "run": 3,
+          "missing": [
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/architecture.md:3"
+              ],
+              "stage": "passage_scoring"
+            },
+            {
+              "ids": [
+                "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+              ],
+              "stage": "passage_scoring"
+            }
+          ],
+          "hits": 0,
+          "status": 200
+        }
+      ],
+      "fault_control_failures": null,
+      "p50_ms": 13.856578000002628,
+      "p95_ms": 23.83814999999595,
+      "model_calls": 0,
+      "usage_unknown_runs": 0,
+      "observed_input_tokens": 0,
+      "observed_output_tokens": 0,
+      "input_tokens": 0,
+      "output_tokens": 0
+    },
+    "jev": {
+      "runs": 60,
+      "normal_runs": 57,
+      "top10_returned": 148,
+      "top10_unrelated": 26,
+      "precision_micro_at10": 0.8243243243243243,
+      "errors": 0,
+      "required_facts": 63,
+      "recalled_facts": 57,
+      "fact_recall": 0.9047619047619048,
+      "unrelated_at_10": 0.14903926482873855,
+      "false_zero": 0,
+      "negative_false_positive": 0,
+      "leaks": 0,
+      "mandatory_failures": [],
+      "fault_control_failures": 0,
+      "p50_ms": 1951.9026479999884,
+      "p95_ms": 3513.686809000006,
+      "model_calls": 2136,
+      "usage_unknown_runs": 0,
+      "observed_input_tokens": 14111233,
+      "observed_output_tokens": 352437,
+      "input_tokens": 14111233,
+      "output_tokens": 352437
+    },
+    "groups": {
+      "A": {
+        "baseline": {
+          "runs": 12,
+          "normal_runs": 12,
+          "top10_returned": 33,
+          "top10_unrelated": 24,
+          "precision_micro_at10": 0.2727272727272727,
+          "errors": 0,
+          "required_facts": 12,
+          "recalled_facts": 6,
+          "fact_recall": 0.5,
+          "unrelated_at_10": 0.30208333333333337,
+          "false_zero": 6,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": null,
+          "p50_ms": 15.059417000000394,
+          "p95_ms": 58.45456399999999,
+          "model_calls": 0,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 0,
+          "observed_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "jev": {
+          "runs": 12,
+          "normal_runs": 12,
+          "top10_returned": 13,
+          "top10_unrelated": 1,
+          "precision_micro_at10": 0.9230769230769231,
+          "errors": 0,
+          "required_facts": 12,
+          "recalled_facts": 12,
+          "fact_recall": 1,
+          "unrelated_at_10": 0.041666666666666664,
+          "false_zero": 0,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": 0,
+          "p50_ms": 1762.4100770000005,
+          "p95_ms": 1993.427946,
+          "model_calls": 403,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 2657330,
+          "observed_output_tokens": 66399,
+          "input_tokens": 2657330,
+          "output_tokens": 66399
+        }
+      },
+      "B": {
+        "baseline": {
+          "runs": 12,
+          "normal_runs": 12,
+          "top10_returned": 0,
+          "top10_unrelated": 0,
+          "precision_micro_at10": null,
+          "errors": 0,
+          "required_facts": 18,
+          "recalled_facts": 0,
+          "fact_recall": 0,
+          "unrelated_at_10": 0,
+          "false_zero": 12,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [
+            {
+              "id": "B25",
+              "run": 1,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B25",
+              "run": 2,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B25",
+              "run": 3,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B26",
+              "run": 1,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B26",
+              "run": 2,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            },
+            {
+              "id": "B26",
+              "run": 3,
+              "missing": [
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/architecture.md:3"
+                  ],
+                  "stage": "passage_scoring"
+                },
+                {
+                  "ids": [
+                    "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+                  ],
+                  "stage": "passage_scoring"
+                }
+              ],
+              "hits": 0,
+              "status": 200
+            }
+          ],
+          "fault_control_failures": null,
+          "p50_ms": 13.183807000001252,
+          "p95_ms": 15.77482400000008,
+          "model_calls": 0,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 0,
+          "observed_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "jev": {
+          "runs": 12,
+          "normal_runs": 12,
+          "top10_returned": 66,
+          "top10_unrelated": 0,
+          "precision_micro_at10": 1,
+          "errors": 0,
+          "required_facts": 18,
+          "recalled_facts": 18,
+          "fact_recall": 1,
+          "unrelated_at_10": 0,
+          "false_zero": 0,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": 0,
+          "p50_ms": 2247.701073000004,
+          "p95_ms": 3380.911297999999,
+          "model_calls": 450,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 3003823,
+          "observed_output_tokens": 75199,
+          "input_tokens": 3003823,
+          "output_tokens": 75199
+        }
+      },
+      "C": {
+        "baseline": {
+          "runs": 12,
+          "normal_runs": 12,
+          "top10_returned": 6,
+          "top10_unrelated": 3,
+          "precision_micro_at10": 0.5,
+          "errors": 0,
+          "required_facts": 15,
+          "recalled_facts": 3,
+          "fact_recall": 0.2,
+          "unrelated_at_10": 0.125,
+          "false_zero": 9,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": null,
+          "p50_ms": 13.7920959999974,
+          "p95_ms": 23.83814999999595,
+          "model_calls": 0,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 0,
+          "observed_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "jev": {
+          "runs": 12,
+          "normal_runs": 12,
+          "top10_returned": 29,
+          "top10_unrelated": 11,
+          "precision_micro_at10": 0.6206896551724138,
+          "errors": 0,
+          "required_facts": 15,
+          "recalled_facts": 15,
+          "fact_recall": 1,
+          "unrelated_at_10": 0.26666666666666666,
+          "false_zero": 0,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": 0,
+          "p50_ms": 1731.0992679999981,
+          "p95_ms": 2203.484454999998,
+          "model_calls": 367,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 2425905,
+          "observed_output_tokens": 57502,
+          "input_tokens": 2425905,
+          "output_tokens": 57502
+        }
+      },
+      "D": {
+        "baseline": {
+          "runs": 12,
+          "normal_runs": 12,
+          "top10_returned": 30,
+          "top10_unrelated": 18,
+          "precision_micro_at10": 0.4,
+          "errors": 0,
+          "required_facts": 15,
+          "recalled_facts": 6,
+          "fact_recall": 0.4,
+          "unrelated_at_10": 0.30357142857142855,
+          "false_zero": 3,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": null,
+          "p50_ms": 14.14474699999846,
+          "p95_ms": 15.350703000003705,
+          "model_calls": 0,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 0,
+          "observed_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "jev": {
+          "runs": 12,
+          "normal_runs": 12,
+          "top10_returned": 31,
+          "top10_unrelated": 11,
+          "precision_micro_at10": 0.6451612903225806,
+          "errors": 0,
+          "required_facts": 15,
+          "recalled_facts": 9,
+          "fact_recall": 0.6,
+          "unrelated_at_10": 0.31626984126984126,
+          "false_zero": 0,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": 0,
+          "p50_ms": 1967.9744499999942,
+          "p95_ms": 2185.001344999997,
+          "model_calls": 424,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 2816528,
+          "observed_output_tokens": 70206,
+          "input_tokens": 2816528,
+          "output_tokens": 70206
+        }
+      },
+      "E": {
+        "baseline": {
+          "runs": 12,
+          "normal_runs": 9,
+          "top10_returned": 0,
+          "top10_unrelated": 0,
+          "precision_micro_at10": null,
+          "errors": 0,
+          "required_facts": 3,
+          "recalled_facts": 0,
+          "fact_recall": 0,
+          "unrelated_at_10": 0,
+          "false_zero": 3,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": null,
+          "p50_ms": 10.861249999987194,
+          "p95_ms": 11.44977699998708,
+          "model_calls": 0,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 0,
+          "observed_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0
+        },
+        "jev": {
+          "runs": 12,
+          "normal_runs": 9,
+          "top10_returned": 9,
+          "top10_unrelated": 3,
+          "precision_micro_at10": 0.6666666666666666,
+          "errors": 0,
+          "required_facts": 3,
+          "recalled_facts": 3,
+          "fact_recall": 1,
+          "unrelated_at_10": 0.1111111111111111,
+          "false_zero": 0,
+          "negative_false_positive": 0,
+          "leaks": 0,
+          "mandatory_failures": [],
+          "fault_control_failures": 0,
+          "p50_ms": 2721.967497000005,
+          "p95_ms": 5109.133499999996,
+          "model_calls": 492,
+          "usage_unknown_runs": 0,
+          "observed_input_tokens": 3207647,
+          "observed_output_tokens": 83131,
+          "input_tokens": 3207647,
+          "output_tokens": 83131
+        }
+      }
+    },
+    "gates": {
+      "complete": true,
+      "normal_requests_succeed": true,
+      "mandatory_recall": true,
+      "no_leaks": true,
+      "no_error_as_empty": true,
+      "recall_not_worse": true,
+      "unrelated_within_five_points": true
+    },
+    "pass": true
+  }
+}

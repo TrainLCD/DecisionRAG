@@ -65,6 +65,9 @@ pub fn with_storage_timing(mut step: Value, storage_ms: f64) -> Value {
 #[derive(Clone, Deserialize, Serialize, Default)]
 #[serde(default)]
 pub struct Config {
+    pub retrieval_engine: String,
+    pub typesafe_api_key: String,
+    pub jev_model: String,
     pub api_token: String,
     pub webhook_secret: String,
     pub github_token: String,

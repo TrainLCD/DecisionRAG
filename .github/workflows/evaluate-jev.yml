@@ -1,0 +1,97 @@
+name: Jev fixed-corpus evaluation
+on:
+  push:
+    branches: ['evaluation/jev-*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evaluate:
+    if: github.repository == 'TrainLCD/DecisionRAG'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 45
+    concurrency:
+      group: decisionrag-fixed-evaluation
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        id: rust
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: cargo-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust.outputs.cachekey }}-${{ hashFiles('Cargo.lock') }}
+      - uses: actions/cache/restore@v4
+        id: bindgen
+        with:
+          path: ~/.cargo/bin/wasm-bindgen
+          key: wasm-bindgen-${{ runner.os }}-${{ runner.arch }}-0.2.129
+      - if: steps.bindgen.outputs.cache-hit != 'true'
+        run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
+      - run: npm ci
+      - run: node --test scripts/evaluation/*.test.mjs
+      - run: npm run build:rust && npx tsc -p tsconfig.test.json
+      - name: Prepare expiring evaluation proxy
+        run: |
+          token=$(openssl rand -hex 32)
+          echo "::add-mask::$token"
+          echo "EVALUATION_TOKEN=$token" >> "$GITHUB_ENV"
+          EVALUATION_TOKEN="$token" node scripts/evaluation/prepare-proxy.mjs
+      - name: Upload evaluation-only version (never deploy traffic)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          output=$(mktemp)
+          trap 'rm -f "$output" wrangler.evaluation.json' EXIT
+          WRANGLER_OUTPUT_FILE_PATH="$output" npx --no-install wrangler versions upload \
+            --config wrangler.evaluation.json --strict --tag "evaluation-$GITHUB_RUN_ID"
+          node --input-type=module - "$output" <<'JS'
+          import {readFileSync,appendFileSync} from 'node:fs';
+          const rows=readFileSync(process.argv[2],'utf8').trim().split('\n').map(JSON.parse);
+          const url=rows.find(r=>r.type==='version-upload')?.preview_url;
+          if(!url || !/^https:\/\/[a-z0-9.-]+\.workers\.dev\/?$/.test(url))throw Error('No evaluation version URL');
+          appendFileSync(process.env.GITHUB_ENV,`EVALUATION_PROXY=${url}\n`);
+          JS
+      - name: Verify evaluation transport
+        run: |
+          node --input-type=module <<'JS'
+          import {mkdirSync,writeFileSync} from 'node:fs';
+          const body={model:'jev-1.14.0',state:{query:'Does the source say hello?',candidates:{c0:'hello'}},questions:{c0:{type:'noul',instructions:'Does candidate c0 say hello?'}}};
+          const response=await fetch(process.env.EVALUATION_PROXY+'/judge',{method:'POST',headers:{Authorization:`Bearer ${process.env.EVALUATION_TOKEN}`,'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(40000)});
+          const raw=await response.text();
+          const result={status:response.status,category:['evaluation_provider_error','evaluation_provider_unavailable'].includes(raw)?raw:(raw?'other_response':'empty_response')};
+          mkdirSync('evaluation-results/transport',{recursive:true});
+          writeFileSync('evaluation-results/transport/preflight.json',JSON.stringify(result));
+          console.log(JSON.stringify(result));
+          if(!response.ok)throw Error('Evaluation transport unavailable; stop before benchmark');
+          JS
+      - name: Run frozen split with real model
+        env:
+          EVALUATION_SPLIT: ${{ startsWith(github.ref_name, 'evaluation/jev-heldout-') && 'evaluation' || 'all' }}
+          EVALUATION_QUESTIONS: ${{ startsWith(github.ref_name, 'evaluation/jev-heldout-fresh-') && 'test/fixtures/jev-evaluation/questions-fresh-v8.json' || startsWith(github.ref_name, 'evaluation/jev-heldout-') && 'test/fixtures/jev-evaluation/questions-heldout-v5.json' || 'test/fixtures/jev-evaluation/questions-regression-v5.json' }}
+        run: node --loader ./scripts/wasm-test-loader.mjs scripts/evaluation/run.mjs
+      - name: Score frozen quality gates
+        run: |
+          inputs=(evaluation-results/*.json)
+          test "${#inputs[@]}" -eq 1
+          node scripts/evaluation/summarize.mjs "${inputs[0]}" evaluation-results/summary.json
+          node --input-type=module -e 'import {readFileSync} from "node:fs"; if (!JSON.parse(readFileSync("evaluation-results/summary.json", "utf8")).pass) process.exit(1);'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jev-fixed-evaluation-${{ github.run_attempt }}
+          path: evaluation-results/**/*.json
+          if-no-files-found: error

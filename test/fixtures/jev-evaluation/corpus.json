@@ -1,0 +1,1763 @@
+[
+  {
+    "id": "TrainLCD/MobileApp#420:0",
+    "source_id": "TrainLCD/MobileApp#420",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "issue",
+    "title": "iOS版 トンネル通過時間が長いと移動していないとカウントされて位置情報追跡が切れる",
+    "url": "https://github.com/TrainLCD/MobileApp/issues/420",
+    "text": "(No body)",
+    "metadata": {
+      "number": 420,
+      "state": "closed",
+      "state_reason": "completed",
+      "labels": [
+        "bug"
+      ],
+      "author": "TinyKitten",
+      "release_status": "unknown"
+    },
+    "ordinal": 0,
+    "updated_at": "2020-12-30T17:19:27Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#423:0",
+    "source_id": "TrainLCD/MobileApp#423",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "title": "位置情報更新をiosで止めないようにした",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/423",
+    "text": "closes #420 \r\n卍して動作確認\n\n## Changed files\nmodified: src/screens/Main/index.tsx",
+    "metadata": {
+      "number": 423,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2020-12-30T17:19:27Z",
+      "merge_commit_sha": "1671b59efa8ef335cbe234be0e6f6c462982bff7",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "fix/ios-tunnel-fix",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2020-12-30T17:19:28Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/changelog.md:0",
+    "source_id": "TrainLCD/MobileApp:docs/changelog.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/changelog.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+    "text": "# 変更履歴\n\n依存パッケージの更新や Expo SDK の移行など、アプリ全体に影響する変更の記録。\nCLAUDE.md「Security & Configuration Guardrails」に従い、依存更新後に実施した\n`expo-doctor` / `npm run lint` / `npm test` / `npm run typecheck` の結果をここに残す。\n\n新しいエントリを上に追加する。\n\n## 2026-11-05 — iOS背景補完測位の開始待ちを短縮\n\n- #7355で10秒に揃えていた背景補完測位の開始待ちを5秒へ分離しました。測位の取得上限30秒、失敗後の再試行待ち10秒、測位の鮮度上限10秒は維持します。前景の補完開始と通常の10m制限も維持します。\n- 通常測位と補完測位のどちらも、JS側の最大許容精度を超える測位では補完を延期・終了しません。リモート設定の取得後は、許容精度の変更を背景タスクにも反映します。\n- 許容精度の更新時に古い開始処理が新しい測位タスクを停止する競合を修正しました。開始と停止を直列化し、古い開始と停止の完了後に新しい設定で開始します。開始後に取り消しを検出して個別に停止する処理は、この順序保証へ置き換えました。\n- `npm run lint`、`npm run typecheck`、測位関連7スイート・130テストに成功しました。未変更のexpo-location 58.0.16へパッチを適用し、検証対象のネイティブ4ファイルとの一致を確認しました。Objective-CのiOSビルドと実機走行は未実施です。\n- 背景補完の回数が増えるため、電池消費と到着判定までの時間を実機で比較します。サスペンド中は開始タイマーを実行できません。適用にはiOSアプリの再ビルドが必要です。\n\n## 2026-11-03 — iOS補完測位のビルドエラー修正\n\n- カナリアのArchiveで、補完測位のエラー判定に使用する`kCLErrorLocationUnknown`の宣言を参照できず、コンパイルが失敗しました。`CoreLocation/CLError.h`を明示的にimportします。\n- Cの判定関数テストではObjective-Cのimport不足を検出できませんでした。修正後の確認にはiOSのArchiveも必要です。\n\n## 2026-11-03 — iOS背景測位の途絶時に限定した補完測位\n\n- 通常測位の10m制限は維持します。背景で新しい測位が10秒以上届かない場合だけ、別の背景対応CLLocationManagerで補完します。要求精度と活動種別は通常測位から引き継ぎます。\n- 新しく有効な時刻の測位を受信したら補完を停止し、既存の位置情報タスクへ即時配信します。通常測位から新しい測位が届いた場合も補完を終了します。JavaScript側の精度フィルターと重複排除を経由します。\n- 補完の待機上限は30秒です。タイムアウト、取得失敗、UIKitの背景実行期限切れでは購読を閉じ、再試行まで10秒待ちます。古い測位や重複測位では待機期限を延長しません。\n- 前景復帰、設定変更、タスク解除では補完用のタイマー、測位要求、背景タスクを破棄します。端末の省電力モードへの移行はネイティブ側でも監視します。常時位置情報の許可がない場合と省電力測位中には開始しません。\n- #7353の継続測位の10m制限を残し、途絶時の補完要求に限って距離制限を設けません。#7257の通常の保留データ配信処理とAndroidの測位処理は維持します。\n- 待機用タイマーでアプリのサスペンドを解除することはできません。補完中だけ有限のUIKit背景タスクを使用します。OSから測位が届かない場合や、座標の誤差自体は解消しません。電池消費と発熱は実機で比較する必要があります。\n- `npm run lint`、`npm run typecheck`、測位関連7スイート・125テストに成功しました。ネイティブ側の判定関数はCとしてコンパイルし、途絶判定、再試行待機、古い測位と重複測位、省電力条件を検証しました。未変更のexpo-location 58.0.16へのパッチ適用と適用後のファイル一致を確認しました。\n- Objective-CのiOSビルドと実機検証は未実施です。適用にはiOSアプリの再ビルドが必要です。実機では地上走行、停車、地下駅で画面ロック前後の測位時刻とaccuracyを比較します。前景復帰、省電力切り替え、案内終了時の補完停止も確認します。\n\n## 2026-11-03 — iOS背景測位の10m間引きを復活\n\n- #7304で追加した「背景測位の10m制限を解除」を試験的機能画面から削除しました。\n- 旧設定の保存値に関係なく、通常のiOS背景測位でも10mの距離制限を適用します。\n- Androidと省電力測位のオプション、保留データの配信処理は維持します。\n\n## 2026-11-03 — 初回案内の保存失敗を処理\n\n- 初回案内のOK操作で完了フラグの保存に失敗した場合、例外をSentryへ報告してダイアログの終了処理を完了します。\n- 保存失敗時に代替の完了フラグを設けず、次回マウント時の案内から保存を再試行できます。MMKVへの同期保存と既存の文字列形式は維持します。\n- 回帰テストではダイアログの終了処理を経由し、通常の保存、保存例外、再表示後の保存を検証します。\n\n## 2026-11-03 — iOSの位置情報利用目的をInfo.plistに追加",
+    "metadata": {
+      "path": "docs/changelog.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "349901303234337b66f37b31a67b3e07220ebf68"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T06:18:30.932Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/changelog.md:3",
+    "source_id": "TrainLCD/MobileApp:docs/changelog.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/changelog.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+    "text": "- expo-location 58.0.16の背景測位用CLLocationManagerにパッチを適用します。通常測位では背景へ移ると距離フィルターを解除し、前景へ戻ると設定値の10mへ戻します。\n- #6470の10m制限を、背景かつ通常測位の場合に限って解除します。前景と省電力測位では設定値を維持します。\n- ネイティブのアプリ状態通知を使うため、JavaScriptのタイマーや前景用watchには依存しません。状態切り替え時に測位タスクを停止・再作成しません。\n- Expoの既存の10秒のバッチ配信と、index.jsで最新1件を処理する方式を維持します。10秒ごとの新しい測位の取得を保証するものではありません。\n- ネイティブの測位頻度が上がるため、電池消費が増える可能性があります。省電力設定中は距離フィルターと測位自動休止を維持します。\n\n### 確認手順\n\n1. ネイティブパッチを含むiOSビルドを作成します。JavaScriptのみの更新では反映されません。\n2. 通常測位で地下鉄に乗車し、画面ロック中と別アプリ使用中に次駅へ移動します。復帰後に測位時刻と現在駅の更新を確認します。\n3. 前景復帰と省電力設定の切り替え後に、距離フィルターが10mへ戻ることを確認します。\n4. 同じ区間で電池消費と発熱を比較します。iOSのビルドと実車確認は未実施です。\n\n### 参照\n\n- [Apple: distanceFilter](https://developer.apple.com/documentation/corelocation/cllocationmanager/distancefilter)\n- expo-location 58.0.16: ios/TaskConsumers/EXLocationTaskConsumer.m\n\n## 2026-10-20 — iOS の補完測位で古い初回配信を待ち直す\n\n### 内容\n\n- 補完測位では、10秒を超えて古い測位や処理済み時刻以下の測位を受け取っても購読を閉じず、新しい測位を待ちます。10秒は既存の途絶判定と同じ値です。\n- #6996 の「最初の1件で終了する」条件を、新しさを確認できた1件に限定しました。待機中に継続測位が更新された場合も、最新の処理済み時刻を参照します。\n- 補完測位の30秒の待機上限と背景・省電力時の停止は維持します。背景の継続測位は上記のネイティブパッチで別途対応します。\n- 古い初回配信だけで終了すると、その後の測位を受け取れません。補完測位の成功件数だけでは位置が更新されたことを確認できないため、時刻と重複判定も確認します。\n\n### 実車確認手順\n\n1. iPhoneで地下鉄の走行画面を開き、出発駅から次駅へ移動します。\n2. 診断の測位時刻と現在駅が更新されることを確認します。\n3. 新しい測位が届かない場合は、30秒の待機上限で再試行することを確認します。実車確認は未実施です。\n\n## 2026-10-18 — Android の起動時に必要なコンストラクターを保持\n\n### 内容\n\n- Canary のビルド `100000871` の配布用 AAB を解析しました。WorkManager 2.9.1 と Room 2.5.0 が含まれており、マニフェストに `WorkManagerInitializer` が登録されています。\n- DEX では `WorkDatabase_Impl`、`OverwritingInputMerger`、`ArrayCreatingInputMerger` の引数なしコンストラクターが欠落していました。Expo #51337 で報告された、R8 による起動時初期化の破損と同じ欠落です。\n- アプリの ProGuard ルールに RoomDatabase と InputMerger の派生クラスの引数なしコンストラクターを保持するルールを追加しました。Expo #51349 と同じルールです。\n- #5121 の Expo モジュール保持ルールは維持し、その対象外だった AndroidX のコンストラクターを補います。R8 の最適化とリソース縮小は継続します。\n\n### 確認\n\n- `npm run lint`、`npm run typecheck`、`npm test -- --runInBand` が成功しました。333テストファイル・3722件が通過しました。\n- 修正前の配布 AAB の解析と、修正ルールの Expo #51349 との照合を実施しました。修正後の Android Release ビルドと実機起動は実施していません。\n\n### Release の回帰確認手順\n\n1. `:app:bundleDevRelease` で AAB をビルドします。\n2. AAB 内の DEX で、上記3クラスに引数なしの `<init>()V` が残っていることを確認します。\n3. Release ビルドを Galaxy Z Flip5 にインストールし、強制停止後の起動で画面が表示されることを確認します。Debug ビルドや JavaScript の単体テストでは R8 による削除を検証できません。\n\n### 参照",
+    "metadata": {
+      "path": "docs/changelog.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "349901303234337b66f37b31a67b3e07220ebf68"
+    },
+    "ordinal": 3,
+    "updated_at": "2026-11-12T06:18:30.932Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#545:0",
+    "source_id": "TrainLCD/MobileApp#545",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "issue",
+    "title": "Location.Accuracy.BestForNavigationは使わないべきなのでは？",
+    "url": "https://github.com/TrainLCD/MobileApp/issues/545",
+    "text": "`Location.Accuracy.BestForNavigation`を使っている地下鉄は動かないのに、`Location.Accuracy.High`を使っている田園都市線の地下区間は割と快適に動いた。\r\nどうせトンネル内では位置が取れないので、位置情報の精度が低くても駅についた瞬間位置を取れるようにしたほうが良いのでは？",
+    "metadata": {
+      "number": 545,
+      "state": "closed",
+      "state_reason": "completed",
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "unknown"
+    },
+    "ordinal": 0,
+    "updated_at": "2021-03-04T08:15:55Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#263:0",
+    "source_id": "TrainLCD/MobileApp#263",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "issue",
+    "title": "バックグラウンドに移しているとき地下鉄でも正常に動作する理由を調べる",
+    "url": "https://github.com/TrainLCD/MobileApp/issues/263",
+    "text": "## Comment: TinyKitten\nhttps://github.com/TrainLCD/MobileApp/issues/263#issuecomment-790421124\n\n\nおそらくバックグラウンド時はHigh Accuracyを使用していたが、フォアグラウンド時はBestForNavigationを使用していたため",
+    "metadata": {
+      "number": 263,
+      "state": "closed",
+      "state_reason": "completed",
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "unknown"
+    },
+    "ordinal": 0,
+    "updated_at": "2021-03-04T08:21:09Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/location-simulation.md:6",
+    "source_id": "TrainLCD/MobileApp:docs/location-simulation.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/location-simulation.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+    "text": "サーバー配信のフラグ 1 つで全ユーザーへ有効化されるため、有効化の前提は\n「正常な走行では何も変えない」ことになる。`location.gpxEtaAssist.test.ts` は各 GPX を\nフラグ ON / OFF で 2 回流し、平滑後の軌跡・位置を据え置いた回数・到着検知位置が\n一致することを確かめる。ETA の停車時刻は GPX 自身の時刻表から作るので、ETA どおりに\n走る列車のモデルになる。棄却が実際に働く側の挙動は合成データで\n`src/store/atoms/location.etaBound.test.ts` が受け持つ。\n\nGPX の解析・停車駅の検出・真の位置の補間は `src/utils/test/gpxTrack.ts` にまとめてある。\n`parseGpx` は 1 点ぶんのノードを切り出してからその内側だけを読む。XML 全体へ\n「`lat`/`lon` のあと最初に現れる `<time>`」のようなパターンを当てると、時刻を持たない点が\nあったときに次の点の `<time>` まで食い、座標と時刻が食い違った組を黙って作るため。\n点ごとに有無が変わる `trainlcd:accuracy` を足すと必ず踏む形になる。\n停車駅は速度がほぼ 0 の区間から検出するが、生成した GPX は始発駅の停車時間を書き出さず\n(1 点目から発車する)、終着駅では減速しきった時点でトラックが終わるため、停車時間の\n下限では始発駅・終着駅を拾えない。先頭・末尾で静止しているトラックはその点が\n始発駅・終着駅なので、停車時間に関わらず停車として扱う。\n`location.gpxLag.test.ts` は始発駅・終着駅を含めない検出を自前に持っており、区間長の\n中央値がこの扱いで変わるため共通化していない。\n\n## 検証できること・できないこと\n\n| 条件 | GPX (iOS シミュレータ) | GPX (Android) | 実乗車 |\n| ---- | ---- | ---- | ---- |\n| 320km/h・精度良好 (精度 50m 未満) | ✅ | ✅ | ✅ |\n| 精度 100m / 300m | ❌ 常に良好な精度を返す | ✅ `--accuracy` か GPX の精度 | ✅ |\n| 配信間隔ごとの追従遅れ | ❌ 間隔は OS 任せ | ❌ 同上 | ✅ |\n| トンネルでの測位途絶からの復帰 | ❓ Xcode が `<time>` の穴をどう扱うか未検証 | ✅ 実機 1 機種で確認済み (下記) | ✅ |\n| 車体による GPS 減衰 | ❌ | ❌ | ✅ |\n| `coords.speed` を使う表示 | ✅ | ❌ 常に 0 | ✅ |\n\n測位途絶は `--signal-profile subway` で GPX に書ける。「テストプロバイダへ打つのを\n止めるだけなので、Play 開発者サービスの Fused が最後の測位を保持して配り続けるのでは\nないか」という懸念を実機で確かめたが、**そうはならなかった**。\n\n線路の長さを反映する前の `FLinerSeibu.gpx` の 195 秒の欠測を Galaxy SCG13 (Android 16) へ流し、`dumpsys location`\nを 3 秒間隔で採った結果、欠測のあいだ fused の `last location` は座標・`hAcc` だけでなく\n**測位自体の時刻 (`et=`) も 1ms も進まなかった** (26 サンプル)。Fused は測位を合成も\n再配信もせず、新しい測位が 1 つも生まれない。つまり GPX の穴はそのまま測位の途絶になる。\n\n**確かめたのはこの 1 機種だけ**なので、他機種・他バージョンの Play 開発者サービスでも\n同じとは限らない。初めて使う端末では「Android 実機・エミュレータで再生する」の手順で\n`et=` が止まることを 1 度確認する。\n\n```text\n09:21:34  35.692672,139.705452 hAcc=618.0 et=+5d1h23m15s728ms   ← 欠測へ突入\n  (26 サンプル、値が 1 つも変わらない)\n09:22:54  35.729662,139.709335 hAcc=378.0 et=+5d1h26m31s710ms   ← 195 秒後、池袋の手前で復帰\n09:23:09  35.731464,139.708291 hAcc= 45.0                       ← 池袋に到着、ホーム帯へ\n09:24:14  35.731466,139.708280 hAcc=496.0                       ← 発車、坑口帯へ\n```\n\n`trainlcd:accuracy` が端末へそのまま届くこともこれで確認できている (618m → 45m → 496m\nが GPX の坑口帯・ホーム帯・坑口帯に一致)。アプリ側は欠測のあいだ表示が凍り、復帰時に\n次の停車駅 (池袋) へ飛ぶ。`etaProgressBound.ts` が想定する「発車を観測できないまま次の\n停車駅で測位が復活する」経路そのものになる。\n\nJest からの再生 (`location.subwayGpx.test.ts`) は `setLocation` を直接呼ぶので、こちらも\n完全な穴になる。",
+    "metadata": {
+      "path": "docs/location-simulation.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "c42ac010e78c00a935619f3de5d9a03e79aa1449"
+    },
+    "ordinal": 6,
+    "updated_at": "2026-11-12T06:18:31.681Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#1:0",
+    "source_id": "TrainLCD/MobileApp#1",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "title": "電波の悪い状況での対応強化",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/1",
+    "text": "- 位置情報精度の警告の文言変更\r\n- 位置情報精度の警告の出るタイミングを改善\r\n- 新幹線・地下鉄専用の閾値を追加\r\n- enableHighAccuracy有効化\r\n- 到着判定を150mから300mに拡大\n\n## Changed files\nmodified: src/components/Layout/index.tsx\nmodified: src/constants.ts\nmodified: src/models/StationAPI.ts\nmodified: src/store/actions/locationAsync.ts\nmodified: src/store/actions/stationAsync.ts",
+    "metadata": {
+      "number": 1,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2019-12-23T00:27:40Z",
+      "merge_commit_sha": "058997ac5f07bcbb8d0d0e4f53f294b404041ea2",
+      "draft": false,
+      "base_branch": "master",
+      "head_branch": "subway",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2019-12-23T00:27:46Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/location-simulation.md:4",
+    "source_id": "TrainLCD/MobileApp:docs/location-simulation.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/location-simulation.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+    "text": "停車駅は StationAPI の `stopCondition` に従う。列車によって停まる駅は一部停車 (`PartialStop`)・\n一部通過 (`Partial`) になっており、生成時はどちらも停車として扱う (柏・土浦など 9 駅)。\nそのため、実在するどの 1 本の停車パターンとも一致しない。\n\n`FLinerSeibu.gpx` は地下鉄の電波環境を持つ唯一のサンプル。いわゆる F ライナーだが、\nStationAPI に「F ライナー」という種別は無く、みなとみらい線・東急東横線が特急、\n副都心線が急行、西武有楽町線・西武池袋線が快速急行という組み合わせ (`lineGroupId`\n152) がそれにあたる。\n\n地下 (みなとみらい線) → 地上 (東急東横線) → 地下 (副都心線 → 西武有楽町線) → 地上\n(西武池袋線) と 5 路線 4 社を跨ぎ、地下 ↔ 地上が 3 回切り替わる (うち地下から地上への\n復帰が 2 回)。副都心線から西武有楽町線は地下から地下なので切り替わりに数えない。\n欠測は 7 件・最長 327 秒で、ETA 棄却の保険 (`ETA_BOUND_MAX_HOLD_MS` = 90 秒) を超える\n区間を 5 箇所含む。\n\n地下鉄分岐と、地上へ復帰したときの基準の張り直しを 1 本で繰り返し踏める\n(ただし実機では上記のとおり副都心線の区間だけ。Jest 側は全区間)。約 92 分・4487 点と\n他のサンプルより大きいが、この経路は他に代えがない。\n\n区間の時間は、路線ごとの到着時間推定に合わせている。トンネル内の欠測の長さは走行時間で\n決まるので、地下区間の所要時間が推定どおりであることが、このサンプルの前提になる。\n\n`KatamachiRapid.gpx` と `SobuRapid.gpx` は、EMA の追従遅れが到着判定へ効く条件を\n狙ったサンプル。到着圏は駅間 800m 以上でどれも 200m にクランプされるので、\n遅れ (速度に比例) が到着圏を食い潰しやすい**全駅停車**の区間を選んでいる。\n到着圏に入るときの速度は減速度で決まり、減速度 0.9m/s² では約 68km/h になる。\n`SobuRapid.gpx` は東京から乗るだけで実機確認できる区間でもある (地上区間は錦糸町以東)。\n\n## iOS シミュレータで再生する\n\n1. Xcode でワークスペースを開く。\n1. メニューの Debug > Simulate Location > Add GPX File to Workspace… で GPX を選ぶ。\n1. アプリを起動した状態で Debug > Simulate Location から追加した GPX を選ぶ。\n\nXcode は `<time>` の間隔どおりに測位を配信するので、GPX 側で速度を制御できる。\n\n## Android 実機・エミュレータで再生する\n\n`scripts/replay-location-gpx.mjs` が GPX を Android のテストプロバイダへ流し込む。\n`adb shell cmd location providers` を使うので、実機でも仮の現在地アプリを別途\n入れる必要はない。手順の全体は `.claude/skills/replay-gpx/SKILL.md` にある。\n\n```bash\nnpm run gpx:replay -- --gpx assets/gpx/SampleTohokuShinkansen.gpx --serial <serial>\n```\n\n主なオプションは次のとおり。`--help` で全件を表示できる。\n\n| オプション | 説明 |\n| ---- | ---- |\n| `--gpx` | 再生する GPX (必須) |\n| `--serial` | adb シリアル。接続が 1 台だけなら省略可 |\n| `--speed` | 再生倍率。既定 `1` |\n| `--accuracy` | 水平精度 (m)。カンマ区切りで点ごとに巡回。既定の扱いは下記 |\n| `--start` | GPX 先頭からのスキップ秒数 |\n| `--provider` | テストプロバイダ名。既定 `gps,network,fused` |\n\n再生を始める前に、GPX の終点の座標でステージングの StationAPI\n(`https://gql-stg.trainlcd.app/`) に 1 回だけ問い合わせ、いちばん近い駅を行先として\n表示する。行先は進捗行にも `京王八王子行` のように出る。環境変数 `GQL_API_URL` が\nあればそちらへ問い合わせる。行先を引けなかったときは、テストプロバイダを有効にする前に\n異常終了する。\n\nXcode と違い精度を指定できるので、`--accuracy 100,300` のように渡せば\n`getSmoothingAlpha` の低精度分岐も実機で観測できる。一方で `coords.speed` を\n渡す手段が無いため、DEV OVERLAY の `CURRENT SPEED` は常に 0km/h を表示する。\n\n精度の優先順位は次のとおり。\n\n1. `--accuracy` を明示したときはその値。GPX に記録された精度より優先する。\n1. 指定が無ければ GPX の `trainlcd:accuracy`。\n1. どちらも無い点は `8`。",
+    "metadata": {
+      "path": "docs/location-simulation.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "c42ac010e78c00a935619f3de5d9a03e79aa1449"
+    },
+    "ordinal": 4,
+    "updated_at": "2026-11-12T06:18:31.681Z"
+  },
+  {
+    "id": "TrainLCD/THQ:docs/location-freeze-regression.md:1",
+    "source_id": "TrainLCD/THQ:docs/location-freeze-regression.md",
+    "repo": "TrainLCD/THQ",
+    "kind": "doc",
+    "title": "docs/location-freeze-regression.md",
+    "url": "https://github.com/TrainLCD/THQ/blob/37208ef7dbac9af640a41cf85c205474377dc277/docs/location-freeze-regression.md",
+    "text": "```graphql\nquery {\n  locationFreezes(\n    filter: {\n      from: \"2026-07-01T00:00:00Z\"\n      to: \"2026-07-08T00:00:00Z\"\n      appVersion: \"10.4.1(100)\"\n    }\n  ) {\n    sessionId\n    segmentId\n    gapStart\n    gapEnd\n    gapMs\n    speedBeforeGap\n    coordsBeforeGap { latitude longitude accuracy speed }\n    coordsAfterGap { latitude longitude accuracy speed }\n    jumpDistanceMeters\n    aliveEventCount\n  }\n}\n```\n\n`jumpDistanceMeters` は `coordsBeforeGap` と `coordsAfterGap` の大円距離(m)で、\n凍結中に表示位置が実位置からどれだけ離れたかの目安です。`aliveEventCount` は欠落期間中に\n届いた `log_events` + `interaction_events` の件数で、条件 3 の根拠にあたります。\n\n## しきい値の考え方\n\n- **`gapThresholdMs`**: 既定の 60000 ms は、送信間隔(最大 1 回/秒)の 60 倍にあたります。\n  地下鉄やトンネル区間では測位が正常に途切れるため、そのままでは正常な欠落を拾います。\n  対象を路線で絞る(`lineId` / `segmentId`)か、しきい値を大きめに取ってください。\n  THQ は路線種別(地上/地下)を持っていないため、この判断は自動化できません。\n- **`speedThresholdKmh`**: 既定の 30 km/h は、駅停車・徐行と走行中を分けるための値です。\n  在来線の低速区間を見るときは下げ、新幹線の高速域だけを見るときは上げます。\n  なお `speed` は OS 由来の値で、欠落直前の 1 行しか見ていません。\n- **`requireAppAlive`**: `false` にすると条件 3 を外し、アプリが落ちた可能性のある欠落も\n  含めて返します。「凍結ではなくクラッシュではないか」を確かめるとき、true と false の\n  件数差を見るのが手軽です。\n- **`limit`**: 既定 100、上限 2000 に丸められます。\n\n## 検索窓と、検出できない欠落\n\n`[from, to)` は **欠落の開始行** を絞ります。つまり `from <= gapStart < to` の欠落が対象で、\n欠落を閉じる行(`gapEnd`)は `to` 以降であっても構いません。窓の末尾で始まった欠落も、\nその後に位置ログが再開していれば `gapMs` まで含めて正しく返ります。\n\n仕組み上検出できないのは、**閉じない欠落** だけです。電源断・アプリ終了・乗車終了などで\n位置ログが二度と来なかった場合、欠落の長さを測る相手が存在しないため、セッション最後の行に\n続く空白は返りません。これは条件 3 で除外したいケースとも重なります。\n\n一方、`locationFreezeSessions` / `locationFreezeSummary` が返す件数\n(`locationCount` / `startedAt` / `endedAt`)は **窓の中の行だけ** を数えます。\n`to` をまたいだ欠落を閉じる行は、欠落の測定には使われますが、これらの集計には入りません。\n\nまた、`session_id` が NULL の行(旧クライアント)は対象外です。\n\n## 過去データの `appVersion` 補完\n\n`location_logs` の `app_version` / `platform` / `channel` は THQ#30 で追加した列です。\nそれ以前の行と、まだ送っていないクライアントの行では NULL になります。\n\nこのため 3 つの Query は、位置ログの列が NULL のときに **同一 `session_id` の\n`log_events` / `interaction_events` からビルド情報を補完** します。補完値は、そのセッションの\n**最初のイベント行(`app_version` を持つ行を優先)から 3 列をまとめて取ります**。\n列ごとに `MIN` を取ると、別々の行の `appVersion` と `platform` が混ざった実在しない組み合わせに\nなり得るためです。\n`appVersion` / `platform` / `channel` フィルタも、この補完後の値に対して適用されます。\nどちらにも情報が無ければ `null` のままです。\n\n補完はセッション単位なので、1 セッションの途中でアプリを更新するようなケースは表現できません。\n実運用では乗車中にビルドが変わることはないため、この単純化を採用しています。\n\n## 実装メモ",
+    "metadata": {
+      "path": "docs/location-freeze-regression.md",
+      "branch": "main",
+      "commit": "37208ef7dbac9af640a41cf85c205474377dc277",
+      "blob_sha": "58846a8465ef3a92858713814f6f6f0a941b45fd"
+    },
+    "ordinal": 1,
+    "updated_at": "2026-11-12T06:18:35.644Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/location-simulation.md:2",
+    "source_id": "TrainLCD/MobileApp:docs/location-simulation.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/location-simulation.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+    "text": "| 成分 | GPX 上の表現 |\n| ---- | ---- |\n| 測位が届かない (トンネル内) | 点を書かない。`<time>` に穴が開く |\n| 精度の劣化 (基地局測位のみ) | 各点の `trainlcd:accuracy` |\n| 位置そのもののずれ | 座標 (現状のプロファイルでは動かしていない) |\n\n### trainlcd:accuracy 拡張\n\nGPX 1.1 にはメートル単位の水平精度を書く標準要素が無い (`<hdop>` は無次元の DOP 値で\nあって精度ではない)。そのため独自要素を `<extensions>` に置く。\n\n```xml\n<gpx version=\"1.1\" creator=\"TrainLCD scripts/generate-location-gpx.mjs\"\n     xmlns=\"http://www.topografix.com/GPX/1/1\"\n     xmlns:trainlcd=\"https://trainlcd.app/xmlns/gpx/v1\">\n<wpt lat=\"35.6908530\" lon=\"139.7048280\">\n<time>2026-01-01T00:05:12.000Z</time>\n<extensions><trainlcd:accuracy>412</trainlcd:accuracy></extensions>\n</wpt>\n</gpx>\n```\n\n- 値は**水平精度のメートル**で、正の数に限る。`coords.accuracy` にそのまま入る。\n  0 以下は精度として扱わない (再生側はエラー、Jest 側は記録なしとして無視する)。\n- `<extensions>` は GPX 1.1 が用意している拡張口で、中身は\n  `<xsd:any namespace=\"##other\" processContents=\"lax\">` と定義されている。\n  「GPX 以外の名前空間なら何でも置いてよく、スキーマを知らないバリデータは素通しする」\n  という意味なので、**この書き方をしたファイルは妥当な GPX 1.1 のままである**。\n  Garmin の `gpxtpx`(心拍・ケイデンス) なども同じ仕組みで相乗りしている。\n- `##other` なので**名前空間の宣言が必須**。接頭辞を付けずに `<accuracy>` と書いたり、\n  `<extensions>` の外へ置いたりすると不正な GPX になる。\n- 名前空間 URI は識別子であって取得先ではないため、実在しなくてよい。\n- 精度を 1 点も書かないときはこの宣言も出さない。従来の生成物に無意味な差分を\n  出さないためで、既存の GPX は同じコマンドで再生成するとバイト単位で一致する。\n\n### --signal-profile\n\n| 値 | 内容 |\n| ---- | ---- |\n| `open` | 既定。従来どおり。精度も穴も書かない |\n| `subway` | 経路のうち地下鉄 (`lineType` が `Subway`) の区間だけを劣化させる |\n\n`subway` の数値はアプリ側の判定境界から逆算している。\n\n| 区間 | 精度 (m) | 狙い |\n| ---- | ---- | ---- |\n| 地上 | 8〜20 | 通常の GPS。`isAccuracyStable` が true になりスムージングが働く |\n| 地下駅のホーム | 25〜60 | Wi-Fi / 基地局。`BAD_ACCURACY_THRESHOLD` (200m) 以内 |\n| 坑口付近 (駅から 20 秒以内) | 260〜620 | 基地局のみ。200m を必ず超える |\n| トンネル内 | (点を落とす) | 測位が届かない時間になる |\n\n坑口帯が 200m を超えることが要点。`isAccuracyStable` は「直近 12 点の平均が\n`BAD_ACCURACY_THRESHOLD` (200m) 未満」かつ「`stddev/mean` が 0.5 未満」で true を返すので、\n平均が 200m を上回った時点で false になり、`setLocation` の地下鉄分岐 (`skipSmoothing`)\nに入る。`MAX_PERMIT_ACCURACY` (1500m) は超えないので、精度フィルタでの棄却は起きない。\n\n逆に言うと、**200m 未満の精度で一定のトラック**を地下鉄の路線で流しても `stddev/mean` が\n0 で「安定」と判定されるため、地下鉄のコードパスには (履歴が 4 点そろった後は) 入らない。\n再生側で `--accuracy 300` のように 200m 以上を一律に与えた場合は逆に全点が分岐へ入るので、\n「精度を固定すれば地上と同じ経路を通る」わけではない。\n\n### 直通運転\n\n劣化させるのは地下を走る区間だけなので、`--line-group` で直通の経路を生成すると\n地上 → 地下 → 地上が 1 本のトラックに入る。地下から地上へ戻ったところで精度が回復し、\n長い欠測のあとなので基準が古い (`STALE_REFERENCE_MS`) と判断されて基準の張り直しが走る。\nこの経路は合成データでは作りにくい。",
+    "metadata": {
+      "path": "docs/location-simulation.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "c42ac010e78c00a935619f3de5d9a03e79aa1449"
+    },
+    "ordinal": 2,
+    "updated_at": "2026-11-12T06:18:31.681Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#1510:0",
+    "source_id": "TrainLCD/MobileApp#1510",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "title": "位置情報取得調整",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/1510",
+    "text": "- 位置情報取得タイムアウトの撤廃\r\n- `geolib.getDistance()` の精度を1000m変更\r\n- 位置情報更新時にrafを使用\r\n- 位置情報精度をbalancedに変更\r\n- 不要なActionSheet関係の処理を削除\n\n## Changed files\nmodified: src/components/Permitted.tsx\nmodified: src/constants/index.ts\nadded: src/constants/location.ts\nmodified: src/hooks/useMirroringShare.ts\nmodified: src/hooks/useRefreshStation.ts\nmodified: src/hooks/useResetMainState.ts\nmodified: src/screens/Main.tsx\nmodified: src/screens/SelectBound.tsx\nmodified: src/utils/stationDistance.ts",
+    "metadata": {
+      "number": 1510,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "enhancement",
+        "react"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2022-06-04T13:02:25Z",
+      "merge_commit_sha": "a47f27c83a9c703536ba8b9545fab55aa461b262",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "fix/subway-hang",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2022-06-04T13:02:26Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#546:0",
+    "source_id": "TrainLCD/MobileApp#546",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "title": "Location.Accuracy.BestForNavigationを使わないようにした",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/546",
+    "text": "closes #545 \r\n\r\nPRの趣旨はIssue参照\n\n## Review: Sw-Saturn\nhttps://github.com/TrainLCD/MobileApp/pull/546#pullrequestreview-603715260\n\nAPPROVED\nLGTM\n\n## Changed files\nmodified: src/screens/Main/index.tsx",
+    "metadata": {
+      "number": 546,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2021-03-04T08:15:55Z",
+      "merge_commit_sha": "b704ef2ffb211103f8c9255c31c80abeb597a168",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "fix/accuracy",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2021-03-04T08:15:56Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/changelog.md:2",
+    "source_id": "TrainLCD/MobileApp:docs/changelog.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/changelog.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+    "text": "- 路線種別による限定を外し、精度履歴に1500m以上の測位がある場合に地下向け処理へ入ります。復帰には既存の精度安定判定を使います。\n- iOSの1500m超に対する平滑化・速度フィルタは維持します。\n\n## 2026-10-24 — iOS通常測位の要求精度をHighestへ戻す\n\n### 内容\n\n- #6395で通常測位へ昇格したHigh精度のうち、iOSだけをHighestへ戻します。expo-location 58.0.16では、背景タスクの`EXLocation.m`と前景購読の`LocationAccuracy.swift`の両方で、Highを`kCLLocationAccuracyNearestTenMeters`、Highestを`kCLLocationAccuracyBest`へ変換します。\n- 前景購読・背景タスク・補完測位は共通プロファイルを使います。AndroidのHigh精度、省電力時のBalanced精度、配信間隔は維持します。\n- 平滑化と到着半径は変更しません。ETAで到着や発車を確定する処理も追加しません。\n\n### 検証と制約\n\n- `npm run lint`、測位関連8スイート・145テスト、`npm run typecheck`が成功しました。\n- iOS実機での走行確認は実施していません。この変更は要求精度の復元であり、一駅遅れの解消を確認したものではありません。\n- Appleの[desiredAccuracy仕様](https://developer.apple.com/documentation/corelocation/cllocationmanager/desiredaccuracy)では、高精度を要求しても精度の低い位置情報が届く場合があります。実測精度と電池消費は実車で比較する必要があります。\n\n## 2026-10-21 — iOS の背景測位で保留データの配信期限を設ける\n\n### 内容\n\n- expo-locationの背景配信では、測位コールバック内で10秒の蓄積条件を確認します。条件を満たす前に測位が途切れると、受信済みのデータを次のコールバックまで保留します。\n- 通常測位の背景配信に、一度だけ動くネイティブタイマーを追加します。保留データがあるときだけ、設定間隔の残り時間を待って配信します。後続の測位を受け取ってもタイマーを延長しません。\n- 待機中はUIKitの有限の背景タスクを使います。時間を確保できない場合や期限切れの場合は保留分を配信し、背景タスクを終了します。\n- 通常の配信、前景復帰、設定変更、測位終了ではタイマーと背景タスクを解除します。空のバッファではタイマーを開始しません。\n- #7255の背景用距離フィルター解除を維持し、配信側の保留を修正します。省電力測位には追加の背景タスクを開始しません。\n- 前景用ハートビートの変更は本修正から外します。ETAによる到着・発車判定は追加しません。Androidの処理も変更しません。\n\n### 検証と適用\n\n- 関連8スイート・118テスト、`npm run lint`、`npm run typecheck`が成功しました。\n- ネイティブで使うC関数をコンパイルして実行し、配信から9秒後に1件だけ測位が届くケース、初回配信、時計の逆転、設定間隔の変更を確認しました。\n- 未変更のexpo-location 58.0.16へパッチを適用し、検証に使ったネイティブファイルと一致することを確認しました。\n- Objective-CのiOSビルドと実機走行の検証は実施していません。ネイティブパッチのため、適用にはiOSアプリの再ビルドが必要です。\n- 保留中の背景実行時間を確保するため、電池消費が変わる可能性があります。OSから新しい測位自体が届かない場合や、測位座標の誤差は本修正では解消しません。\n\n## 2026-10-21 — iOS の補完測位を測位時刻で判定する\n\n### 内容\n\n- 継続測位を遅れて受信した場合、受信時刻から10秒を数え直して補完測位を先送りします。これを測位自体の古さで判定するよう修正します。\n- #6969の配信経過時間の記録を残し、受信時点の測位の古さを別に記録します。受信後は単調時計で経過時間を加算します。\n- 精度外れ値の新しい測位は更新として扱います。精度だけを理由に補完を続けることはありません。\n- 補完測位は従来どおりiOSの前景・通常測位でのみ動作します。到着・発車判定、ETAによる棄却、Androidの配信処理、背景測位のネイティブパッチは変更しません。\n- 遅延受信で先送りされる経路を対象とした修正です。測位座標の誤差を補正する処理は追加しません。\n\n### 検証\n\n- `npm run lint`、`npm run typecheck`が成功しました。\n- 補完測位、共通測位入口、到着判定、ETAアンカー、背景測位、ETA棄却の関連7スイート・126テストが成功しました。\n- 34秒古い測位を受信してから前景の補完処理を開始するケースと、5秒古い測位を受信するケースを追加しました。旧判定では両方の回帰テストが失敗し、修正後は成功しました。\n- iPhone実機での走行検証は実施していません。\n\n## 2026-10-20 — iOS の背景測位の変位ゲートを切り替える\n\n### 内容",
+    "metadata": {
+      "path": "docs/changelog.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "349901303234337b66f37b31a67b3e07220ebf68"
+    },
+    "ordinal": 2,
+    "updated_at": "2026-11-12T06:18:30.932Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/changelog.md:1",
+    "source_id": "TrainLCD/MobileApp:docs/changelog.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/changelog.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+    "text": "- 位置情報の説明文は日英の `InfoPlist.strings` にだけ存在し、本体とApp Clipの `Info.plist` にはありませんでした。\n- Canary・Prodの本体とApp Clipに `NSLocationWhenInUseUsageDescription` を追加しました。本体には常時利用の説明キーも追加しました。使用中の説明には既存の日本語訳を使用しています。常時利用の説明にはバックグラウンドで最寄り駅を取得する目的を明記し、日英の翻訳とExpoの設定にも反映しました。\n- Expoの位置情報プラグインにも同じ説明文を設定しました。ネイティブの4つのマニフェストで説明文の欠落を検出するテストを追加しました。XMLコメント内の記述は検証対象から除外します。\n\n\n\n\n## 2026-11-03 — iOS 16対応を維持して振り返りの地図をexpo-mapsへ移行\n\n- iOS 17以降とAndroidでは `expo-maps` 58.0.11を使います。iOS 16では従来の `react-native-maps` の実装を使います。最低対応版のiOS 16.4は変更していません。\n- #7145の経路線・駅の点・駅名表示と、#7253のズーム時の円の更新単位を引き継ぎます。iOS 16の実装は別コンポーネントに保存しました。\n- expo-mapsでは地図の外側に見出しと凡例の高さを確保します。Androidの駅名は画像化してマーカーに渡します。iOSの全画面地図はApple Maps標準の操作を使います。Androidのカードは操作を禁止し、旧実装のliteModeは使いません。\n- iOS 16.4・16.7・16.7.12の分岐、期間変更、Androidのカメラ、余白、空データをテストしています。\n- WSL（Ubuntu、Node.js 24.22.1）で `npm run lint`、`npm run typecheck`、`npm test -- --runInBand` が成功しました。345スイート・4,161テストが通りました。\n- `npx expo export --platform ios --platform android --max-workers 2` で両OSのHermesバンドルを生成しました。実機での描画とネイティブビルドは未実施です。\n- `npx expo-doctor` は19項目中17項目が成功しました。既存の `react-native-edge-to-edge` と `audio-focus` のメタデータ、および既存依存のパッチ版不一致が指摘されました。地図以外の依存バージョンは変更していません。\n\n## 2026-10-30 — 近くの駅一覧に TanStack DB を試験導入\n\n- `@tanstack/react-db` 0.5.12 と `@tanstack/query-db-collection` 1.4.8 を追加しました。両者が使用する `@tanstack/db` は 0.15.2 です。\n- 駅検索モーダルの近くの駅一覧を Query Collection とライブクエリに接続しました。通信には既存の TanStack Query と GraphQL を使います。\n- 距離順、重複行、座標変更、再表示、通信失敗からの復旧、キャッシュ更新、Web Crypto がない環境を回帰テストで確認しました。\n- `npm run lint` と `npm run typecheck` は成功しました。`npm test -- --runInBand` は342スイート・4,117テストが成功しました。\n- `npx expo export --platform ios --platform android --max-workers 2` で両プラットフォームの Hermes バンドルを生成しました。実機での動作確認は行っていません。\n- `npx expo-doctor` は19項目中17項目が成功しました。既存の `react-native-edge-to-edge` と `audio-focus` のメタデータ、およびExpo関連22パッケージのパッチ版不一致が指摘されました。これらの依存バージョンは変更していません。\n\n## 2026-10-30 — iOSアーカイブの循環依存を修正\n\n- CanaryとProdのSentryデバッグシンボル送信を、App ClipとPodsの組み込み処理より後へ移動しました。\n- dSYMの入力依存は維持しました。App Clipの組み込みがシンボル送信を待つ順序を解消しました。\n- ビルドフェーズの順序を検証する回帰テストを追加しました。\n\n## 2026-10-24 — iOSの背景測位の距離制限を設定で切り替える\n\n- 試験的機能に「背景測位の10m制限を解除」を追加しました。初期値はONです。\n- #7255の距離制限解除を端末ごとに切り替えます。OFFでは背景でも設定済みの10m制限を維持します。\n- 設定は端末に保存します。測位中の変更は測位プロファイルへ反映し、既存の処理でタスクを再登録します。\n- 前景と省電力測位の距離制限、#7257の保留データ配信処理は変更しません。Androidには項目を表示しません。\n- ネイティブパッチを含むiOSビルドが必要です。JavaScriptのみの更新では切り替わりません。\n\n## 2026-10-24 位置情報フィルタの路線種別依存を解消",
+    "metadata": {
+      "path": "docs/changelog.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "349901303234337b66f37b31a67b3e07220ebf68"
+    },
+    "ordinal": 1,
+    "updated_at": "2026-11-12T06:18:30.932Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+    "source_id": "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/background-location-diagnostics.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/background-location-diagnostics.md",
+    "text": "# iOS背景補完測位の診断\n\nDevOverlayのコピーボタンで生成するJSONには、前景JSの`heartbeat`と別に、iOSネイティブの`backgroundHeartbeat`を含めます。#7355で追加した背景補完測位の経過を確認できます。診断機能を使うにはiOSアプリの再ビルドが必要です。\n\n## 利用できるかの確認\n\n`availability`が`available`なら、`native`に診断結果を格納します。`unavailable`の場合は`reason`で区別します。\n\n| reason | 意味 |\n| --- | --- |\n| `unsupported-platform` | iOS以外です。ネイティブの診断APIを呼びません。 |\n| `native-method-missing` | 実行中のビルドに診断APIがありません。要求0件とは区別します。 |\n| `read-failed` | ネイティブ診断の取得に失敗しました。他の診断項目はコピーできます。 |\n\n## 記録の範囲\n\n`native.scope`は`process`です。イベント回数の`counts`はプロセス起動からの累積で、記録のないキーは0回です。前景復帰やタスクの再登録では消去しません。アプリのプロセスが終了すると消えます。\n\n`recentEvents`には古い順で最大40件を残します。`lastEvents`にはイベント種別ごとの最新1件を残します。通常測位が続いて直近40件から終了イベントが消えても、種別ごとの記録を確認できます。複数の位置情報タスクがある場合、回数は合算します。各イベントの`taskName`でタスクを識別できます。\n\n各イベントには壁時計の`atMs`と単調時計の`uptimeMs`を記録します。権限、前景・背景、省電力状態などもイベント発生時の値です。現在の状態を表す値ではありません。ネイティブ側での取得時刻は`native.capturedAtMs`です。\n\n| イベント | 記録するタイミング |\n| --- | --- |\n| `entered-background` / `entered-foreground` | 背景移行・前景復帰の通知を受けたときです。 |\n| `scheduled` | 補完開始用タイマーを予約したときです。`delayMs`に待機時間を記録します。 |\n| `timer-fired` | 補完開始用タイマーのコールバックを実行したときです。 |\n| `ineligible` / `start-skipped` | 予約時・開始時に条件を満たさなかったときです。権限や省電力状態などを併記します。 |\n| `requested` | 補完用マネージャーを作成する直前です。 |\n| `started` | 背景実行権を取得し、`startUpdatingLocation`を呼ぶ直前です。 |\n| `recovery-received` / `regular-received` | 補完・通常マネージャーから測位コールバックを受けたときです。通常側は背景中だけ記録します。 |\n| `no-fresh-sample` | 補完側のコールバックに、新しく有効な時刻の測位がなかったときです。 |\n| `succeeded` | 新しい測位によって補完を終了するときです。`source`で補完側と通常側を区別します。 |\n| `timed-out` | 補完待機上限のタイマーを実行したときです。 |\n| `expired` | UIKitの背景実行期限切れコールバックを実行したときです。 |\n| `background-task-denied` | UIKitの背景タスク識別子が無効だったときです。 |\n| `recovery-error` | 補完側のエラーを受信したときです。ドメインとコードを記録します。 |\n| `failed` | 継続待機する`locationUnknown`以外のエラーで終了するときです。 |\n| `cancelled` | 前景復帰、設定変更、省電力状態の変化、タスク解除で取得中の補完を閉じるときです。`reason`を併記します。 |\n| `power-state-changed` / `task-reset` | 端末の省電力状態の通知・タスクのリセット処理に入ったときです。 |\n\n## 読み方と制限\n\n- `scheduled`と`timer-fired`を比較すると、予約後にタイマーのコールバックを実行できたかを確認できます。前景復帰や設定変更でもタイマーを取り消すため、差だけでサスペンドを断定しません。\n- `requested`と`started`を比較すると、要求後に背景実行権を取得できたかを確認できます。\n- `recovery-received`などの回数はコールバック単位です。各コールバックの測位件数は`sampleCount`に記録します。\n- `succeeded`はネイティブ側での新しい測位の受信を表します。JavaScript側の精度フィルター通過や駅到着の確定は表しません。`filter.counts`と併せて確認します。\n- 受信イベントには最新測位の時刻と精度を残します。緯度経度はこの追加診断に記録しません。ファイル保存やネットワーク送信は行いません。\n- コピー時だけネイティブの履歴を読み取ります。診断用のタイマーや測位要求は追加しません。通常測位の10m制限、補完の開始条件、待機上限は#7355の実装を維持します。\n\n## 測位ごとの配信追跡（schemaVersion 2）",
+    "metadata": {
+      "path": "docs/background-location-diagnostics.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "8a0a44e55e2f0008347bbe094a9cfd7ce66b1e1c"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T06:18:30.855Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#447:0",
+    "source_id": "TrainLCD/MobileApp#447",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "issue",
+    "title": "Expo SDK 39に戻す",
+    "url": "https://github.com/TrainLCD/MobileApp/issues/447",
+    "text": "Androidで位置情報が取れなくなった",
+    "metadata": {
+      "number": 447,
+      "state": "closed",
+      "state_reason": "completed",
+      "labels": [
+        "bug"
+      ],
+      "author": "TinyKitten",
+      "release_status": "unknown"
+    },
+    "ordinal": 0,
+    "updated_at": "2021-01-22T10:46:53Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#448:0",
+    "source_id": "TrainLCD/MobileApp#448",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "title": "rollback expo 39",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/448",
+    "text": "closes #447 \n\n## Changed files\nmodified: android/app/src/main/java/me/tinykitten/trainlcd/generated/BasePackageList.java\nmodified: ios/Podfile.lock\nmodified: package-lock.json\nmodified: package.json",
+    "metadata": {
+      "number": 448,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "bug"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2021-01-22T10:46:53Z",
+      "merge_commit_sha": "d8c5f22cd30c1dad7c14d20c21ffa7026166ea04",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "fix/rollback-expo-39",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2021-01-22T10:46:53Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#1138:0",
+    "source_id": "TrainLCD/MobileApp#1138",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "issue",
+    "title": "地下鉄で戻ったり進んだりするようになった",
+    "url": "https://github.com/TrainLCD/MobileApp/issues/1138",
+    "text": "大江戸線と副都心線で確認\n多分到着判定の閾値を300mにしたあたりからデグレったので地下鉄だけ閾値を狭くするとかそういう感じになりそう",
+    "metadata": {
+      "number": 1138,
+      "state": "closed",
+      "state_reason": "completed",
+      "labels": [
+        "bug"
+      ],
+      "author": "TinyKitten",
+      "release_status": "unknown"
+    },
+    "ordinal": 0,
+    "updated_at": "2021-12-04T13:56:31Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#267:0",
+    "source_id": "TrainLCD/MobileApp#267",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "title": "位置情報精度設定と開発者モード有効化",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/267",
+    "text": "related: #263\n\n## Changed files\nmodified: src/components/DevOverlay/index.tsx\nmodified: src/components/Layout/Permitted.tsx\nremoved: src/devMode.ts\nmodified: src/screens/Main/index.tsx",
+    "metadata": {
+      "number": 267,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2020-10-12T13:52:35Z",
+      "merge_commit_sha": "40b10452c5e7a62ffb0eb28cc2a5aa3376f177eb",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "feature/subway",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2020-10-12T13:52:36Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/changelog.md:12",
+    "source_id": "TrainLCD/MobileApp:docs/changelog.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/changelog.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+    "text": "- `npx expo install --fix` により Expo SDK 57 系 16 パッケージを推奨バージョンへ更新\n  （`expo` 57.0.12 → 57.0.16、`expo-location` 57.0.9 → 57.0.13、\n  `expo-notifications` 57.0.10 → 57.0.14 ほか）。\n- `expo-task-manager` が 57.0.9 → 57.0.13 に上がり `patch-package` のパッチが競合したため、\n  57.0.13 上でパッチを再生成（`patches/expo-task-manager+57.0.13.patch`）。\n  あわせてパッチの適用範囲を **API 31+ の 1 分岐のみ** に縮小した。\n- **API 28–30 分岐は上流 57.0.13 の実装に戻した**（`setImportantWhileForeground(true)` +\n  `setOverrideDeadline(DEFAULT_OVERRIDE_DEADLINE)`）。旧パッチがこの分岐を置き換えていたのは、\n  57.0.9 では `setImportantWhileForeground(true)` が単独で置かれており、一部 OEM の\n  `JobInfo.Builder` バリデータが制約なしと判定して `IllegalArgumentException` を投げたため。\n  57.0.13 は上流が late constraint である `setOverrideDeadline` を追加したことでこの原因が\n  解消しており、パッチを維持する理由がなくなった。上流に戻したことで、前面実行時の\n  優先度ヒントと Doze 緩和の効果が復活する。\n- **API 31+ 分岐のパッチは維持**（`setExpedited(true)` → `setMinimumLatency(0)` +\n  `setOverrideDeadline(DEFAULT_OVERRIDE_DEADLINE)`）。上流は未修正で、Android 14+/16 での\n  `JobInfo.Builder.build()` クラッシュ要因が残っているため。この分岐の挙動は従来の\n  出荷状態と同一で、この更新による変更はない。\n- API 31+ 分岐のトレードオフ（従来からの継続であり、この更新で新たに生じたものではない）:\n  expedited job を使わないため実行優先度が上流素の状態より低い。JS 側の\n  `watchPositionAsync` バイパスは `NEEDS_JOBSCHEDULER_BYPASS`（`src/constants/native.ts`）で\n  API 36+ に限定されているため、**API 31–35 ではこのバイパスによる補償が効かない**。\n  当該レンジではフォアグラウンド位置情報サービスによるプロセス維持のみが緩和策で、\n  Doze 下で JS 配信が遅延する可能性がある。パッチ内コメントにも同旨を明記した。\n\n### 検証結果\n\n```text\nnpx expo-doctor    → 20/20 checks passed. No issues detected!\nnpx expo install --check → Dependencies are up to date\nnpm ci             → patches/ 配下 5 件すべて適用\nnpm run lint       → Checked 668 files, 指摘なし\nnpm run typecheck  → エラーなし\nnpm test           → Test Suites: 236 passed / Tests: 2540 passed\n```\n\n### 未検証・申し送り",
+    "metadata": {
+      "path": "docs/changelog.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "349901303234337b66f37b31a67b3e07220ebf68"
+    },
+    "ordinal": 12,
+    "updated_at": "2026-11-12T06:18:30.932Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#1652:0",
+    "source_id": "TrainLCD/MobileApp#1652",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "title": "位置情報関連の修正",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/1652",
+    "text": "## Changed files\nmodified: android/app/src/main/AndroidManifest.xml\nmodified: ios/TrainLCD/Info.plist\nmodified: src/hooks/useMirroringShare.ts\nmodified: src/utils/threshold.ts",
+    "metadata": {
+      "number": 1652,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "bug",
+        "ios",
+        "android",
+        "react"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2022-09-03T10:35:03Z",
+      "merge_commit_sha": "2fbddd0feaf210161b58087e9a9b10b2b6f2f7c4",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "fix/loc-updates",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2022-09-03T10:35:03Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#1145:0",
+    "source_id": "TrainLCD/MobileApp#1145",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "title": "地下鉄の接近到着しきい値の変更(x1.5)",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/1145",
+    "text": "closes #1138 \r\n\r\n地下鉄で暴れだすのでしきい値を低くした（これで解決するかどうかは裏付けなし）\n\n## Review: 0x307e\nhttps://github.com/TrainLCD/MobileApp/pull/1145#pullrequestreview-823256622\n\nAPPROVED\n\n\n\n\n## Changed files\nmodified: src/constants/index.ts",
+    "metadata": {
+      "number": 1145,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2021-12-04T13:56:31Z",
+      "merge_commit_sha": "68d931694676da05c60f8b782099017708051485",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "fix/adjust-subway-threshold",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2021-12-04T13:56:32Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#402:0",
+    "source_id": "TrainLCD/MobileApp#402",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "title": "地下鉄ではBestForNavigation&メイン画面行かない限り位置を取り続けない",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/402",
+    "text": "closes #401 \r\n\r\nそもそもメイン画面以外で位置を取り続けてたのはバグだった\n\n## Changed files\nmodified: src/screens/Main/index.tsx",
+    "metadata": {
+      "number": 402,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "bug",
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2020-12-26T17:06:48Z",
+      "merge_commit_sha": "44e23c92d74003f9d30b31d92e6810e588ae6d6c",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "feature/subway-accuracy",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2020-12-26T17:06:50Z"
+  },
+  {
+    "id": "TrainLCD/THQ:docs/location-freeze-regression.md:0",
+    "source_id": "TrainLCD/THQ:docs/location-freeze-regression.md",
+    "repo": "TrainLCD/THQ",
+    "kind": "doc",
+    "title": "docs/location-freeze-regression.md",
+    "url": "https://github.com/TrainLCD/THQ/blob/37208ef7dbac9af640a41cf85c205474377dc277/docs/location-freeze-regression.md",
+    "text": "# 現在地凍結(location freeze)の検出\n\nテスト乗車のテレメトリから「アプリは動いているのに現在地が進まなくなった」区間を抽出し、\n路線・区間・機種・ビルド別に集計するための GraphQL Query 3 本(`locationFreezes` /\n`locationFreezeSessions` / `locationFreezeSummary`)について説明します。\n\n関連 Issue: [TrainLCD/THQ#30](https://github.com/TrainLCD/THQ/issues/30)\n\n## シグネチャ(何を「凍結」とみなすか)\n\nMobileApp は乗車中、最大 1 回/秒の頻度で `sendLocation` を送ります。したがって位置ログが\n数分単位で途切れていれば、その間クライアントは位置を更新できていません。ただし途切れ自体は\n異常とは限らないため、次の 3 条件を **すべて** 満たしたものだけを凍結候補として扱います。\n\n1. **位置ログの欠落**: 同一 `session_id` の連続する 2 行の間隔が `gapThresholdMs`(既定 60000 ms)を超える。\n2. **欠落直前の速度が高い**: 欠落直前の行の OS 由来 `speed` が `speedThresholdKmh`(既定 30 km/h)を超える。\n3. **その間もアプリは生きていた**: 欠落期間中に同一 `session_id` の `log_events` /\n   `interaction_events` が 1 件以上ある(`requireAppAlive: true`、既定)。\n\n各条件が切り分けているものは次のとおりです。\n\n- 条件 2 は **駅停車** を除外します。停車中に位置更新が止まっても、それは正常です。\n- 条件 3 は **アプリ・端末の死亡** を除外します。強制終了・電源断・バックグラウンド停止で\n  ログ全体が止まったのであれば、位置ログだけの問題ではありません。\n- 残るのは「アプリのイベントは流れ続けているのに位置ログだけが止まった」ケース、つまり\n  画面上の現在地が高速移動中に凍結した状態です。\n\n## 3 つの Query の使い分け\n\nいずれも観測用トークン(`THQ_OBSERVER_AUTH_TOKEN`)と DB 接続が必要で、同じ\n`LocationFreezeFilter` を取ります。`from` / `to` は必須で、差は最大 90 日です。\n\n| Query | 粒度 | 並び順 | 主な用途 |\n|---|---|---|---|\n| `locationFreezes` | 欠落 1 件ごと | `gapStart` 降順 | 個別事象の再現条件を調べる |\n| `locationFreezeSessions` | セッションごと | `startedAt` 降順 | 1 回の乗車が何回凍結したかを見る |\n| `locationFreezeSummary` | 路線・区間・機種・ビルドごと | `freezeCount` 降順、`sessionCount` 降順 | ビルド間・区間別の比較 |\n\n`locationFreezeSessions` と `locationFreezeSummary` は **凍結が 0 件のセッション / グループも返します**。\n「結果に出てこない」と「凍結が無かった」を区別できないと、ビルド間比較になりません。\n\n### 例: 同一区間を 2 つのビルドで走った結果を並べる\n\n```graphql\nquery {\n  locationFreezeSummary(\n    filter: {\n      from: \"2026-07-01T00:00:00Z\"\n      to: \"2026-07-08T00:00:00Z\"\n      segmentId: \"11302:1130201:1130202\"\n    }\n  ) {\n    appVersion\n    platform\n    device\n    sessionCount\n    locationCount\n    freezeSessionCount\n    freezeCount\n    maxGapMs\n    totalGapMs\n  }\n}\n```\n\n返る行は例えば次のようになります。\n\n```text\nappVersion     device      sessionCount  freezeSessionCount  freezeCount  maxGapMs\n10.4.1(100)    Pixel 8     1             1                   1            300000\n10.4.2(101)    Pixel 8     1             0                   0            null\n```\n\n同じ区間・同じ端末で `freezeSessionCount` が 1 → 0 になっているので、その区間については\n10.4.2(101) で解消したと読めます。逆に `freezeCount` が増えていれば退行です。\n\n個別事象の詳細を見るときは `locationFreezes` を使います。",
+    "metadata": {
+      "path": "docs/location-freeze-regression.md",
+      "branch": "main",
+      "commit": "37208ef7dbac9af640a41cf85c205474377dc277",
+      "blob_sha": "58846a8465ef3a92858713814f6f6f0a941b45fd"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T06:18:35.644Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/location-simulation.md:5",
+    "source_id": "TrainLCD/MobileApp:docs/location-simulation.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/location-simulation.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+    "text": "欠測 (`<time>` の穴) はそのまま待ち時間になる。GPX に 195 秒の穴があれば端末へも\n195 秒のあいだ何も流さないので、`STALE_REFERENCE_MS` の基準張り直しまで含めて観測できる。\n\nテストプロバイダへ打つのを止めるだけなので「Play 開発者サービスの Fused が最後の測位を\n保持して配り続けるのでは」という懸念があるが、実測ではそうならなかった (後述の\n「検証できること・できないこと」を参照)。ただし確かめたのは 1 機種なので、初めて使う\n端末では下の手順で一度確認する。\n\n```bash\nadb shell dumpsys location | grep -A3 \"fused provider\" | grep \"last location=\"\n```\n\n欠測のあいだ `last location` の `et=` (測位時刻) が止まっていれば途絶になっている。\n値が進み続けるなら Fused が配り直しているので、`--provider gps,network` で `fused` を\n外して試す。\n\n`MAX_PLAUSIBLE_SPEED` は 100m/s (360km/h) なので、320km/h の GPX を `--speed 2`\n以上で流すと速度フィルタが全点を棄却して現在地が凍る。倍速で見たいときは\n`--max-speed` を下げた GPX を作り直す。\n\n## EMA スムージングと配信間隔\n\n固定 α の EMA の追従遅れは、定速・一定間隔のとき `((1-α)/α)·v·Δt` で、配信間隔 Δt に\n比例する。α を精度だけで決めると Δt が変わるたびに遅れも変わるため、\n`getSmoothingAlpha` は精度が `BAD_ACCURACY_THRESHOLD` (200m) 未満の帯で\n`α = Δt / (Δt + T)` を使う。**このとき追従遅れは `v·T` になり Δt に依存しない**。\nT は旧実装の固定 α が 1 秒間隔で持っていた遅れ時間なので、Δt が 1 秒のとき α は\n旧実装と完全に一致する。\n\n精度 200m 以上の帯だけは固定 α (0.3) を維持している。この帯は測位ノイズ\n(σ ≒ accuracy) が到着圏に対して大きく、スムージングが到着判定の安定性そのものを\n担っているため。正規化して α を上げると遅れは詰まるが、平滑後の座標が到着圏を\n出入りして到着表示がばたつく。追従遅れと安定性の積は配信間隔で決まるので、\n10 秒間隔・σ=250m では許容遅れをどこに置いても両立しない。\n\nこの挙動は `src/store/atoms/location.gpxLag.test.ts` が GPX を実パイプラインへ\n流して検証している (`assets/gpx/KatamachiRapid.gpx` は駅間 2.3km と、到着圏が\n最小クランプに張り付く最も不利な条件)。10 秒間隔の測位は、駅に対して当たる位置が\n1 通りではない。テストは最初の測位の遅れとノイズの種を変えた複数の条件で測る。\nばたつきは、`useRefreshStation` と同じく停車時のグレース期間 (`ARRIVED_GRACE_PERIOD_MS`)\nを含めて数える。到着直後に 1 回だけ圏外へ押し出された測位は、表示を変えないためである。\n精度 250m で α を正規化すると、グレース期間を含めてもほとんどの条件でばたつく。\n\n## Jest から GPX を流すテスト\n\nGPX は Xcode / adb だけでなく Jest からも参照する。`src/store/atoms/location.ts` の\n`setLocation` へ直接流し込めるので、速度フィルタ・EMA・基準の張り直しまで含んだ\n測位パイプライン全体を CI で回帰させられる。\n\n| テスト (`src/store/atoms/`) | 対象 | 使う GPX |\n| ---- | ---- | ---- |\n| `location.gpxLag.test.ts` | EMA の追従遅れが表示の切り替わり位置をどれだけ後ろへずらすか | 4 本 (新幹線を除く) |\n| `location.gpxEtaAssist.test.ts` | ETA 補助を有効にしても走行結果が変わらないこと | 精度を持たない全 GPX |\n| `location.subwayGpx.test.ts` | 地下鉄の電波環境で地下鉄分岐へ入ること | F ライナー |\n\nETA 補助 (`eta_assist_enabled`) がパイプラインへ介入する経路は、ETA が許す進行量を\n超えた測位の棄却 (`store/atoms/location.ts`) だけである。精度劣化時に到着圏を緩和する\nR1 (`hooks/useRefreshStation.ts`) も持っていたが、有効化して実走させたところ到着判定が\n悪化したため廃止した。\n\n`location.gpxEtaAssist.test.ts` は点ごとの精度を持つ GPX を対象から外す。あのスイープは\n「GPX は真の軌跡だけを供給し、精度と配信間隔はテストが振る」前提で組まれており、\n`truthAt` で等間隔に再サンプルするため GPX が持つ欠測は補間で消え、記録された精度も\n使われない。電波環境そのものが被検体になるトラックは `location.subwayGpx.test.ts` が\n記録されたまま流す。",
+    "metadata": {
+      "path": "docs/location-simulation.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "c42ac010e78c00a935619f3de5d9a03e79aa1449"
+    },
+    "ordinal": 5,
+    "updated_at": "2026-11-12T06:18:31.681Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#785:0",
+    "source_id": "TrainLCD/MobileApp#785",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "issue",
+    "title": "たまに路線情報から駅名が消える",
+    "url": "https://github.com/TrainLCD/MobileApp/issues/785",
+    "text": "位置情報の誤差でぶれた時に発生することが多い？",
+    "metadata": {
+      "number": 785,
+      "state": "closed",
+      "state_reason": "completed",
+      "labels": [
+        "bug"
+      ],
+      "author": "TinyKitten",
+      "release_status": "unknown"
+    },
+    "ordinal": 0,
+    "updated_at": "2021-10-04T11:48:22Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#401:0",
+    "source_id": "TrainLCD/MobileApp#401",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "issue",
+    "title": "地下鉄に乗っている時だけBestForNavigationに精度を上げる",
+    "url": "https://github.com/TrainLCD/MobileApp/issues/401",
+    "text": "(No body)",
+    "metadata": {
+      "number": 401,
+      "state": "closed",
+      "state_reason": "completed",
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "unknown"
+    },
+    "ordinal": 0,
+    "updated_at": "2020-12-26T17:06:49Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#348:0",
+    "source_id": "TrainLCD/MobileApp#348",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "title": "v1.5",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/348",
+    "text": "- アニメーションをReact Native Reanimatedに移行\r\n- 環状線では終端確認処理を行わない\r\n- 起動時と初回起動時の位置情報取得精度をBalancedにした\r\n- 駅読込中FABを無効化する\r\n- メトロテーマ/DTテーマヘッダー調整\r\n- Apple Watch対応\r\n- 「ただいま」表示をメトロテーマとDTテーマで粛清\r\n- 位置情報監視の精度をHighestに落とす(地下鉄は維持)\r\n- 位置情報監視ストラテジをOtherNavigationに変更\r\n- 駅指定画面でクエリを入力しないでFABをタップするとヘッダーが非表示のままになるバグを修正\r\n- メイン画面行かない限り位置を取り続けない\r\n- 駅検索で近い順にソート\r\n- 総武線快速対応\r\n- Push通知許可アラートで画面を止めないようにした",
+    "metadata": {
+      "number": 348,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "production"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2020-12-30T00:24:44Z",
+      "merge_commit_sha": "706a9145860e429e29dbec851367f6f536834bbe",
+      "draft": false,
+      "base_branch": "master",
+      "head_branch": "dev",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2020-12-30T00:24:45Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1",
+    "source_id": "TrainLCD/MobileApp:docs/background-location-diagnostics.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/background-location-diagnostics.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/background-location-diagnostics.md",
+    "text": "`receivedSamples`と`dispatchedSamples`には、ネイティブ受信とタスクへの引き渡しを最大40件ずつ記録します。累積件数も別に記録します。`sessionId`と`sampleId`の組で照合します。同一タイムスタンプの測位も別の受信として扱います。引き渡しはJS側の受信完了を意味しません。\n\n`locationDelivery`には継続測位のJS受信と処理結果を残します。タスク、直接購読、前景補完を区別します。バッチの最後以外は従来どおり処理せず、`not-selected`と記録します。処理対象は既存フィルターの実際の戻り値から、採用・重複・精度・ETA・速度による棄却を記録します。手動選択とワンショット取得はこの履歴の対象外です。\n\n`currentConsumers`はコピー時点で存在するタスク消費側の状態です。要求精度、位置精度の権限、背景更新の許可、保留件数、配信条件、タイマー状態を含めます。保留測位の古さと受信時刻は別項目です。通常測位のエラーは`regular-error`、JSタスクのエラーは`locationDelivery.taskErrors`に記録します。JS側にはエラーコードだけを残します。\n\nJS側はコピー開始時、ネイティブ側は非同期取得の実行時に採取します。両者は同時刻のスナップショットではありません。ネイティブの単調時計とJSの壁時計を引き算しません。壁時計の差は端末の時刻変更の影響を受けます。\n\n各履歴の上限は`historyLimit`です。JS履歴はJSランタイム再起動、ネイティブ履歴はプロセス終了で消えます。履歴から見つからないだけでは配信漏れと断定できません。schemaVersion 1のバイナリでは測位IDと現在状態を取得できません。OSがアプリを実行しなかった理由そのものは記録できません。ネイティブの追加を反映するにはアプリのリビルドが必要です。\n\nネイティブ診断が3秒以内に応答しない場合は、取得結果を`read-timeout`として他の情報をコピーします。JS自体が停止している間はこの待機上限のタイマーも実行できません。\n",
+    "metadata": {
+      "path": "docs/background-location-diagnostics.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "8a0a44e55e2f0008347bbe094a9cfd7ce66b1e1c"
+    },
+    "ordinal": 1,
+    "updated_at": "2026-11-12T06:18:30.855Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#761:0",
+    "source_id": "TrainLCD/MobileApp#761",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "issue",
+    "title": "強制位置情報更新機能を実装する",
+    "url": "https://github.com/TrainLCD/MobileApp/issues/761",
+    "text": "地下鉄とかで本当に位置情報を取ってるか不安な時に使えそう",
+    "metadata": {
+      "number": 761,
+      "state": "closed",
+      "state_reason": "completed",
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "unknown"
+    },
+    "ordinal": 0,
+    "updated_at": "2021-05-16T07:38:13Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#3:0",
+    "source_id": "TrainLCD/MobileApp#3",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "title": "地下鉄線内のしきい値変更",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/3",
+    "text": "ストロングしきい値過ぎた\n\n## Changed files\nmodified: app.json\nmodified: src/constants.ts\nmodified: src/store/actions/locationAsync.ts",
+    "metadata": {
+      "number": 3,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2019-12-23T11:10:55Z",
+      "merge_commit_sha": "5d3fa255723899150b0f1c5794cbf3551bf4163b",
+      "draft": false,
+      "base_branch": "master",
+      "head_branch": "fix-threshold",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2020-02-21T13:22:34Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/changelog.md:13",
+    "source_id": "TrainLCD/MobileApp:docs/changelog.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/changelog.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/changelog.md",
+    "text": "- **TODO（担当: @TinyKitten）: API 28–30 の実機／エミュレータ回帰確認。**\n  この更新で `createJobInfo` の API 28–30 分岐が上流実装\n  （`setImportantWhileForeground(true)` と `setOverrideDeadline` の併用）に戻り、\n  旧パッチの `setMinimumLatency(0)` と `setOverrideDeadline` の併用から\n  実挙動が変わる。自動テストを追加していない理由は、対象が `node_modules` 配下の\n  Java コードで `patch-package` 適用後にのみ存在し、Jest からは到達できないため\n  （Android の instrumentation テスト基盤はこのリポジトリに未整備）。上流が\n  late constraint を設定済みなので「制約なし」例外の条件は成立せず、旧パッチが\n  対処していたクラッシュは再発しない見込みだが、Android 9–11 実機での\n  バックグラウンド位置情報の配信を一度確認したい。\n- API 31+ 分岐は挙動を変更していないため、この更新に起因する回帰確認は不要。\n  ただし expedited job を使わない現行方針を API 36+ 限定に絞り込むかどうかは、\n  本番 Sentry での Android 12–15 の `IllegalArgumentException` 発生実績を確認したうえで\n  別途判断する（本更新のスコープ外）。\n- `expo install --fix` は最後に `expo-build-properties` を `app.config.ts` の\n  `plugins` へ自動追記できず非ゼロ終了する。`app.config.ts` が dynamic config かつ\n  元から当該 plugin を登録していない既存の状態に起因するため、この更新では対応していない。\n",
+    "metadata": {
+      "path": "docs/changelog.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "349901303234337b66f37b31a67b3e07220ebf68"
+    },
+    "ordinal": 13,
+    "updated_at": "2026-11-12T06:18:30.932Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/location-simulation.md:3",
+    "source_id": "TrainLCD/MobileApp:docs/location-simulation.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/location-simulation.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/location-simulation.md",
+    "text": "> **`--subway-lines` は GPX の書き出しを変えるだけで、アプリの地下鉄分岐には効かない。**\n> `setLocation` の `skipSmoothing` は `stationState.station?.line?.lineType` で判定する。\n> これは StationAPI が返す値なので、`--subway-lines` で地下へ寄せた路線 (みなとみらい線・\n> 西武有楽町線) の区間は、坑口帯 260〜620m の精度が付いていても実機では地上と同じ経路\n> (速度フィルタと低精度 α の EMA) を通る。**実機再生で地下鉄分岐に入るのは API 上\n> `Subway` の区間だけ** で、`FLinerSeibu.gpx` では副都心線の区間にあたる。\n> Jest 側 (`location.subwayGpx.test.ts`) は `lineType` を固定して流すため全区間で分岐を踏む。\n\n地下と地上の別は原則 StationAPI の `lineType` に従うが、これは路線単位の属性なので\n実態と食い違うことがある。全線地下でも `Normal` で登録されている路線があるため、\n`--subway-lines` に路線 ID を渡して地下側へ寄せる。\n\n| 路線 | ID | API の `lineType` | 実際 |\n| ---- | ---- | ---- | ---- |\n| みなとみらい線 | `99310` | `Normal` | 全線地下 |\n| 西武有楽町線 | `22003` | `Normal` | 小竹向原〜練馬が地下 |\n\n逆に**一部だけ地下化されている路線 (東急東横線の渋谷〜代官山) は路線単位では\n表せない**ので、駅数の多い側に倒して地上のまま扱う。`--subway-lines` に経路上に無い\n路線 ID を渡した場合はエラーにする (地下扱いにしたつもりの区間が黙って地上のまま\n出るのを防ぐため)。同じ理由で `--signal-profile subway` を伴わない `--subway-lines` も\nエラーにする。経路に地下の駅が 1 つも無いまま `--signal-profile subway` を指定した\n場合は、欠測が発生しないことを標準エラーで知らせる。\n\n生成時、どの路線を地下として扱ったかを標準エラーに出す。生成物からは読み取れない\n情報なので、意図どおりに分かれたかはここで確認する。\n\n```text\n区間の扱い: みなとみらい線(地下) / 東急東横線(地上) / 東京メトロ副都心線(地下) / 西武有楽町線(地下) / 西武池袋線(地上)\n```\n\n```bash\n\n\n# Fライナー相当 (元町・中華街→飯能)\nnpm run gpx:generate -- \\\n  --line-group 152 --signal-profile subway \\\n  --subway-lines 99310,22003 --out assets/gpx/FLinerSeibu.gpx\n```\n\n## 同梱している GPX\n\n| ファイル | 内容 |\n| ---- | ---- |\n| `assets/gpx/SampleJY.gpx` | 山手線。外部ツールで記録した実走行ログ |\n| `assets/gpx/SampleTohokuShinkansen.gpx` | 東北新幹線 盛岡→仙台。最高 320km/h、一ノ関に停車、通過駅 5 駅を経由 |\n| `assets/gpx/KeioSpecialExpress.gpx` | 京王線 特急 新宿→京王八王子。到着時間推定に合わせて走る |\n| `assets/gpx/HitachiShinagawaSendai.gpx` | 特急ひたち 品川→仙台。到着時間推定に合わせて走る |\n| `assets/gpx/KatamachiRapid.gpx` | 片町線 快速 京田辺→木津。駅間 2.3km 前後の全駅停車 |\n| `assets/gpx/SobuRapid.gpx` | 総武快速線 錦糸町→津田沼。駅間 3.6〜7.6km (線路の長さ) の全駅停車 |\n| `assets/gpx/FLinerSeibu.gpx` | Fライナー相当 元町・中華街→飯能。地下鉄の電波環境付き |\n\n`SampleTohokuShinkansen.gpx` は盛岡以南の 320km/h 区間を再現するためのもの。\n経路上の 8 駅すべてに `ARRIVED_MAX_THRESHOLD` (200m) 以内まで接近するので、\n各駅の到着判定・通過判定をそのまま観測できる。\n\n`KeioSpecialExpress.gpx` は在来線側のサンプルで、種別グループの停車パターン\n(経路 32 駅 / うち停車 12 駅) をそのまま走る。StationAPI のデータが変わらなければ、\n同じコマンドを再実行するとバイト単位で同じ内容が得られる。京王線の特急は到着時間\n推定の較正テーブルに無いので、所要時間は一般則による推定値になる。\n\n`HitachiShinagawaSendai.gpx` は、通過駅が長く続く在来線特急のサンプル。東海道線・上野東京ライン・\n常磐快速線・常磐線の 4 路線を直通し、経路 94 駅のうち 30 駅に停車する。`--line-group 116` で\n生成した。約 307 分・18394 点と同梱のサンプルで最も長い。巡航速度は到着時間推定に合わせて\n決まり、最高でも 82km/h にとどまる。",
+    "metadata": {
+      "path": "docs/location-simulation.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "c42ac010e78c00a935619f3de5d9a03e79aa1449"
+    },
+    "ordinal": 3,
+    "updated_at": "2026-11-12T06:18:31.681Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#764:0",
+    "source_id": "TrainLCD/MobileApp#764",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "title": "強制位置情報更新",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/764",
+    "text": "closes #761\n\n## Review: Sw-Saturn\nhttps://github.com/TrainLCD/MobileApp/pull/764#pullrequestreview-660414415\n\nAPPROVED\n\n\n\n\n## Changed files\nmodified: android/app/src/main/assets/translations/en.json\nmodified: android/app/src/main/assets/translations/ja.json\nmodified: ios/TrainLCD/translations/en.json\nmodified: ios/TrainLCD/translations/ja.json\nmodified: src/components/Layout/Permitted.tsx\nmodified: src/providers/SpeechProvider.tsx",
+    "metadata": {
+      "number": 764,
+      "state": "closed",
+      "state_reason": null,
+      "labels": [
+        "enhancement"
+      ],
+      "author": "TinyKitten",
+      "release_status": "included_in_github_release",
+      "merged_at": "2021-05-16T07:38:13Z",
+      "merge_commit_sha": "64168f5b26e7fae6b6ed043afe543bae875631a0",
+      "draft": false,
+      "base_branch": "dev",
+      "head_branch": "feature/force-refresh",
+      "github_release": {
+        "tag": "v10.19.2",
+        "url": "https://github.com/TrainLCD/MobileApp/releases/tag/v10.19.2",
+        "published_at": "2026-10-29T16:39:14Z"
+      }
+    },
+    "ordinal": 0,
+    "updated_at": "2021-05-16T07:38:14Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+    "source_id": "TrainLCD/MobileApp:docs/home-screen-widgets.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/home-screen-widgets.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/home-screen-widgets.md",
+    "text": "プリセット一覧は各行をその路線色で表示します。プリセット名は18pt/spの太字にします。\niOSの小・中サイズは先頭の1件を表示し、ウィジェット全体をその路線色にします。\niOSのプリセット中サイズは内容の上部、大サイズはカード一覧の上部に、\n乗車中の中サイズと同じ電車アイコンと「TrainLCD」を表示します。\n正方形では駅名の間に下向き矢印を置き、横長では駅名を横に並べます。\n乗車中にも同じ路線見出しと駅名のレイアウトを使います。\niOSの横並びの駅名は、乗車中とプリセットの中・大サイズで内容に合わせた幅にします。\n駅名と矢印の間隔は左右とも8ptとし、残りの余白は駅名の間に配分しません。\n乗車中は路線名の下に方面を表示します。iOSの乗車中・プリセットの小／中サイズと、\nAndroidの乗車中の正方形／横長は、見出しから駅名までの内容全体を上下中央に揃えます。\nAndroidでは表示内容を測定し、必要な高さを確保できるレイアウトを選びます。\nAndroid 12以降はランチャーから渡された各サイズで個別に判定します。\nサイズ一覧がない場合は、最小幅×最大高と最大幅×最小高を縦・横のサイズとして扱います。\n正方形が収まらなければ横長に、横長も収まらなければ路線名だけの1行表示に切り替えます。\n\n### 駅名の文字サイズ\n\n駅名はiOSの小サイズ・横長・プリセット一覧で24ptの太字にします。\n駅名の行は24ptの高さを確保し、縦方向の圧縮で文字を縮小しません。\n小サイズの項目間隔は2pt、横長は6ptにし、駅名の高さを確保します。\n乗車中の小サイズは駅情報がある場合だけ路線名を1行にし、駅情報がない場合は2行に戻します。\nAndroidの乗車中は24sp、プリセット一覧は20spを上限にします。\n長い駅名は従来どおり縮小し、駅番号は11pt/spのまま表示します。\n\n### 駅番号\n\n乗車中の現在駅・次駅と、プリセットの始発駅・終着駅には、駅名の下に駅番号を表示します。\n英字と数字の間はハイフンで区切り、11pt/spの太字で駅名に対して中央揃えにします。\n表示する駅の片方でも番号がある場合は、iOSは16pt、Androidは14spの番号欄を両駅に確保します。\niOSの番号自体の行高は14ptとし、駅名との間に2ptの余白を設けます。\n片方が欠番でも駅名・矢印の位置を揃えます。両駅とも番号がない場合は番号欄を確保しません。\n駅そのものがない終点では次駅の欄ごと隠し、非表示の次駅の番号は枠取りの判定に含めません。\n番号を持たない旧保存データは空欄として読み込みます。\n短い駅名でも番号が収まるよう、iOSは48pt、Androidの正方形は48spの最小幅を設けます。\n長い番号はその幅に合わせて縮小します。両駅とも番号がない場合は番号用の最小幅も設けません。\nAndroidの読み上げでは、駅名と番号を組にして説明します。番号がない場合は駅名のみです。\n\n乗車中は`stationNumber`・`nextStationNumber`、プリセットは`fromStationNumber`・\n`toStationNumber`を同期・保存します。番号の変更も表示内容の差分に含めます。\niOSの乗車中はライブアクティビティの番号を共有し、Androidの乗車中とプリセットは\n各駅の`line.lineSymbols`に対応する`stationNumbers`を優先します。\n対応する番号がなければ、既存の番号選択と同じく先頭を使います。\n\n表示確認では、両駅に番号がある場合、片方だけにある場合、両方にない場合を切り替え、\n小・中・大、長い駅名、終点、旧保存データで位置と見切れを確認します。\nAndroidではフォントサイズ変更とリサイズ後の表示も確認します。\n\n## データ経路\n\nアプリのプロセスが落ちていてもウィジェットは描画されるため、\n表示に必要な文字列はすべて解決済みの状態でネイティブへ渡し、端末ストレージへ永続化する。\n\n```text\nJS (解決済みの表示用文字列)\n  ├─ iOS     → PresetsWidgetModule → App Group の UserDefaults → WidgetCenter.reloadTimelines\n  └─ Android → WidgetModule        → SharedPreferences        → notifyAppWidgetViewDataChanged\n```\n\n- iOS の App Group ID は `Info.plist` の `APP_GROUP_ID`(既定値 `group.me.tinykitten.trainlcd`)。\n- Android の SharedPreferences 名は `me.tinykitten.trainlcd.widget`。\n- 表示内容に差分が無い更新は書き込まない。iOS は WidgetKit のリロードバジェット、\n  Android は再描画ブロードキャストを無駄に消費しないため。\n\n## 乗車中の駅情報\n\n現在駅はライブアクティビティと同じ停車駅基準です。走行中は最後の停車駅を表示します。\n次駅は表示用の次駅を使い、現在駅と同じ駅になった遷移では記録基準の次駅に戻します。\niOSでは既存のライブアクティビティの値をApp Groupへ保存します。\nAndroidでは`useUpdateWidget`で同じ選択規則を使います。",
+    "metadata": {
+      "path": "docs/home-screen-widgets.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "a2f3570afbf247b6555736af3c623600e761ff72"
+    },
+    "ordinal": 1,
+    "updated_at": "2026-11-12T06:18:27.590Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/home-screen-widgets.md:2",
+    "source_id": "TrainLCD/MobileApp:docs/home-screen-widgets.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/home-screen-widgets.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/home-screen-widgets.md",
+    "text": "`stationName`と`nextStationName`も差分比較に含めます。駅が変わった場合に更新し、\n駅名が変わらない更新ではネイティブ側の再描画を抑えます。\n終点などで次駅がない場合は矢印と次駅を表示しません。\n旧保存データなど両方の駅名がない場合は従来の方面を表示します。\n降車時は従来どおり未乗車表示へ戻します。\n\n### 横長の最終更新時刻\n\n乗車中の横長ウィジェットでは、駅名の下に「最終更新 14:32」を表示します。\niOSの中サイズとAndroidの横長レイアウトが対象です。時刻は端末の時刻表記に従います。\n表示情報を保存するときに、iOSはApp Groupの`widgetUpdatedAt`（Unix秒）、\nAndroidはSharedPreferencesの`updatedAt`（Unixミリ秒）へ記録します。\n同一内容の更新を抑制する既存処理は維持し、再描画やリサイズでは時刻を進めません。\niOSでは再起動後も保存済みの表示内容と乗車状態を比較し、同じ情報なら時刻を維持します。\n降車時には時刻を削除します。未乗車時と時刻を持たない旧データでは表示しません。\nAndroidでは時刻行も含めて必要な高さを測定します。\n\n変更時は次の手順で実機確認します。\n\n1. 乗車開始後に横長ウィジェットへ時刻が表示されることを確認します。\n2. 同じ表示内容を再送しても時刻が変わらず、駅名の変更後には進むことを確認します。\n3. アプリを終了して再起動し、同じ乗車情報を再送しても保存済みの時刻が維持されることを確認します。\n4. 降車後と時刻キーのない旧データで時刻が表示されないことを確認します。旧データに同じ情報を再送しても時刻を補わず、降車後の再乗車では新しい時刻になることも確認します。\n5. 日本語・英語、12時間・24時間表記、Androidのリサイズで見切れを確認します。\n\n## プリセットウィジェット\n\n横長（`systemMedium`）では、プリセット名を路線記号の右側にある路線名の下へ表示します。\n乗車中の方面表示と同じ`WidgetLineHeader`を使い、14ptの文字と2ptの行間に揃えます。\n見出しと駅名の間隔は6ptとし、内容全体を上下中央に配置します。\n駅名の下には「プリセット」のピルを表示し、乗車中と区別できるようにします。\n乗車中の最終更新時刻に相当する位置に、10ptの太字で表示します。\n背景には前景色を18%の不透明度で敷き、左右8pt・上下3ptの余白を設けます。\n英語表示では既存の翻訳「Presets」を使います。駅情報がない場合にもピルを表示します。\n小サイズでは、路線記号の右側に路線名と18pt太字のプリセット名をまとめます。\n路線名は1行にし、項目間隔を2ptにして24ptの駅名が収まる高さを確保します。\n\n表示確認では、横長のプリセットと乗車中を並べ、短い名前と長い名前で見出しの配置を確認します。\n駅情報がない場合、小サイズ、大サイズの一覧でも見切れがないことを確認します。\n\n### 同期\n\n`usePresetCarouselData` が取得済みのプリセット(駅情報込み)を `usePresetsWidgetSync` が\n表示用の文字列へ変換してネイティブへ渡す。始発駅・終着駅の解決はアプリ内のプリセットカードと\n共通の `getPresetRouteEndpoints` を使う。\n\n乗換経路のプリセットは、保存した区間(`SavedRoute.legs`)ごとに系統の駅を拾い、つないだ駅リストから\n始発駅・終着駅を求めます(`buildSavedRouteStations`)。ウィジェットに出る路線名・路線色は、\n始発駅の路線(1 区間目の路線)のものです。\n\n同期される項目は `PresetsWidgetItem`(`src/utils/native/presetsWidget.ts`)で、\n`lineColor` と `lineSymbol` は解決できない場合に空文字を渡し、\nネイティブ側でブランドカラー・路線名の先頭 1 文字へフォールバックさせる。\n\n### ディープリンク\n\n行をタップすると以下の URL でアプリが起動する。\n\n```text\ntrainlcd://?preset=<SavedRoute.id>          # 本番\ntrainlcd-canary://?preset=<SavedRoute.id>   # Canary\n```\n\n`useDeepLink` は `preset` を他の経路パラメータ(`id` / `sids` / `sgid`)より優先して処理し、\nクイックアクションと同じ `pendingQuickActionRouteId` を立てて路線選択画面へ戻す。\n`SelectLineScreen` がそれを検知して当該プリセットの行き先選択を開く。\n\n経路そのものは URL に含まれず端末内の DB から解決するため、\n`preset` の値は UUID 書式に一致するもののみ受け付ける。\n\n### サイズと表示件数\n\nサイズは乗車中ウィジェットと揃えている(iOS は `systemSmall`、Android は 2x2)。\n\nAndroid は `ListView` + `RemoteViewsService`(`PresetsWidgetService`)のコレクション\nウィジェットで、入るぶんだけ表示され残りは縦スクロールで辿れる。縦スクロールできる以上\nリサイズしても見られる情報は増えないため、`resizeMode` は `none` で 2x2 に固定している。",
+    "metadata": {
+      "path": "docs/home-screen-widgets.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "a2f3570afbf247b6555736af3c623600e761ff72"
+    },
+    "ordinal": 2,
+    "updated_at": "2026-11-12T06:18:27.590Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/home-screen-widgets.md:3",
+    "source_id": "TrainLCD/MobileApp:docs/home-screen-widgets.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/home-screen-widgets.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/home-screen-widgets.md",
+    "text": "行数をウィジェットの高さから dp で見積もる方式は採らない。端末・ランチャー・画面の向きで\n実寸が変わるため必ずずれる(`OPTION_APPWIDGET_MIN_HEIGHT` は横向き時＝取り得る最小の\n高さで、これを基準にすると縦向きで収まるはずの行まで落ちる)。アダプタに任せることで\n高さ計算自体を持たない。\n\niOS は WidgetKit にスクロールが無いため、表示できる件数はウィジェットの高さで決まる。\nファミリーごとに件数を決め打ちすると端末サイズ差で余白が出たり見切れたりするため、\n`GeometryReader` で実際の描画高を測り、`rowHeight` / `rowSpacing` から収まる行数を求める。\n\niOSの大サイズはヘッダーとその下の余白を除いた高さを測り、行高92pt・行間8ptから表示件数を求めます。\n駅名はFigmaの大サイズに合わせて24ptの太字で表示します。\n各カードには上下10ptの余白を設け、駅番号欄もカードの内側に確保します。\n駅情報がない行の路線名はDynamic Typeの上限をxxxLargeにし、固定行高に収めます。\n従来の72ptの行より表示件数が減る場合がありますが、行全体のタップと保存順は維持します。\nAndroidは従来どおりスクロールで全件に到達できます。\n\niOSの路線記号は、直径を固定した円に中央揃えで重ねます。\n文字を縮小する場合も中央揃えを指定し、乗車中とプリセットで同じ部品を使います。\n\nAndroid の行は `AbsListView.LayoutParams` がマージンを持たないため、行間は行レイアウト外側の\n`FrameLayout` のパディングで作り、カードの下敷き(`widget_preset_row_background`)は\nその内側に敷いて余白まで塗らないようにしている。\n\n| ファミリー | 表示 | タップ |\n| --- | --- | --- |\n| `systemSmall` | 1 件を縦に積んで表示 | `widgetURL` でウィジェット全体 |\n| `systemMedium` | 1 件を横並びで表示 | `widgetURL` でウィジェット全体 |\n| `systemLarge` | 収まるだけの行 | 行ごとの `Link` |\n\n`systemSmall` はウィジェット全体が単一のタップ領域で、行ごとの `Link` が個別のタップ先に\nならない。行を並べても 1 件しか開けず件数を増やす意味が無いため、1 件だけを出す\n(`PresetsWidgetFeatured`)。その 1 件は「始発駅 → 終着駅」を横一列に置くと正方形の\n横幅で先に頭打ちになり駅名がすぐ省略されるので、サークル → プリセット名 → 始発駅 →\n下向き矢印 → 終着駅 の順に縦へ積み、1 駅あたりの幅をフルに使う。\n\n## 変更時に揃えるべき箇所\n\n- ウィジェットの kind 文字列: iOS の `Widget.kind` と、リロードを呼ぶネイティブモジュール側の定数。\n- ストレージのキー名: iOS の `PresetsEntry.storageKey` と `PresetsWidgetModule.presetsStorageKey`、\n  Android の `PresetsWidgetStore` のフィールド名、JS の `PresetsWidgetItem`。\n- 同期する最大件数: JS の `MAX_PRESETS_WIDGET_ITEMS`(両 OS 共通)。\n  描画側は iOS が実測、Android が `ListView` に任せており、どちらも件数の決め打ちを持たない。\n- 未設定時のフォールバック表示: iOS / Android の双方で同じ文言・同じ色になるようにする\n  (色は iOS の `LockScreenEntry.fallbackLineColor` / Android の\n  `WidgetStateStore.PLACEHOLDER_LINE_COLOR` と `@color/widget_brand`)。\n- 前景色の判定式と閾値: iOS の `lineForegroundColor` と Android の `WidgetTheme.onLineColor`。\n\n## 走行中の経路切り替え確認\n\n走行画面を開いている間にプリセットウィジェットや共有リンクから経路を開くと、切り替え確認を表示します。プリセット名を取得できる場合は「プリセット名に切り替えますか？」と表示します。対象プリセットの路線に記号画像がある場合は、情報アイコンの代わりに表示します。設定画面を重ねている場合も確認します。ホーム画面のクイックアクションも同じ動作です。\n\n「切り替える」を選ぶまで経路の取得や画面遷移を開始しません。キャンセル、背景タップ、Androidの戻る操作では現在の経路と設定を維持します。確認中に届いた追加のリンクは適用しません。アプリの初回起動や路線選択画面では確認せずに開きます。\n",
+    "metadata": {
+      "path": "docs/home-screen-widgets.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "a2f3570afbf247b6555736af3c623600e761ff72"
+    },
+    "ordinal": 3,
+    "updated_at": "2026-11-12T06:18:27.590Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp:docs/square-running-screen.md:0",
+    "source_id": "TrainLCD/MobileApp:docs/square-running-screen.md",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "doc",
+    "title": "docs/square-running-screen.md",
+    "url": "https://github.com/TrainLCD/MobileApp/blob/c5aa7b2d929215d8a32846266304fc3494c4d13f/docs/square-running-screen.md",
+    "text": "# 正方形の走行画面\n\n画面の長辺が短辺の1.2倍以下の場合は、正方形用の走行画面を表示します。\n縦画面設定の有無にかかわらず適用します。PiP表示を優先します。\nそれ以外の画面では、従来の縦画面設定と横画面表示を使います。\n\n初期表示はC案の乗換案内です。ヘッダーや駅名をタップすると、B案の駅一覧に切り替わります。\nB案の駅一覧や下段をタップするとC案に戻ります。\nスクロール中は表示を切り替えません。駅一覧は現在駅より前も含む全駅を進行方向順に保持します。環状線も現在駅を基準に回転させません。\n設定ボタンは既存の設定メニューを開きます。C案の乗換路線は既存の路線選択処理を使います。\nタッチロック中はこれらの操作を無効にします。\n\nB案では駅名の右にAPI表記の駅番号、その右にポートレートと同じ残り分のETAを表示します。\n同名のバス停が連続する場合は、縦画面と同じ条件で停留所名にのりば番号を添えます。横画面の路線図とLED案内でも同じ条件で表示します。\nETAは現在駅より先の停車駅に表示し、丸めて0分なら「まもなく」、一部未取得なら「--」と表示します。現在駅より先にある表示対象の停車駅にETAが一つもない場合は、列を表示しません。通過駅や表示対象外の駅の推定値はこの判定に含めません。現在駅が前方補正された場合は、補正後の現在駅より先の停車駅だけを表示対象と列の有無の判定に使います。補正後の現在駅が表示順に見つからない場合は、記録上の現在駅を基準にします。\nB案では通過済みの駅にラベルを付けず、文字と記号の濃淡で区別します。\nB案の下段には「のりかえ」と乗換路線の記号を表示します。\nラベルはアプリが日本語環境なら「のりかえ」、それ以外なら「Transfers」に固定します。路線数と路線名は表示しません。\n路線の記号と駅番号は既存のAPIデータと描画コンポーネントを使います。\n乗換がない場合は、その旨を表示します。\n\n駅名と状態の文言は既存のヘッダー状態に従います。\nC案は日本語と英語を同時には表示せず、中国語・韓国語を含む既存の言語切替に従います。\n言語が切り替わっても、C案とB案の選択を維持します。\n背景はライト・ダーク設定に従い、路線色と種別色はデータを使います。\n\n## 確認\n\n- `runningLayout.test.ts`: 正方形の境界と既存の縦横画面判定を確認します。\n- `SquareMain.test.tsx`: 言語・駅順・環状線・ナンバリングと設定の接続を確認します。\n- `SquareMainView.test.tsx`: C案とB案の切替・乗換ラベルと記号の下段・タッチロックと操作の分離を確認します。\n\n## Galaxy Z Flipのカバー画面\n\nSamsungのFlex Window向けに「TrainLCD カバー画面」ウィジェットを追加しています。\nカバー画面のウィジェット一覧で有効にし、タップするとカバー画面を指定してアプリを開きます。\n既存のホーム画面ウィジェットの登録と起動先は変更しません。\n起動後は既存のナビゲーションを使います。乗車中であれば走行画面を表示します。\n\nウィジェットにはSamsung指定の`sub_screen`メタデータと`keyguard`カテゴリを設定しています。\n起動には`ActivityOptions.launchDisplayId = 1`を使います。\n端末のロックとOSの起動制限には従います。\nGood LockのMultiStarからアプリを起動する方法もSamsungが案内しています。\n\nAndroidでは画面サイズの変更イベントを購読し、ウィンドウの寸法が変わらない場合も表示を再判定します。\nAndroidではウィンドウだけでなく、装飾領域を含む画面の縦横比も正方形判定に使います。\n画面全体による補正は、ウィンドウの各辺が画面全体の70%以上100%以下の場合に限定します。\nこれは表示領域を確保するためのアプリ側の基準で、OSの分割画面状態を判別するものではありません。\n360×374の画面で360×280のウィンドウは補正し、360×180の半画面ではウィンドウ自体の縦横比で判定します。\n描画領域では既存のSafe Areaを使い、画面の上下左右のインセットを確保します。\nMainActivityには既にリサイズ許可と画面サイズ変更への追従設定があります。\n\n仕様の出典:\n\n- [Samsung Flex Window: ウィジェット登録と起動先の指定](https://developer.samsung.com/galaxy-z/flex_window.html)\n- [Samsung: Good Lockからの起動と画面サイズへの対応](https://developer.samsung.com/sdp/blog/en/2024/01/09/best-practices-of-app-development-for-various-screen-sizespowered-by-good-lock)\n\n実機確認の項目:\n\n- カバー画面の一覧にウィジェットが現れ、タップでカバー画面にアプリが開くこと。\n- 本体画面で乗車を開始してから、カバー画面でも同じ乗車状態を表示すること。\n- C案とB案の切替、日英切替、設定画面が使えること。\n- カメラ部分とシステムバーに文字や操作部分が隠れないこと。\n- 開閉後に画面サイズと操作領域が更新されること。",
+    "metadata": {
+      "path": "docs/square-running-screen.md",
+      "branch": "dev",
+      "commit": "c5aa7b2d929215d8a32846266304fc3494c4d13f",
+      "blob_sha": "e8527f40b82a11520caa8fcadb8b16e1b9f527c1"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T06:18:29.968Z"
+  },
+  {
+    "id": "TrainLCD/MobileApp#7403:0",
+    "source_id": "TrainLCD/MobileApp#7403",
+    "repo": "TrainLCD/MobileApp",
+    "kind": "pr",
+    "title": "バス走行中のApple Watchの乗換案内からバス系統を除外する",
+    "url": "https://github.com/TrainLCD/MobileApp/pull/7403",
+    "text": "## 概要\n\nバス走行中、Apple Watchの乗換欄には鉄道路線だけを表示します。\n\n## 変更の種類\n\n- [x] バグ修正\n- [ ] 新機能\n- [ ] リファクタリング\n- [ ] ドキュメント\n- [ ] CI/CD\n- [ ] その他\n\n## 変更内容\n\n- iPhoneからApple Watchへ乗換候補を送る際、バス乗車中はバス系統を除きます。\n- 鉄道の候補は従来どおり路線名で表示します。\n- バス系統と鉄道路線が混在する停留所で、到着時と次の停留所の案内時に鉄道路線名だけが送られることをテストします。\n\n## テスト\n\n- [x] `npm run lint` が通ること\n- [x] `npm test` が通ること（関連4スイート、23件）\n- [x] `npm run typecheck` が通ること\n\n`npm test -- --runInBand useAppleWatch useTransferLinesFromStation useTransferLines useTransferTargetStation`\n\n## 関連Issue\n\n- iPhoneの走行画面で同じ絞り込みを行った #7399\n\n## スクリーンショット（任意）\n\n<!-- create-pr:screenshots:start -->\n乗換候補の抽出結果をテストで確認しました。画面の撮影は省略しています。\n<!-- create-pr:screenshots:end -->\n\n\n",
+    "metadata": {
+      "merged_at": "2026-11-08T13:18:03Z",
+      "base_branch": "dev"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-08T13:18:06Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0",
+    "source_id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/gtfs-bus-integration-research.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/gtfs-bus-integration-research.md",
+    "text": "# GTFS都営バスデータ導入に関する調査報告書\n\n> **追記 (2026-05、2026-09 更新)**: 本書は実装に着手する前にまとめた調査・設計検討の資料である。実際の統合方針は実装の段階で確定しており、本書の案とは異なる部分が多い。主な違いは次のとおり。\n>\n> - GTFS 用のテーブル群は設けず、バスのデータを既存の `lines` / `stations` / `types` / `station_station_types` に投影した。`stations` と `lines` には `transport_type` 列 (0: 鉄道、1: バス) を加えた。\n> - バス用のコードは FNV-1a ハッシュで決定的に割り当てる。値域は `line_cd` / `type_cd` / `line_group_cd` が 100,000,000 以上、`station_cd` / `station_g_cd` が 200,000,000 以上で、鉄道のコードとは重ならない。\n> - `(route_id, shape_id)` ごとの運行パターンを、`TrainTypeKind::BusRoute` (= 7) の列車種別として登録した。\n> - GTFS から読むのは routes・stops・trips・stop_times・translations だけで、calendar による運行日の管理は取り込んでいない。\n> - 取り込み対象は都営バスだけでなく、GTFS フィード 6 本 (都営バス・西武バス・京王バスと、東急バスが運行する大田区・品川区・目黒区のコミュニティバス) と、東急バスの一般路線の ODPT JSON に広がった。\n>\n> 最新の実装は [`architecture.md` のデータパイプライン節](./architecture.md#データパイプライン) (特に[バスのコード生成](./architecture.md#バスのコード生成)) と `preprocessor/src/gtfs/` を参照のこと。\n> また、本書が前提としている gRPC + PostgreSQL の構成は、その後 Cloudflare Workers 上の GraphQL に置き換えられた。\n\n## 概要\n\n本書は、日本の鉄道駅データを提供する gRPC API である StationAPI に、GTFS 形式の都営バスデータを導入する際の懸念点をまとめたものである。\n\n---\n\n## 1. 調査当時のStationAPIの構造\n\n以下は調査を行った時点の構成であり、現在は Cloudflare Workers 上の GraphQL API に置き換わっている。\n\n### 1.1 技術スタック\n\n| 項目 | 技術 |\n|------|------|\n| 言語 | Rust (edition 2021) |\n| 非同期ランタイム | Tokio |\n| API | gRPC (Tonic) + gRPC-Web |\n| データベース | PostgreSQL 18 |\n| ORM | SQLx |\n\n### 1.2 データモデル\n\n```text\ncompanies (鉄道会社)\n    ↓\nlines (路線)\n    ↓\nstations (駅)\n    ↓\nstation_station_types (駅と列車種別の関連)\n    ↓\ntypes (列車種別)\n```\n\n### 1.3 主要テーブル\n\n| テーブル | レコード数 | 説明 |\n|----------|-----------|------|\n| companies | 173 | 鉄道会社 |\n| lines | 623 | 路線 |\n| stations | 11,141 | 駅 |\n| types | 317 | 列車種別 |\n| station_station_types | 41,005 | 駅と列車種別の関連 |\n| connections | 17,664 | 駅と駅の接続 |\n\n### 1.4 主要なAPIエンドポイント\n\n- `get_station_by_id` - ID を指定して駅を取得する\n- `get_stations_by_coordinates` - 座標から周辺の駅を取得する\n- `get_stations_by_line_id` - 路線に属する駅を取得する\n- `get_stations_by_name` - 駅名で検索する (複数言語に対応)\n- `get_train_types_by_station_id` - 駅に停車する列車種別を取得する\n- `get_routes` - 経路を検索する\n\n---\n\n## 2. GTFSフォーマットの構造\n\n### 2.1 標準ファイル構成\n\n#### 必須ファイル\n\n| ファイル | 説明 |\n|----------|------|\n| agency.txt | 交通事業者 |\n| stops.txt | 停留所・駅 |\n| routes.txt | 路線 |\n| trips.txt | 便 (トリップ) |\n| stop_times.txt | 各便の停留所ごとの到着・出発時刻 |\n\n#### 条件付き必須ファイル",
+    "metadata": {
+      "blob_sha": "c01f19af15d9677821d94736654b87b2d302703c",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/gtfs-bus-integration-research.md"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T12:18:15.687Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:3",
+    "source_id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/gtfs-bus-integration-research.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/gtfs-bus-integration-research.md",
+    "text": "CREATE TABLE gtfs_trips (\n    trip_id VARCHAR PRIMARY KEY,\n    route_id VARCHAR REFERENCES gtfs_routes,\n    service_id VARCHAR,\n    trip_headsign VARCHAR,\n    direction_id INT\n);\n\nCREATE TABLE gtfs_stop_times (\n    trip_id VARCHAR REFERENCES gtfs_trips,\n    stop_id VARCHAR REFERENCES gtfs_stops,\n    arrival_time TIME,\n    departure_time TIME,\n    stop_sequence INT,\n    PRIMARY KEY (trip_id, stop_sequence)\n);\n\nCREATE TABLE gtfs_calendar (\n    service_id VARCHAR PRIMARY KEY,\n    monday BOOLEAN,\n    tuesday BOOLEAN,\n    wednesday BOOLEAN,\n    thursday BOOLEAN,\n    friday BOOLEAN,\n    saturday BOOLEAN,\n    sunday BOOLEAN,\n    start_date DATE,\n    end_date DATE\n);\n```\n\n```sql\n-- 案2: 既存テーブルの拡張\nALTER TABLE stations ADD COLUMN transport_type INT DEFAULT 0;  -- 0:鉄道, 1:バス\nALTER TABLE stations ADD COLUMN gtfs_stop_id VARCHAR;\nALTER TABLE lines ADD COLUMN is_bus BOOLEAN DEFAULT FALSE;\nALTER TABLE lines ADD COLUMN gtfs_route_id VARCHAR;\n```\n\n#### パフォーマンス懸念\n\n| 項目 | 現在 | バス追加後（推定） |\n|------|------|-------------------|\n| stations レコード数 | 11,141 | 15,000〜20,000 |\n| インデックスサイズ | - | 1.5〜2倍 |\n| stop_times レコード数 | 0 | 数百万〜数千万 |\n\n---\n\n### 3.8 座標検索のパフォーマンス\n\n#### 現在の実装\n\n```sql\n-- idx_performance_stations_point インデックス使用\nSELECT * FROM stations\nORDER BY point(lat, lon) <-> point($1, $2)\nLIMIT $3;\n```\n\n#### 懸念点\n\n- バス停を加えると、検索対象が 1.5〜2 倍に増える。\n- 都心部ではバス停が密集している (半径 500 m 以内に数十か所)。\n- 駅とバス停を混ぜて表示してよいかを判断する必要がある。\n\n#### 対応案\n\n```sql\n-- transport_type でフィルタリング\nSELECT * FROM stations\nWHERE transport_type = $4  -- または transport_type IN (...)\nORDER BY point(lat, lon) <-> point($1, $2)\nLIMIT $3;\n\n-- パーティショニングの検討\nCREATE TABLE stations_rail PARTITION OF stations FOR VALUES IN (0);\nCREATE TABLE stations_bus PARTITION OF stations FOR VALUES IN (1);\n```\n\n---\n\n### 3.9 データ更新・同期の問題\n\n| 項目 | 鉄道データ | GTFSバスデータ |\n|------|-----------|---------------|\n| 更新頻度 | 年に数回 (ダイヤ改正時) | 週次〜月次 |\n| データソース | 独自に収集し、手動で更新 | ODPT API |\n| フォーマット | 独自 CSV | GTFS 標準 (ZIP) |\n| 認証 | 不要 | ODPT API キーが必要 (注) |\n\n注 (2026-09 追記): 都営バスの GTFS は ODPT の公開用エンドポイント (`api-public.odpt.org`) から認証なしで取得できる。API キー (`ODPT_ACCESS_TOKEN`) が必要なのは、後から加えた西武バス・京王バス・東急バスのデータである。\n\n#### 必要な追加実装\n\n1. **GTFSフィードのダウンロード処理**\n   - ODPT API からデータを取得する\n   - ZIP を展開してパースする\n\n2. **差分更新ロジック**\n   - 既存のデータと比較する\n   - 追加・更新・削除を判定する\n\n3. **バージョン管理**\n   - フィードのバージョンを追跡する\n   - ロールバックできるようにする\n\n4. **定期実行基盤**\n   - cron ジョブまたはスケジューラで定期的に実行する\n   - 更新の通知とログを残す\n\n---",
+    "metadata": {
+      "blob_sha": "c01f19af15d9677821d94736654b87b2d302703c",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/gtfs-bus-integration-research.md"
+    },
+    "ordinal": 3,
+    "updated_at": "2026-11-12T12:18:15.687Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:0",
+    "source_id": "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/cloudflare-workers-migration.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/cloudflare-workers-migration.md",
+    "text": "# Cloudflare Workers 移行\n\n> 最終更新: 2026年9月24日\n>\n> **移行は完了しています。** gRPC サーバーと PostgreSQL は削除し、BFF も\n> 廃止しました。このリポジトリは、Cloudflare Workers 上で動く GraphQL API\n> そのものになっています。現在の構成は [architecture.md](./architecture.md)\n> を参照してください。\n>\n> 以下は移行時の検証記録です。数値や挙動は、特に断りがなければ当時のものです。\n\n## 目次\n\n- [背景と目的](#背景と目的)\n- [結論](#結論)\n- [アーキテクチャ](#アーキテクチャ)\n- [実装の要点](#実装の要点)\n- [データの用意](#データの用意)\n- [検証方法](#検証方法)\n- [実測値](#実測値)\n- [作業中に見つかった問題](#作業中に見つかった問題)\n- [運用上の注意](#運用上の注意)\n- [残作業](#残作業)\n- [追記: データパイプラインの純 Rust 化](#追記-データパイプラインの純-rust-化)\n- [追記: 本番 (BFF 経由の gRPC) との応答突き合わせ](#追記-本番-bff-経由の-grpc-との応答突き合わせ)\n- [関連](#関連)\n\n---\n\n## 背景と目的\n\nオンプレミスで動かしていた gRPC-Web の API を Cloudflare Workers へ移せるかを\n検証し、そのまま実装まで進めました。\n\n当時、クライアントは gRPC-Web を直接使わず、BFF (TrainLCD/BFF) が GraphQL に\n変換したものを使っていました。gRPC-Web を使い続ける理由がなかったため、\nWorker 版は GraphQL を直接返すようにし、BFF を経由しない構成にしました\n(BFF はその後廃止しています)。\n\n検証中はオンプレミス版 (gRPC) も残していました。検証を終えた後に、次のものを\n削除して Worker 版を本体にしています。\n\n- gRPC サーバー\n- sqlx を使った repository 層\n- PostgreSQL\n- proto\n\n---\n\n## 結論\n\n移行は可能と判断しました。BFF が公開していた 18 クエリをすべて Workers 上で\n動かし、当時は staging で稼働させていました。\n\ngRPC の rpc は 19 本ありましたが、`GetRoutesMinimal` はどこからも呼ばれて\nいなかったため削除しました。\n\n| 項目 | 結果 |\n|---|---|\n| domain / use_case 層 (約17,000行) | **既存のロジックは変更していない** (未使用の `GetRoutesMinimal` を削除しただけ) |\n| PostgreSQL | 不要 |\n| `pg_trgm` / `point() <-> point()` | 不要 |\n| GraphQL スキーマ | 当時の公開スキーマと完全に一致 (18クエリ / 28型) |\n| バス (GTFS) | 対応済み (都営・西武・京王・東急) |\n\n`sqlx` と `tonic` は wasm32 では動きません。`sqlx` は埋め込みデータの\nインメモリ索引に置き換え、`tonic` は GraphQL 化によって不要になりました。\nrepository トレイトの実装を差し替えるだけで、経路探索を含む既存の\nビジネスロジックはそのまま動きます。\n\n---\n\n## アーキテクチャ\n\n### 移行前\n\n```text\nTrainLCD -> BFF (GraphQL -> gRPC-Web 変換) -> StationAPI (gRPC) -> PostgreSQL\n```\n\n### 移行後\n\n```text\nTrainLCD -> stationapi (GraphQL を直接返す) -> WASM に埋め込んだデータ\n```\n\n### レイヤーの対応\n\n| 層 | 旧 (gRPC) | 現在 |\n|---|---|---|\n| Presentation | `presentation/controller/grpc.rs` (tonic) | `src/graphql/` (async-graphql) |\n| UseCase | `use_case/` | **同じものを使用** |\n| Domain | `domain/` | **同じものを使用** |\n| Infrastructure | `infrastructure/*_repository.rs` (sqlx) | `src/repository.rs` (インメモリ) |\n| データ生成 | `import.rs` (PostgreSQL への取り込み) | `preprocessor/` (Rust のみで実装) |\n\n### crate 構成\n\n移行の検証中は、`stationapi` crate を `server` feature で分割し、Worker を\nworkspace から除外していました。gRPC を削除した後は Worker がルートの crate に\nなり、共有部分だけが `stationapi` crate として残っています。",
+    "metadata": {
+      "blob_sha": "2a4c9b6423f06dc0df1e9ea0895acbf81b681205",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/cloudflare-workers-migration.md"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T12:18:24.657Z"
+  },
+  {
+    "id": "TrainLCD/Website#186:0",
+    "source_id": "TrainLCD/Website#186",
+    "repo": "TrainLCD/Website",
+    "kind": "pr",
+    "title": "fix(lp): バス対応の文言を「都営バスのみ対応」に変更",
+    "url": "https://github.com/TrainLCD/Website/pull/186",
+    "text": "## 概要\n「バス等の移動手段には対応しておりません」という文言を、都営バスには対応している旨が伝わる表現に変更しました。\n\n## 変更箇所\n- `apps/lp/src/components/pages/FAQPage.tsx` — FAQ「どの路線に対応していますか？」の回答\n- `apps/lp/src/components/sections/ServiceArea.astro` — LPのサービス対象セクションの注釈(*1)\n\nいずれも「またバスについては都営バスのみ対応しており、その他のバス路線には対応しておりません。」という文言に変更しています。\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n## リリースノート\n\n* **Documentation**\n  * FAQ及びサービスエリア情報のバス対応状況を更新。都営バスのみ対応、その他のバス路線は未対応であることをより明確に記載しました。\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->\n\n## Comment: vercel[bot]\nhttps://github.com/TrainLCD/Website/pull/186#issuecomment-4666216202\n\n\n[vc]: #ZnXswcDAnPJB/wLw3UB7bgdeYwdAR/PUXu8KVnQWXew=:eyJpc01vbm9yZXBvIjp0cnVlLCJ0eXBlIjoiZ2l0aHViIiwicHJvamVjdHMiOlt7Im5hbWUiOiJ0cmFpbmxjZC1scC1zdGciLCJwcm9qZWN0SWQiOiJwcmpfNlVhVk1ITXMzaFhQYjNMTk5KU1NsdUpGZ2lGZiIsInJvb3REaXJlY3RvcnkiOiJhcHBzL2xwIiwiaW5zcGVjdG9yVXJsIjoiaHR0cHM6Ly92ZXJjZWwuY29tL3RpbnlraXR0ZW4vdHJhaW5sY2QtbHAtc3RnLzlvZmtjV21KQlM0NTR4b0JUdFd4SldrREVhWTEiLCJwcmV2aWV3VXJsIjoidHJhaW5sY2QtbHAtc3RnLWdpdC1maXgtbHAtYnVzLXN1cHBvcnQtd29yZGluZy10aW55a2l0dGVuLnZlcmNlbC5hcHAiLCJuZXh0Q29tbWl0U3RhdHVzIjoiREVQTE9ZRUQiLCJsaXZlRmVlZGJhY2siOnsicmVzb2x2ZWQiOjAsInVucmVzb2x2ZWQiOjAsInRvdGFsIjowLCJsaW5rIjoidHJhaW5sY2QtbHAtc3RnLWdpdC1maXgtbHAtYnVzLXN1cHBvcnQtd29yZGluZy10aW55a2l0dGVuLnZlcmNlbC5hcHAifX0seyJuYW1lIjoidHJhaW5sY2Qtc3RhdHVzLXN0ZyIsInByb2plY3RJZCI6InByal9FRmtjSU01VXBjZFBEYURaVFVsNnNhTFcwZXpUIiwicm9vdERpcmVjdG9yeSI6ImFwcHMvc3RhdHVzIiwiaW5zcGVjdG9yVXJsIjoiaHR0cHM6Ly92ZXJjZWwuY29tL3RpbnlraXR0ZW4vdHJhaW5sY2Qtc3RhdHVzLXN0Zy9LUlhtQW1uVzYyTFRjWWlRZnh5ZkNZSlFnNUxCIiwicHJldmlld1VybCI6InRyYWlubGNkLXN0YXR1cy1zdGctZ2l0LWZpeC1scC1idXMtc3VwcG9ydC13b3JkaW5nLXRpbnlraXR0ZW4udmVyY2VsLmFwcCIsIm5leHRDb21taXRTdGF0dXMiOiJERVBMT1lFRCIsImxpdmVGZWVkYmFjayI6eyJyZXNvbHZlZCI6MCwidW5yZXNvbHZlZCI6MCwidG90YWwiOjAsImxpbmsiOiJ0cmFpbmxjZC1zdGF0dXMtc3RnLWdpdC1maXgtbHAtYnVzLXN1cHBvcnQtd29yZGluZy10aW55a2l0dGVuLnZlcmNlbC5hcHAifX1dLCJyZXF1ZXN0UmV2aWV3VXJsIjoiaHR0cHM6Ly92ZXJjZWwuY29tL3ZlcmNlbC1hZ2VudC9yZXF1ZXN0LXJldmlldz9vd25lcj1UcmFpbkxDRCZyZXBvPVdlYnNpdGUmcHI9MTg2In0=\nThe latest updates on your projects. Learn more about [Vercel for GitHub](https://vercel.link/github-learn-more).",
+    "metadata": {
+      "author": "TinyKitten",
+      "base_branch": "dev",
+      "draft": false,
+      "head_branch": "fix/lp-bus-support-wording",
+      "labels": [],
+      "merge_commit_sha": "348ad4fa28c6c5f9913a708a15c249f2013fe166",
+      "merged_at": "2026-06-10T03:44:38Z",
+      "number": 186,
+      "release_status": "unknown",
+      "state": "closed",
+      "state_reason": null
+    },
+    "ordinal": 0,
+    "updated_at": "2026-06-10T03:44:40Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:2",
+    "source_id": "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/cloudflare-workers-migration.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/cloudflare-workers-migration.md",
+    "text": "**`data/*.csv` をそのまま読むと、本番とは挙動が変わります。** 列車種別を\n持たない路線には、各駅停車の系統を補う必要があるためです。当時の実測では\n2,427 行が生成され、2,268 駅 (有効な駅の約 21%) が影響を受けていました。\n\n移行の検証中は、この変換を PostgreSQL への取り込み時に行い、取り込み後の DB を\n`stationapi --export-worker-data` で書き出していました。gRPC の削除にあわせて\n同じ変換を `preprocessor` crate (Rust のみで実装) へ移したため、PostgreSQL は\n不要になりました。\n\n```text\nmake data     # cargo run --profile tool -p stationapi-preprocessor\n```\n\n出力するのは次の 7 テーブルです。\n\n- companies\n- lines\n- stations\n- types\n- station_station_types\n- aliases\n- line_aliases\n\n`build.rs` は、`generated/*.csv` があればそれを OUT_DIR に配置します。なければ\n`data/*.csv` にフォールバックし、警告を出します。一部のテーブルだけが\n`generated/` にある状態は、データが食い違うためビルドを失敗させます。\nあわせて、`station_station_types` を固定長のバイナリ (`sst.bin`) に変換します。\n\nCI では、この流れを composite action (`.github/actions/build-worker`) が実行\nします。検証用の `build_worker.yml` と、デプロイ用の `deploy_staging.yml` /\n`deploy_production.yml` がこれを共有しています。移行時点では\n`build_worker.yml` が単独で実行していました。\n\n### バス (GTFS)\n\n`DISABLE_BUS_FEATURE` を指定しなければ、GTFS の取得と統合も実行します。\nフィードによっては `ODPT_ACCESS_TOKEN` が必要です。\n\n| フィード | トークン |\n|---|---|\n| 都営バス | 不要 |\n| 西武バス / 京王バス / 東急バス (3区のコミュニティバス) / 東急バス ODPT JSON | 必要 |\n\n全フィードを取り込んだ後のデータ量 (当時) は次のとおりです。\n\n| テーブル | 鉄道のみ | 全フィード |\n|---|---|---|\n| lines | 624 | 1,601 (+977 バス路線) |\n| stations | 11,148 | 39,204 (+28,063 バス停) |\n| types | 325 | 1,585 (+1,260 バス系統) |\n| station_station_types | 43,677 | 65,281 |\n\n---\n\n## 検証方法\n\n`postgres:18` に実データを投入し、**既存の SQL の結果と直接比較しました。**\n実装を読んで「同じになるはず」と判断するのではなく、実際のクエリ結果を\n比べています。\n\n| 対象 | 内容 |\n|---|---|\n| 名前検索 | ランダムな 30 クエリで `station_cd` の集合が一致 |\n| `lineGroupStations` | 10 グループで順序も含めて一致 (最大 250 件) |\n| `lineStations` | 5 路線で順序も含めて一致 (種別あり・フォールバックの両方) |\n| `stationTrainTypes` | 6 駅で `sst.id` と種別名が順序も含めて一致 |\n| `linesByName` | 6 クエリで順序も含めて一致 |\n| `lines[]` の line_cd の集合 | 9 駅グループで一致 |\n| `hasTrainTypes` | `lines[]`・駅本体ともに不一致 0 件 |\n\n`station_station_types.id` は `ORDER BY sst.id` として停車順そのものに使われます。\nそのため、SERIAL で採番したときの順序が保たれていることを `build.rs` で検証して\nいます。\n\n### 検証手法の落とし穴\n\n作業中に何度か、**検証スクリプト側の不備で誤った結論を出しかけました。**\n\n- gRPC-Web 用の比較スクリプトを GraphQL 化の後もそのまま使っていたため、404 を\n  「1 件」と数えてしまい、差分があるように見えた。さらにそれ以前は、「0 件中\n  0 件が不一致」を一致と表示していた\n- Node が TTY かどうかを判定して数値に ANSI エスケープを付けたため、順序の\n  不一致と誤判定した\n- 比較用の SQL に `transport_type` の条件がなく、Worker 側の既定のフィルタとの\n  違いが差分に見えた\n\nいずれも実装は正しく、スクリプトを直すと結果は一致しました。\n\n---\n\n## 実測値\n\nstaging (`gql-stg.trainlcd.app`) で測定しました。日本から東京のエッジに接続して\nいます (`cf-ray` は NRT)。",
+    "metadata": {
+      "blob_sha": "2a4c9b6423f06dc0df1e9ea0895acbf81b681205",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/cloudflare-workers-migration.md"
+    },
+    "ordinal": 2,
+    "updated_at": "2026-11-12T12:18:24.657Z"
+  },
+  {
+    "id": "TrainLCD/Website#186:2",
+    "source_id": "TrainLCD/Website#186",
+    "repo": "TrainLCD/Website",
+    "kind": "pr",
+    "title": "fix(lp): バス対応の文言を「都営バスのみ対応」に変更",
+    "url": "https://github.com/TrainLCD/Website/pull/186",
+    "text": "Reviewing files that changed from the base of the PR and between ed2299ae535b873489632996822c3f7ad2c65541 and 91b3134942548d8ea75348325f03a867b6a6ac04.\n\n</details>\n\n<details>\n<summary>📒 Files selected for processing (2)</summary>\n\n* `apps/lp/src/components/pages/FAQPage.tsx`\n* `apps/lp/src/components/sections/ServiceArea.astro`\n\n</details>\n\n</details>\n\n---\n<!-- walkthrough_start -->\n\n<details>\n<summary>📝 Walkthrough</summary>\n\n## Walkthrough\n\nランディングページのFAQおよびサービスエリアセクションにおいて、バスサービス対応についての案内文言を更新しました。従来の「バス等の移動手段には対応していない」という記述を、「都営バスのみ対応」かつ「その他のバス路線は未対応」と具体化し、ユーザーへのメッセージを統一しています。\n\n## Changes\n\n**バスサービス対応範囲の明示化**\n\n|Layer / File(s)|Summary|\n|---|---|\n|**バス対応範囲の明示化** <br> `apps/lp/src/components/pages/FAQPage.tsx`, `apps/lp/src/components/sections/ServiceArea.astro`|FAQ内「どの路線に対応していますか？」の回答とサービスエリア注記で、バス対応を「都営バスのみ対応」「その他のバス路線は未対応」と明記するよう文言統一。|\n\n## Estimated code review effort\n\n🎯 1 (Trivial) | ⏱️ ~3 minutes\n\n## Poem\n\n> 都営バスのみ、明き目に書きて\n> ユーザーの問いに答えん\n> 混乱なき道へ、\n> 小さな変更、大きな明確さ🚌✨\n\n</details>\n\n<!-- walkthrough_end -->\n<!-- pre_merge_checks_walkthrough_start -->\n\n<details>\n<summary>🚥 Pre-merge checks | ✅ 5</summary>\n\n<details>\n<summary>✅ Passed checks (5 passed)</summary>\n\n|         Check name         | Status   | Explanation                                                                                                |\n| :------------------------: | :------- | :--------------------------------------------------------------------------------------------------------- |\n|      Description Check     | ✅ Passed | Check skipped - CodeRabbit’s high-level summary is enabled.                                                |\n|         Title check        | ✅ Passed | PRのタイトルは「バス対応の文言を『都営バスのみ対応』に変更」で、変更内容の主要な目的を正確に反映しており、FAQページとServiceAreaコンポーネントの両方で適用される変更の核心を明確に伝えています。   |\n|     Docstring Coverage     | ✅ Passed | No functions found in the changed files to evaluate docstring coverage. Skipping docstring coverage check. |\n|     Linked Issues check    | ✅ Passed | Check skipped because no linked issues were found for this pull request.                                   |\n| Out of Scope Changes check | ✅ Passed | Check skipped because no linked issues were found for this pull request.                                   |\n\n</details>\n\n<sub>✏️ Tip: You can configure your own custom pre-merge checks in the settings.</sub>\n\n</details>",
+    "metadata": {
+      "author": "TinyKitten",
+      "base_branch": "dev",
+      "draft": false,
+      "head_branch": "fix/lp-bus-support-wording",
+      "labels": [],
+      "merge_commit_sha": "348ad4fa28c6c5f9913a708a15c249f2013fe166",
+      "merged_at": "2026-06-10T03:44:38Z",
+      "number": 186,
+      "release_status": "unknown",
+      "state": "closed",
+      "state_reason": null
+    },
+    "ordinal": 2,
+    "updated_at": "2026-06-10T03:44:40Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/architecture.md:3",
+    "source_id": "TrainLCD/StationAPI:docs/architecture.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/architecture.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/architecture.md",
+    "text": "2026 年 9 月時点のデータでは、約 11,000 組のうち約 10,400 組を計算でき、\n測れなかった約 290 組のほとんどは N02 に線路が残っていない廃線の駅でした\n(営業中の駅どうしは 2 組)。実キロと比べると、東海道・山陽新幹線の東京〜博多が\n1,066km (実キロ 1,069km)、石勝線のトマム〜新得が 33.8km (営業キロ 33.8km) です。\npreprocessor の実行は 1 秒ほどです。\n\n`data/8!connections.csv` に書いた行は計算結果より優先します。N02 の線形や駅の\n座標のずれで値が実際と合わない区間は、ここで直します。\n\nWorker では `build.rs` が 1 行 = `i32` 3 つの固定長バイナリ (`connections.bin`、\n約 130KB) に変換し、組の昇順に並べます。ランタイムは索引を作らずに二分探索で\n引くので、コールドスタートの費用は増えません。値を埋めるのは、並びを返す\n`lineStations`・`lineGroupStations`・`trainRoute`・`stations(ids)` だけです\n(他の問い合わせでは直前の駅が無いので `null`)。`stations(ids)` は駅を指定した\nID の順に返すので、経路の駅を順に渡すクライアント (MobileApp の `sids` 形式の\nディープリンク) は、その順で隣り合う組の長さを受け取れます。途中の駅を省いた\n並びなど、線路のデータ上で隣り合わない組は `null` です。`trainRoute` を `legs` で呼んだ場合は、各区間の\n先頭の駅も `null` になります。\n\nN02 は `data/N02-25/` にキャッシュします (git 管理外。CI では `actions/cache` で\n保存します)。取得できなかった場合、preprocessor は失敗します。版を上げるときは\n`preprocessor/src/track/mod.rs` の URL とキャッシュ先、`.github/actions/build-worker/action.yml`\nのキャッシュを揃えて変え、測れなかった組の件数を確かめてください。\n\n### バスのコード生成\n\nバス由来のレコードには、FNV-1a ハッシュを使って、鉄道と重ならない値域の\nコードを決定的に割り当てます。実行するたびに同じ値にならなければならない\nので、`DefaultHasher` は使いません。\n\n| 対象 | 値域 | ハッシュの入力 |\n|---|---|---|\n| `line_cd` | 100,000,000〜 (1,000 万件分) | `route_id` |\n| `station_cd` | 200,000,000〜 (1 億件分) | `(stop_id, route_id)` |\n| `station_g_cd` | 200,000,000〜 (1 億件分) | `stop_id` (上下線などのポールをまとめた代表の停留所) |\n| `type_cd` | 100,000,000〜 (1 億件分) | `(route_id, shape_id)` |\n| `line_group_cd` | 100,000,000〜 (1 億件分) | `(route_id, shape_id)` |\n\nハッシュなので、別々の入力が同じ値になることがあります (実データでも、都営\nバスと西武バスの停留所で `station_cd` が 1 件衝突していました)。`station_g_cd`\n以外は、衝突したら次の空き値にずらして必ず一意にします。`station_g_cd` は\n停留所をまとめるためのキーで一意である必要がないため、ずらしません。\n\n### 環境変数\n\n| 変数 | 効果 |\n|---|---|\n| `ODPT_ACCESS_TOKEN` | 認証が必要な ODPT フィード（西武バス・京王バス・東急バス系・小田急バス・西東京バス）の取得に使います。未設定でも、未展開の認証不要フィードは取得します。認証付き GTFS は展開済みデータ（`data/*-GTFS/`）を使い、東急バスの ODPT JSON は期限切れも含めてキャッシュの読み込みを試みます。取得に失敗したフィードは警告してスキップします。GTFS の読み込みに失敗した場合は警告を出し、失敗前に読み込んだデータが出力に残ることがあります。 |\n| `DISABLE_BUS_FEATURE` | `true` (または `1`) にするとバスを取り込まない (鉄道のみ) |\n\n`ODPT_ACCESS_TOKEN` に空文字列を設定すると、期限切れの ODPT JSON キャッシュは\n使わず、空のトークンで取得を試みます。`build-worker` は `odpt-access-token` の\n入力を省略すると、環境変数に空文字列を渡します。\n\n---\n\n## インメモリ索引\n\nPostgreSQL のクエリは、次のように置き換えています。",
+    "metadata": {
+      "blob_sha": "8b9c337c3c6bcd3baf8ab53fb4fb27e4683a4849",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/architecture.md"
+    },
+    "ordinal": 3,
+    "updated_at": "2026-11-12T12:18:27.650Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/architecture.md:0",
+    "source_id": "TrainLCD/StationAPI:docs/architecture.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/architecture.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/architecture.md",
+    "text": "# StationAPI アーキテクチャドキュメント\n\n> 最終更新: 2026年9月29日\n\n## 目次\n\n- [概要](#概要)\n- [全体構成](#全体構成)\n- [レイヤー構造](#レイヤー構造)\n- [データパイプライン](#データパイプライン)\n- [インメモリ索引](#インメモリ索引)\n- [乗換経路探索](#乗換経路探索)\n- [GraphQL とスキーマ一致の担保](#graphql-とスキーマ一致の担保)\n- [命名規則](#命名規則)\n- [データフロー](#データフロー)\n- [ディレクトリ構造](#ディレクトリ構造)\n- [運用](#運用)\n- [関連ドキュメント](#関連ドキュメント)\n\n---\n\n## 概要\n\n日本の鉄道駅とバス停の情報を返す GraphQL API です。Cloudflare Workers 上で\n動作し、データはビルド時に WASM バイナリへ埋め込んで配布します。\n**サーバープロセスもデータベースもありません。**\n\n以前は、オンプレミスのサーバーが PostgreSQL からデータを読んで gRPC-Web で\n返し、クライアントは BFF (TrainLCD/BFF) が GraphQL に変換したものを使って\nいました。gRPC-Web を使い続ける理由がなかったため、GraphQL を直接返す構成に\n改め、BFF も廃止しました。\n\n### 技術スタック\n\n| 用途 | 採用しているもの |\n|---|---|\n| 実行環境 | Cloudflare Workers (wasm32-unknown-unknown) |\n| API | GraphQL ([async-graphql](https://github.com/async-graphql/async-graphql) 7) |\n| データ | ビルド時に WASM へ埋め込む CSV (`generated/*.csv`) |\n| データ生成 | `preprocessor` crate (Rust のみで実装) |\n| デプロイ | wrangler |\n\nデータベースを使わないので、`sqlx` も接続プールもありません。検索はすべて、\n埋め込みデータから isolate の中に組み立てたインメモリ索引に対して行います。\n\n---\n\n## 全体構成\n\n```txt\n  data/*.csv          GTFS (ZIP)        ODPT (JSON)      N02 (GeoJSON)\n  鉄道の正本データ      バス 6 フィード      東急バス          国土数値情報の線路\n      │                    │                 │                 │\n      └────────────────────┴─────────────────┴─────────────────┘\n                           │\n                 ┌─────────▼──────────┐\n                 │   preprocessor     │  Rust のみで実装。各駅停車の\n                 │   (ビルド時ツール)  │  系統生成、駅間の線路の長さの\n                 │                    │  計算、GTFS の統合を行う\n                 └─────────┬──────────┘\n                           │\n                    generated/*.csv     8 テーブル\n                           │\n                 ┌─────────▼──────────┐\n                 │  build.rs          │  CSV を OUT_DIR に配置し、sst と\n                 │                    │  connections を固定長バイナリに変換\n                 └─────────┬──────────┘\n                           │\n                 ┌─────────▼──────────┐\n                 │  worker-build      │\n                 └─────────┬──────────┘\n                           │\n                        WASM ────────► Cloudflare Workers\n                                          │\n                                     GraphQL (POST /)\n                                          │\n                                       TrainLCD\n```\n\nデータは WASM に埋め込まれるため、**データを更新するたびに再デプロイが\n必要です。** 起動時にデータを読み込んで自動的に反映する仕組みではありません。\n\n---\n\n## レイヤー構造",
+    "metadata": {
+      "blob_sha": "8b9c337c3c6bcd3baf8ab53fb4fb27e4683a4849",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/architecture.md"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T12:18:27.650Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/architecture.md:2",
+    "source_id": "TrainLCD/StationAPI:docs/architecture.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/architecture.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/architecture.md",
+    "text": "1. `data/*.csv` を読み込む (`#` で始まる列は読み込まない)\n2. 各駅停車の系統を生成する (`generate_virtual_local_rail_services`)\n3. 国土数値情報の鉄道データ (N02) を取得し、隣り合う駅のあいだの線路の長さを\n   求める (`track::generate_connections`。[駅間の線路の長さ](#駅間の線路の長さ))\n4. GTFS フィードを取得・展開して読み込む (都営バス・西武バス・京王バスと、\n   東急バスが運行する大田区・品川区・目黒区のコミュニティバス、名古屋市SRT)\n5. 東急バスの ODPT JSON を読み込む (7 日間キャッシュする)\n6. 名古屋市バス、北海道中央バス、北海道高速バス、じょうてつバス、千代田区「風ぐるま」、小田急バス、西東京バス、港区「ちぃばす」、文京区「Bーぐる」の GTFS をこの順に取得・展開して読み込む\n7. [追加フィードの設定](../data/gtfs-feeds/)をファイル名順に読み込み、既存フィードの後に取り込む。追加フィードは停車順から運行パターンを作る。\n   季節路線を路線一覧に残すフィードでは、設定で便のない路線だけを停車順の検証前に除外できる。\n8. バスのデータを lines / stations / types / station_station_types に統合する\n9. `generated/*.csv` に書き出す (8 テーブル)\n\n配布元が運休を案内している路線が静的フィードに残る場合、追加フィードの設定でその路線と便・停車時刻を取り込みから除外できます。\n群馬フィードの停留所は行政区域の境界と座標を照合し、県外の停留所にも所在地の都道府県コードを割り当てます。\n\n取得に失敗したフィードは、警告を出して飛ばします。GTFS の読み込みに失敗した場合は、\n警告を出し、失敗前に読み込んだデータが出力に残ることがあります。バスの取り込みが\n有効で、GTFS と ODPT JSON のどちらからも路線を 1 つも取り込めなかった場合は、\n前処理がエラーで終了します。デプロイ用のワークフローでは、\nフィードの取得・読み込みの失敗や必須ファイルの欠落を検出すると失敗させます\n(`fail-on-missing-bus-feeds`)。\n\n`station_station_types.id` はそのまま停車順として使われるため、行の順序に\n意味があります。書き出すときは必ず `id` の昇順に並べます。\n\n### 駅間の線路の長さ\n\n`Station.trackDistanceFromPrevious` は、返す駅の並びで直前にある駅からの\n線路の長さ (メートル) です。`trainRoute` の `distanceFromPrevious` は駅の座標\nどうしの直線距離なので、カーブの多い区間では実際より短く出ます。こちらはその\n代わりに、乗車距離を集計するクライアントが使います。\n\n値は、国土数値情報の鉄道データ (N02、国土交通省、CC BY 4.0) の線路区間\n(`RailroadSection`) から preprocessor で求め、`generated/connections.csv`\n(`station_cd1 < station_cd2`、整数メートル) に書き出します。\n\n1. **グラフ**: 線路区間の LineString を、頂点を座標 (小数第 5 位) で同一視した\n   無向グラフにする。N02-25 で頂点 約 38 万、辺 約 38 万\n2. **駅の組**: API が返す駅の並びで隣り合う鉄道駅の組を集める。並びは路線の\n   `(e_sort, station_cd)` 順と系統の `station_station_types.id` 順で、廃止駅を\n   除いた並びと除かない並びの両方を使う。環状運転の系統は、末尾駅と先頭駅が\n   3km 以内なら継ぎ目の組も含める (`trainRoute` は継ぎ目をまたいで切り出す\n   ため)。同じ駅グループの組 (直通運転の境界駅) は 0 にする\n3. **駅を線路へ寄せる**: 駅から 500m 以内の辺をすべて候補にし、\n   「寄せた距離 × 2 + 線路上の距離」が最小になる組を Dijkstra で探す。最も\n   近い線路だけに寄せると、大きな駅で同じ事業者の別路線 (本町の御堂筋線と\n   四つ橋線など) に寄って乗換駅をまわる遠回りが出るため\n4. **事業者で絞る**: まず両駅の路線の会社の線路だけで測る。N02 の事業者名と\n   会社名 (`company_name_h` から「株式会社」を除いたもの) が違う会社は\n   `OPERATOR_ALIASES` で対応させる。他社の線路を走る路線 (北陸新幹線の\n   上越妙高以西、相鉄・JR直通線など) はそれでは寄せられないので、全事業者の\n   線路で測り直す\n5. **打ち切りと下限**: 線路上の距離が直線距離の 3 倍と直線距離 + 5km の大きい方を\n   超えたら、線形が途切れて大回りしたものとみなして測れなかったことにする\n   (実在の最大は木次線の出雲坂根〜三井野原の約 3.6 倍)。線路の長さは直線距離より\n   短くならないので、駅の座標のずれで短く出た値は直線距離で抑える",
+    "metadata": {
+      "blob_sha": "8b9c337c3c6bcd3baf8ab53fb4fb27e4683a4849",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/architecture.md"
+    },
+    "ordinal": 2,
+    "updated_at": "2026-11-12T12:18:27.650Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:2",
+    "source_id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/gtfs-bus-integration-research.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/gtfs-bus-integration-research.md",
+    "text": "- 循環する路線や枝分かれする路線が多い\n- 同じ系統番号でも経路のパターンが複数ある\n- 行き先 (headsign) による区別が重要になる\n- 系統番号で管理されている\n\n#### 懸念点\n\n- 現在の `lines` テーブルの `line_type` に「バス」を足すだけでは足りない。\n- バス特有の「系統」という概念をどうモデル化するか。\n- 経路の形状 (shapes.txt) をどう保存し、どう活用するか。\n\n---\n\n### 3.5 列車種別 vs 運行パターン\n\n#### 現在の train_type モデル\n\n```sql\n-- types テーブル\ntype_cd      -- 列車種別コード\ntype_name    -- 種別名（快速、急行等）\ncolor        -- 表示色\ndirection    -- 方向（0:方向制限なし, 1:上り, 2:下り）\nkind         -- 種別区分（0:基本, 1:支線, 2:快速, 3:急行, 4:特急, 5:高速運転快速）\n\n-- 停車条件（station_station_types テーブルの pass フィールド）\n0: 停車\n1: 通過\n2: 一部通過\n3: 平日停車\n4: 休日停車\n5: 一部停車\n```\n\n#### バスの運行パターン\n\n- 急行・各停といった区別はあまりない (一部の路線を除く)\n- 時間帯によって運行が変わる (深夜バス、早朝便など)\n- 曜日や祝日によって運行するかどうかが変わる\n- GTFS では `trip` 単位と `calendar` の組み合わせで管理する\n\n#### 懸念点\n\n- 既存の `station_station_types` の設計では、バスの運行パターンを表現しにくい。\n- カレンダーに基づいて運行を管理するモデルを新たに追加する必要がある。\n\n---\n\n### 3.6 APIエンドポイントへの影響\n\n#### 既存エンドポイントの課題\n\n| エンドポイント | 課題 |\n|---------------|------|\n| `get_station_by_id` | バス停も返すか。ID 体系の違いをどう扱うか |\n| `get_stations_by_coordinates` | バス停が大量に返り、レスポンスが肥大化する |\n| `get_stations_by_line_id` | バスの系統 ID をどう扱うか |\n| `get_stations_by_name` | 「○○バス停」「○○前」などの検索にどう対応するか |\n| `get_train_types_by_station_id` | バスには当てはまらない |\n| `get_routes` | 鉄道とバスをまたぐ乗換検索が複雑になる |\n\n#### 対応案\n\n```protobuf\n// 案1: フィルタパラメータの追加\nmessage GetStationsByCoordinatesRequest {\n  double latitude = 1;\n  double longitude = 2;\n  int32 limit = 3;\n  TransportType transport_type = 4;  // RAIL, BUS, ALL\n}\n\n// 案2: バス専用エンドポイントの追加\nservice BusStopApi {\n  rpc GetBusStopById(GetBusStopByIdRequest) returns (BusStopResponse);\n  rpc GetBusStopsByRouteId(GetBusStopsByRouteIdRequest) returns (MultipleBusStopResponse);\n}\n```\n\n---\n\n### 3.7 データベースへの影響\n\n#### スキーマ拡張案\n\n```sql\n-- 案1: GTFSテーブルを別途追加\nCREATE TABLE gtfs_agencies (\n    agency_id VARCHAR PRIMARY KEY,\n    agency_name VARCHAR NOT NULL,\n    agency_url VARCHAR,\n    agency_timezone VARCHAR\n);\n\nCREATE TABLE gtfs_stops (\n    stop_id VARCHAR PRIMARY KEY,\n    stop_code VARCHAR,\n    stop_name VARCHAR NOT NULL,\n    stop_lat DOUBLE PRECISION,\n    stop_lon DOUBLE PRECISION,\n    location_type INT  -- 0:停留所, 1:駅\n);\n\nCREATE TABLE gtfs_routes (\n    route_id VARCHAR PRIMARY KEY,\n    agency_id VARCHAR REFERENCES gtfs_agencies,\n    route_short_name VARCHAR,\n    route_long_name VARCHAR,\n    route_type INT,  -- 3:バス\n    route_color VARCHAR\n);",
+    "metadata": {
+      "blob_sha": "c01f19af15d9677821d94736654b87b2d302703c",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/gtfs-bus-integration-research.md"
+    },
+    "ordinal": 2,
+    "updated_at": "2026-11-12T12:18:15.687Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:1",
+    "source_id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/gtfs-bus-integration-research.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/gtfs-bus-integration-research.md",
+    "text": "| ファイル | 説明 |\n|----------|------|\n| calendar.txt | 運行日 (曜日単位の定期パターン)。すべての運行日を calendar_dates.txt で定義する場合は省略できる |\n| calendar_dates.txt | 運行日の例外。calendar.txt を省略する場合は必須 |\n| feed_info.txt | フィード自体の情報。translations.txt を含める場合は必須 |\n\n#### オプショナルファイル\n\n| ファイル | 説明 |\n|----------|------|\n| shapes.txt | 車両が走る経路の形状 |\n| frequencies.txt | 運行間隔 (ヘッドウェイ) による運行の定義 |\n| transfers.txt | 乗り換えの規則 |\n| translations.txt | 多言語の翻訳 |\n\n### 2.2 GTFSデータモデル\n\n```text\nagency (事業者)\n    ↓\nroutes (路線)\n    ↓\ntrips (便) ← calendar (サービスカレンダー)\n    ↓\nstop_times (時刻表)\n    ↓\nstops (停留所)\n```\n\n### 2.3 都営バスGTFSデータの特徴\n\n- **提供元**: ODPT (公共交通オープンデータセンター)\n- **フォーマット**: GTFS-JP (国土交通省が定めた標準的なバス情報フォーマット)\n- **多言語対応**: 日本語、英語、中国語、韓国語\n  - 注 (2026-09 追記): 2026-09 時点で取得した都営バス GTFS の translations.txt に含まれる言語は `ja` / `ja-Hrkt` (読み) / `en` だけで、中国語と韓国語は含まれていない。\n- **リアルタイムデータ**: バスの位置情報を GTFS-RT 形式で配信している\n\n---\n\n## 3. 懸念点\n\n### 3.1 データモデルの根本的な違い\n\n#### 概念の比較\n\n| 概念 | 鉄道（現在） | バス（GTFS） | 差異 |\n|------|-------------|-------------|------|\n| 時刻表 | なし | trips + stop_times | **新規追加が必要** |\n| 便（Trip） | 存在しない | 中心となる概念 | **新規追加が必要** |\n| サービスカレンダー | 停車条件で簡易的に表現 | calendar.txt で詳細に管理 | **新規追加が必要** |\n| 運行パターン | train_type | trip ごとに定義 | 設計変更が必要 |\n\n#### 影響\n\n- 時刻表を扱うために、新しいエンティティ (Trip、StopTime、Calendar) を追加しなければならない。\n- 既存の `train_type` モデルでは、バスの運行パターンを表現しきれない。\n\n---\n\n### 3.2 ID体系の衝突リスク\n\n#### 現在のID体系\n\n```rust\nstation_cd: i32  // 数値型（例: 1130101）\nline_cd: i32     // 数値型\ncompany_cd: i32  // 数値型\n```\n\n#### GTFSのID体系\n\n```text\nstop_id: String    // 文字列型（例: \"0001-01\"）\nroute_id: String   // 文字列型\nagency_id: String  // 文字列型\n```\n\n#### 懸念点\n\n- 数値型と文字列型の違いから、型の変換が必要になる。\n- 既存の `station_cd` と GTFS の `stop_id` を統一するか、分けて持つかを決めなければならない。\n- ID を全体で一意に保つため、プレフィックスの付け方を検討する必要がある。\n\n#### 対応案\n\n```rust\n// 案1: 統一ID型\nenum TransportId {\n    Rail(i32),\n    Bus(String),\n}\n\n// 案2: 文字列に統一\nstation_id: String  // \"rail_1130101\" or \"bus_0001-01\"\n```\n\n---\n\n### 3.3 「駅」と「停留所」の概念の違い\n\n| 属性 | 鉄道駅 | バス停留所 |\n|------|--------|-----------|\n| 数 | 約11,000 | 都営バスだけで約4,000以上 |\n| 密度 | 比較的疎 | 非常に密 (数百 m 間隔) |\n| グループ化 | `station_g_cd` でまとめる | まとめる基準がはっきりしない |\n| 永続性 | 比較的安定 | 移設・廃止が多い |\n| 命名 | 「○○駅」 | 「○○」「○○前」などさまざま |\n\n#### 懸念点\n\n- データ量が大きく増える (約1.5〜2倍)。\n- 座標検索の性能が落ちる。\n- バス停同士をまとめるロジックを新たに作る必要がある。\n- 鉄道駅とバス停の間で乗り換えられるかを判定する基準が要る。\n\n---\n\n### 3.4 路線の概念の違い\n\n#### 鉄道路線の特徴\n\n- 起点と終点がはっきりしている\n- 駅の並び順が決まっている\n- 路線シンボル (最大 4 個) で識別できる\n- `line_type` で新幹線・一般・地下鉄・路面電車・モノレール等を区別する\n\n#### バス路線の特徴",
+    "metadata": {
+      "blob_sha": "c01f19af15d9677821d94736654b87b2d302703c",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/gtfs-bus-integration-research.md"
+    },
+    "ordinal": 1,
+    "updated_at": "2026-11-12T12:18:15.687Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/architecture.md:5",
+    "source_id": "TrainLCD/StationAPI:docs/architecture.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/architecture.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/architecture.md",
+    "text": "```graphql\nconnectedRoutes(fromStationGroupId: Int!, toStationGroupId: Int!, viaLineId: Int, sortBy: ConnectedRouteSort): [ConnectedRoute!]!\n\nenum ConnectedRouteSort { Recommended  ArrivalTime  TransferCount }\n\ntype ConnectedRoute { totalSeconds: Int!  legs: [RouteLeg!] }\ntype RouteLeg { recommendedGroupId: Int!  trainTypes: [TrainType!]  fromStation: Station  toStation: Station  stationGroupIds: [Int!] }\n```\n\n`stationGroupIds` は、乗車駅から降車駅までの駅グループ ID を進行順に並べた\nもの (通過駅を含む) で、探索で使った系統の駅の並びをそのまま返します。\n駅 ID ではなく駅グループ ID にしているのは、アプリが区間ごとに選ぶ種別\n(手動で変更した場合) が、探索で使った系統とは別の路線を走ることがあるためです。\n駅 ID は路線ごとに異なりますが、駅グループ ID ならどの種別の駅リストとも\n照合できます。アプリはこの並びに沿って、選んだ種別の駅リストから駅を\n取り出すので、環状線でどちら回りにするかをアプリ側で判断する必要は\nありません。同じ駅グループが 2 回現れる系統 (大江戸線の都庁前) では、\n直前に取り出した駅に隣接するほうを選びます。\n\n探索では、停車駅が同じ並行種別を一つの経路にまとめます。\n`trainTypes` は手動で変更できる種別一覧です。`routeTypes` と同じ取得処理を使い、\n探索した系統が集約で省かれた場合はその系統も加えます。\n`recommendedGroupId` は探索で評価した系統です。アプリは既定選択にこの ID を\n使います。`totalSeconds` は最初の待ち時間を除いた、乗換の徒歩と待ち時間を\n含む秒数です。既定の各停に置き換えて順位を付け直す処理はありません。\n\n`viaLineId` は `routeTypes` と同様に、検索結果でタップした駅の路線を指します。\n指定すると、目的地にその路線の駅で到着する経路 (最後の区間がその路線を走る\n経路) だけに絞り込みます。\n\n`sortBy` は経路の並び順です。並べ替えはサーバー側で行います。どれを選んでも返す経路の集合は変わらず、\n並びだけが変わります。\n\n| `sortBy` | 並び |\n|---|---|\n| `Recommended` (省略時) | おすすめ順。「評価値 (最初の列車の待ち時間を含む所要時間の見込み) + 乗換 1 回につき 5 分」の小さい順 (後述) |\n| `ArrivalTime` | 到着の早い順。同じなら乗換の少ない順 |\n| `TransferCount` | 乗換の少ない順。同じなら到着の早い順 |\n\n到着の早い順は、`estimateArrivalTimes` と同じ定義の所要時間 (最初の列車の\n待ち時間は含めず、乗換ごとに徒歩時間と乗換先の待ち時間を加える) で並べます。\n探索で選んだ `recommendedGroupId` の系統で見積もります。\nユーザーが別の種別へ変更した場合は、その種別の ETA を求め直します。\nキーが同じ経路同士は、おすすめ順のまま並びます。\n\n### 系統網\n\n系統 (`line_group_cd`) ごとの停車駅の並びを 1 つのパターンとし、駅グループ\n(`station_g_cd`) を乗換のノードとします。駅間の所要時間には\n`arrival_estimation` の推定値を使います。環状線は 2 周分に展開し、継ぎ目を\nまたぐ乗車も同じ配列で計算できるようにしています。対象は鉄道だけで、バスは\n含みません。\n\n網は全系統の駅と区間時分表から構築します。最初に\n`connectedRoutes` が呼ばれたときに `OnceLock` に構築し、isolate が生きている\n間は使い回します。\n\n### 探索 (RAPTOR)\n\n時刻表のデータを持たないため、運行頻度に基づく RAPTOR で探索します。\nラウンド k では「k 本目の列車に乗った時点」での最良値を求め、前のラウンドで\n値が改善した駅を通るパターンだけを走査します。各ラウンドでの目的地の値が、\nそのまま「k 本以内の乗車で到達できる最良値」になるので、所要時間と乗換回数の\nパレート解が得られます。\n\n評価値 (秒) は次の合計です。\n\n| 項目 | 値 |\n|---|---|\n| 乗車時間 | `arrival_estimation` の推定値 (停車時間・通過を含む) |\n| 乗車ごとの待ち時間 | 特急・新幹線 15 分 / 急行・新快速クラス 5 分 / その他 3 分 |\n| 乗換の徒歩時間 | 3 分 |\n\n待ち時間を加えないと、本数の少ない特急が「直通で速い」と評価され、\n東京 → 渋谷で山手線より成田エクスプレスを勧めてしまいます。\n\n### 代替経路と並び順",
+    "metadata": {
+      "blob_sha": "8b9c337c3c6bcd3baf8ab53fb4fb27e4683a4849",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/architecture.md"
+    },
+    "ordinal": 5,
+    "updated_at": "2026-11-12T12:18:27.650Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stop_times.txt:0",
+    "source_id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stop_times.txt",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "preprocessor/test_data/nagoya_city_bus/stop_times.txt",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/preprocessor/test_data/nagoya_city_bus/stop_times.txt",
+    "text": "trip_id,arrival_time,departure_time,stop_id,stop_sequence,stop_headsign,pickup_type,drop_off_type,shape_dist_traveled\n6101001_平日_0930,09:30:00,09:30:00,41200005,1,,0,1,\n6101001_平日_0930,09:33:00,09:33:00,41200504,2,,0,0,\n6101001_平日_0930,09:35:00,09:35:00,71137301,3,,0,0,\n6101001_平日_0930,09:36:00,09:36:00,71135302,4,,0,0,\n6101001_平日_0930,09:37:00,09:37:00,41245301,5,,0,0,\n6101001_平日_0930,09:38:00,09:38:00,52310301,6,,0,0,\n6101001_平日_0930,09:40:00,09:40:00,52310302,7,,0,0,\n6101001_平日_0930,09:42:00,09:42:00,52315301,8,,0,0,\n6101001_平日_0930,09:43:00,09:43:00,52315302,9,,0,0,\n6101001_平日_0930,09:45:00,09:45:00,52309302,10,,0,0,\n6101001_平日_0930,09:47:00,09:47:00,21012503,11,,0,0,\n6101001_平日_0930,09:48:00,09:48:00,41236501,12,,0,0,\n6101001_平日_0930,09:49:00,09:49:00,224605W1,13,,0,0,\n6101001_平日_0930,09:50:00,09:50:00,224605W2,14,,0,0,\n6101001_平日_0930,09:52:00,09:52:00,71145301,15,,0,0,\n6101001_平日_0930,09:56:00,09:56:00,53098701,16,,0,0,\n6101001_平日_0930,09:58:00,09:58:00,71145702,17,,0,0,\n6101001_平日_0930,09:59:00,09:59:00,91015701,18,,0,0,\n6101001_平日_0930,10:02:00,10:02:00,05059501,19,,0,0,\n6101001_平日_0930,10:04:00,10:04:00,11175301,20,,0,0,\n6101001_平日_0930,10:07:00,10:07:00,05058101,21,,0,0,\n6101001_平日_0930,10:08:00,10:08:00,05052101,22,,0,0,\n6101001_平日_0930,10:12:00,10:12:00,224601W1,23,,0,0,\n6101001_平日_0930,10:13:00,10:13:00,41236101,24,,0,0,\n6101001_平日_0930,10:15:00,10:15:00,21012102,25,,0,0,\n6101001_平日_0930,10:17:00,10:17:00,52309703,26,,0,0,\n6101001_平日_0930,10:19:00,10:19:00,52315701,27,,0,0,\n6101001_平日_0930,10:20:00,10:20:00,52310701,28,,0,0,\n6101001_平日_0930,10:22:00,10:22:00,52310702,29,,0,0,\n6101001_平日_0930,10:24:00,10:24:00,41245701,30,,0,0,\n6101001_平日_0930,10:25:00,10:25:00,71135701,31,,0,0,\n6101001_平日_0930,10:27:00,10:27:00,711377N1,32,,0,0,\n6101001_平日_0930,10:29:00,10:29:00,41200102,33,,1,0,\n6101001_平日_0930,10:40:00,10:40:00,41200001,34,,1,0,\n6201001_平日深夜_2530,25:30:00,25:30:00,210105E2,1,,0,1,\n6201001_平日深夜_2530,25:32:00,25:32:00,210103S5,2,,0,0,\n6201001_平日深夜_2530,25:34:00,25:34:00,35037301,3,,0,0,\n6201001_平日深夜_2530,25:36:00,25:36:00,22580301,4,,0,0,\n6201001_平日深夜_2530,25:38:00,25:38:00,52307301,5,,0,0,\n6201001_平日深夜_2530,25:40:00,25:40:00,32050301,6,,0,0,\n6201001_平日深夜_2530,25:42:00,25:42:00,021903S2,7,,0,0,\n6201001_平日深夜_2530,25:45:00,25:45:00,02015303,8,,0,0,\n6201001_平日深夜_2530,25:47:00,25:47:00,11010301,9,,0,0,\n6201001_平日深夜_2530,25:50:00,25:50:00,65025301,1",
+    "metadata": {
+      "blob_sha": "9a4ac43ba65825c88f5ea9baddab9ff5c4ba37d4",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "preprocessor/test_data/nagoya_city_bus/stop_times.txt"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T12:18:17.844Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/nearby-bus-stops.md:2",
+    "source_id": "TrainLCD/StationAPI:docs/nearby-bus-stops.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/nearby-bus-stops.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/nearby-bus-stops.md",
+    "text": "バス停も鉄道駅と同じく列車種別 (`TrainType`) を持ち、系統に属するバス停では\n`Station.hasTrainTypes` が `true` になります。これは、バスのデータを取り込む\nときに、`(route_id, shape_id)` の運行パターンごとに次の 2 つを生成している\nためです。\n\n- `types` の行 (`kind = TrainTypeKind::BusRoute (= 7)`)\n- `station_station_types` の行\n\n運行パターンとは、池86 でいえば一周する便・サンシャインシティ経由・短ターン\nのような違いです。同じ系統の中で通る停留所の集合が同じ shape は、上下線と\nみなして 1 つの種別にまとめ、`direction = Both` (双方向) として返します。\n\nクライアントは `stationTrainTypes(stationId:)` でバス停の運行パターンを取得し、\n「池袋駅東口 (循環)」「新宿伊勢丹前 ⇔ 池袋駅東口」のように切り替えて表示\nできます。詳しくは\n[アーキテクチャドキュメントの「バスのコード生成」](./architecture.md#バスのコード生成)\nと、`preprocessor/src/gtfs/integrate.rs` の `trip_variations_to_types` を参照して\nください。\n\n## 注意事項\n\n- 候補のバス停は、駅グループごとに検索半径内のものを近い順に見て、有効な\n  路線を持つものを最大 50 件まで採ります。バス停の行は停留所と系統の組ごとに\n  あるため、この 50 件は行の数です。\n- 近傍のバス路線は、採用したバス停の近い順に並びます。同じ路線は 1 回だけ\n  加えます。\n- 鉄道駅の `lines` に近傍のバス路線が加わるのは、`transportType` が未指定・\n  `TransportTypeUnspecified`・`RailAndBus` のいずれかの場合です。\n",
+    "metadata": {
+      "blob_sha": "26d03b82bd4b0200eab445582f56ee141ced8844",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/nearby-bus-stops.md"
+    },
+    "ordinal": 2,
+    "updated_at": "2026-11-12T12:18:28.796Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/routes.txt:0",
+    "source_id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/routes.txt",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "preprocessor/test_data/nagoya_srt/routes.txt",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/preprocessor/test_data/nagoya_srt/routes.txt",
+    "text": "route_id,agency_id,route_short_name,route_long_name,route_desc,route_type,route_color,route_text_color\n1,3000020231002,,名駅－栄ルート,,3,E26B0A,FFFFFF\n2,3000020231002,,名駅－名城ルート,,3,FFFF00,000000\n",
+    "metadata": {
+      "blob_sha": "667b321b991d8b350d2d22717a47d5ab18798711",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "preprocessor/test_data/nagoya_srt/routes.txt"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T12:18:26.555Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/nearby-bus-stops.md:0",
+    "source_id": "TrainLCD/StationAPI:docs/nearby-bus-stops.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/nearby-bus-stops.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/nearby-bus-stops.md",
+    "text": "# 近傍バス停検索機能\n\n鉄道駅とバス停の間で、近くの乗換路線を `lines` に加える機能の仕様です。\n\n## 概要\n\n駅を返すクエリの多くは `transportType` 引数を受け付けます。この引数は\n次の 2 つを決めます。\n\n- 返す駅を、鉄道駅とバス停のどちらに絞るか\n- 鉄道駅の `lines` に、近くのバス路線を加えるか\n\n未指定のときは `RailAndBus` として扱い、鉄道駅とバス停の両方を返したうえで、\n鉄道駅の `lines` に近くのバス路線を加えます。\n\n近傍のバス停そのものが駅の一覧に加わるわけではありません。近くのバス停は、\n鉄道駅の `lines` に加わったバス路線の `station` として返ります。\n\n## パラメータ\n\n### TransportType\n\n```graphql\nenum TransportType {\n  TransportTypeUnspecified\n  Rail\n  Bus\n  RailAndBus\n}\n```\n\n## 動作仕様\n\n| transportType | 返す駅 | 鉄道駅の `lines` |\n|----------------|------|------|\n| **未指定 / TransportTypeUnspecified** | 鉄道駅とバス停 | 乗換路線に加え、近傍のバス路線 (`RailAndBus` と同じ) |\n| **Rail** | 鉄道駅のみ | 鉄道路線のみ |\n| **Bus** | バス停のみ | (鉄道駅は返らない) |\n| **RailAndBus** | 鉄道駅とバス停 | 乗換路線に加え、近傍のバス路線 |\n\n- 未指定と `TransportTypeUnspecified` は、どちらも `RailAndBus` と同じ扱いに\n  なります。gRPC 版では未指定を `Rail` として扱っていましたが、Worker 版では\n  バスを含めた結果を既定で返すよう、意図的に変えています。\n- `lines` に加えたバス路線の `station` には、その路線で最も近いバス停が\n  入ります。\n- `Rail` と `Bus` では、`lines` もその種別の路線だけに絞られます。\n- バス停の `lines` には、その停留所を通るバス路線が入ります。\n  走行画面向けのクエリでは、近傍の鉄道路線も加えます。\n\n**注**: `stationsNearby` で種別を絞らない場合 (未指定・\n`TransportTypeUnspecified`・`RailAndBus`) は、鉄道駅を先に、バス停を後に\n返します。それぞれの中は距離の昇順です。`limit` は種別ごとではなく並べた後の\n全体にかかるため、鉄道駅だけで `limit` 件そろう地点ではバス停は返りません。\n`limit` を省略した場合は 1 件です。\n\n## 対象API\n\n`transportType` を受け付けるクエリと、その効き方は次のとおりです。\n\n| クエリ | 返す駅の絞り込み | 近傍のバス路線 |\n|-----|---------------|------|\n| `station` | ✅ | ✅ |\n| `stations` | ✅ | ✅ |\n| `stationGroupStations` | ✅ | ✅ |\n| `stationsNearby` | ✅ | ✅ |\n| `stationsByName` | ✅ | ✅ |\n| `lineListStations` | ✅ | ✅ |\n| `lineGroupListStations` | ✅ | ✅ |\n| `lineStations` | ❌ | ✅ |\n| `lineGroupStations` | ❌ | ✅ |\n\n- `lineStations` と `lineGroupStations` は路線 (系統) の停車駅をそのまま\n  返すため、`transportType` で駅は絞りません。`lines` の絞り込みと近傍の\n  バス路線の追加には、他のクエリと同じく `transportType` が効きます。\n- `trainRoute` は `transportType` を受け付けませんが、常に `RailAndBus` と\n  同じ扱いで、区間の各駅に近傍のバス路線を加えます。\n- `stationGroupStations` などで鉄道駅の駅グループを指定した場合、\n  `transportType: Bus` の結果は空になります。バス停の駅グループ\n  (`station_g_cd`) は鉄道とは別の値域で生成しているため、鉄道駅と同じ\n  グループには入りません。\n\n## 距離計算\n\n### バス停から鉄道への乗換案内\n\n`lineStations`、`lineGroupStations`、`stations` では、`RailAndBus` のときに\nバスののりばから直線距離で 300m 以内にある有効な鉄道駅を検索します。\n候補は距離順で、同じ路線に複数の駅がある場合は最寄りの駅だけを使います。\n鉄道路線はバス停の `lines` に追加し、乗換先の駅はその路線の `station` に入ります。\n駅の検索には鉄道用のグリッド索引を使い、同じのりば ID はリクエスト内で一度だけ検索します。\n\n### 鉄道駅からバス停への乗換案内",
+    "metadata": {
+      "blob_sha": "26d03b82bd4b0200eab445582f56ee141ced8844",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/nearby-bus-stops.md"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T12:18:28.796Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/architecture.md:1",
+    "source_id": "TrainLCD/StationAPI:docs/architecture.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/architecture.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/architecture.md",
+    "text": "```txt\n┌──────────────────────────────────────────────┐\n│ Presentation (src/graphql/)                   │  async-graphql のリゾルバと型\n│   Query / 型 / enum / スカラー                 │\n├──────────────────────────────────────────────┤\n│ Model (stationapi/src/model.rs)               │  API が返す値の型\n├──────────────────────────────────────────────┤\n│ UseCase (stationapi/src/use_case/)            │  クエリの処理、\n│   QueryInteractor / DTO 変換                   │  IPA・TTS の生成\n├──────────────────────────────────────────────┤\n│ Domain (stationapi/src/domain/)               │  エンティティ、経路探索、\n│   entity / repository トレイト / 速度表        │  到着時刻の推定、正規化\n├──────────────────────────────────────────────┤\n│ Index (src/index.rs, src/repository.rs)       │  埋め込みデータの索引と\n│                                               │  repository トレイトの実装\n└──────────────────────────────────────────────┘\n```\n\n`stationapi` crate は Domain / UseCase / Model だけを含むライブラリで、\nWorker と preprocessor の両方から使われます。wasm32 向けにビルドできなければ\nならないため、I/O を伴う依存は追加しません。\n\n### Domain 層 (`stationapi/src/domain/`)\n\nエンティティ、リポジトリの抽象、そして純粋な計算処理 (haversine 距離、\n経路探索、到着時刻の推定、速度表、ローマ字・IPA 変換、検索用の正規化) を\n置いています。\n\n### UseCase 層 (`stationapi/src/use_case/`)\n\n`QueryInteractor` が repository トレイトを通してデータを集め、駅に路線・\n事業者・列車種別の情報を付け加えます。N+1 問題を避けるため、関連データは\n常にまとめて取得します。\n\nDTO (`use_case/dto/`) はドメインエンティティを Model に変換します。IPA と\nTTS セグメントもここで生成します。\n\n### Model 層 (`stationapi/src/model.rs`)\n\nAPI が返す値を表す型です。もともとは prost が `.proto` から生成していた型\nです。gRPC をやめた後も、IPA・TTS の生成がこの型への変換処理に組み込まれて\nいるため、ドメインエンティティと GraphQL 型の間の層として残しています。\n\n### Presentation 層 (`src/graphql/`)\n\n`async-graphql` の Query リゾルバと型定義を置いています。Model を GraphQL 型に\n変換するのもこの層です。\n\n### Index 層 (`src/index.rs`, `src/repository.rs`)\n\n埋め込まれた CSV は、isolate の中で最初に必要になったときに一度だけパースし、\n`OnceLock` に保持します。`src/repository.rs` は 4 つの repository トレイトを実装しているので、\nUseCase 層からはデータベースを使っていた頃と同じインターフェースに見えます。\n\n---\n\n## データパイプライン\n\n`data/*.csv` をそのまま Worker に渡すと、**本番とは異なる挙動になります。**\n\n- 列車種別を持たない路線には、各駅停車の系統を補う必要があります (約 2,400 行。\n  有効な駅の約 21% が該当します)。これらの行は `data/*.csv` には含まれて\n  いません\n- バス停・バス路線・バス系統は、GTFS と ODPT の JSON から生成する必要が\n  あります\n- 隣り合う駅のあいだの線路の長さは、国土数値情報の鉄道データから求める必要が\n  あります\n\nこれらを担うのが `preprocessor` crate です。\n\n```bash\nmake data     # cargo run --profile tool -p stationapi-preprocessor\n```\n\n処理の流れは次のとおりです。",
+    "metadata": {
+      "blob_sha": "8b9c337c3c6bcd3baf8ab53fb4fb27e4683a4849",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/architecture.md"
+    },
+    "ordinal": 1,
+    "updated_at": "2026-11-12T12:18:27.650Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/stop_times.txt:0",
+    "source_id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/stop_times.txt",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "preprocessor/test_data/nagoya_srt/stop_times.txt",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/preprocessor/test_data/nagoya_srt/stop_times.txt",
+    "text": "trip_id,arrival_time,departure_time,stop_id,stop_sequence,stop_headsign,pickup_type,drop_off_type,timepoint\n1金土日月・祝_08時29分_系統201,08:29:00,08:29:00,21_01,1,名古屋城 行き,0,1,1\n1金土日月・祝_08時29分_系統201,08:44:00,08:44:00,23_01,2,名古屋城 行き,0,0,1\n1金土日月・祝_08時29分_系統201,08:54:00,08:57:00,20_01,3,名古屋駅太閤通口 行き,0,0,1\n1金土日月・祝_08時29分_系統201,09:18:00,09:18:00,21_01,4,名古屋駅太閤通口 行き,1,0,1\n1金土日月・祝_09時02分_系統102,09:02:00,09:02:00,14_01,1,栄 行き,0,1,1\n1金土日月・祝_09時02分_系統102,09:05:00,09:05:00,15_01,2,栄 行き,0,0,1\n1金土日月・祝_09時02分_系統102,09:10:00,09:10:00,16_01,3,栄 行き,0,0,1\n1金土日月・祝_09時02分_系統102,09:15:00,09:15:00,12_02,4,栄 行き,0,0,1\n1金土日月・祝_09時02分_系統102,09:22:00,09:22:00,11_01,5,栄 行き,1,0,1\n1金土日月・祝_09時30分_系統103,09:30:00,09:30:00,11_01,1,名古屋駅 行き,0,1,1\n1金土日月・祝_09時30分_系統103,09:38:00,09:38:00,12_01,2,名古屋駅 行き,0,0,1\n1金土日月・祝_09時30分_系統103,09:43:00,09:43:00,13_01,3,名古屋駅 行き,0,0,1\n1金土日月・祝_09時30分_系統103,09:49:00,09:49:00,14_01,4,栄 行き,0,0,1\n1金土日月・祝_09時30分_系統103,09:52:00,09:57:00,15_01,5,栄 行き,0,0,1\n1金土日月・祝_09時30分_系統103,10:02:00,10:02:00,16_01,6,栄 行き,0,0,1\n1金土日月・祝_09時30分_系統103,10:07:00,10:07:00,12_02,7,栄 行き,0,0,1\n1金土日月・祝_09時30分_系統103,10:14:00,10:14:00,11_01,8,栄 行き,1,0,1\n1金土日月・祝_09時39分_系統201,09:39:00,09:39:00,21_01,1,名古屋城 行き,0,1,1\n1金土日月・祝_09時39分_系統201,09:54:00,09:54:00,23_01,2,名古屋城 行き,0,0,1\n1金土日月・祝_09時39分_系統201,10:04:00,10:07:00,20_01,3,名古屋駅太閤通口 行き,0,0,1\n1金土日月・祝_09時39分_系統201,10:28:00,10:28:00,21_01,4,名古屋駅太閤通口 行き,1,0,1\n1金土日月・祝_10時20分_系統101,10:20:00,10:20:00,11_01,1,名古屋駅 行き,0,1,1\n1金土日月・祝_10時20分_系統101,10:28:00,10:28:00,12_01,2,名古屋駅 行き,0,0,1\n1金土日月・祝_10時20分_系統101,10:33:00,10:33:00,13_01,3,名古屋駅 行き,0,0,1\n1金土日月・祝_10時20分_系統101,10:35:00,10:38:00,22_01,4,名古屋駅 行き,0,0,1\n1金土日月・祝_10時20分_系統101,10:42:00,10:42:00,14_01,5,栄 行き,0,0,1\n1金土日月・祝_10時20分_系統101,10:45:00,10:50:00,15_01,6,栄 行き,0,0,1\n1金土日月・祝_10時20分_系統101,10:55:00,10:55:00,16_01,7,栄 行き,0,0,1\n1金土日月・祝_10時20分_系統101,11:00:00,11:00:00,12_02,8,栄 行き,0,0,1\n1金土日月・祝_10時20分_系統101,11:07:00,11:07:00,11_01,9,栄 行き,1,0,1\n1金土日月・祝_10時39分_系統202,10:39:00,10:39:00,21_01,1,名古屋城 行き,0,1,1\n1金土日月・祝_10時39分_系統202,10:49:00,10:52:00,22_01,2,名古屋城 行き,0,0,1\n1金土日月・祝_10時39分_系統202,10:57:00,10:57:00,23_01,3,名古屋城 行き,0,0,1\n1金土日月・祝_10時39分_系統202,11:07:00,11:10:00,20_01,4,名古屋駅太閤通口 行き,0,0,1\n1金土日月・祝_10時39分_系統202,11:31:00,11:31:00,21_01,5,名古屋駅太閤通口 行き,1,0,1\n1金土日月・祝_11時20分_系統101,11:20:00,11:20:00,11_01,1,名古屋駅 行き,0,1,1\n1金土日月・祝_11時20分_系統101,11:28:00,11:28:00,12_01,2,名古屋駅 行き,0,0,1\n1金土日月・祝_11時20分_系統101,11:33:00,11:33:00,13_01,3,名古屋駅 行き,0",
+    "metadata": {
+      "blob_sha": "9b98229e08991312bddbf69c0e6ca8927fdc4492",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "preprocessor/test_data/nagoya_srt/stop_times.txt"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T12:18:24.736Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/architecture.md:7",
+    "source_id": "TrainLCD/StationAPI:docs/architecture.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/architecture.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/architecture.md",
+    "text": "- `Legacy` (省略時): 追加した時点 (#1568) のモデルです。最高速度と加減速は\n  `dto::simulation::resolve_speed_profile` が決め、到着・出発の見込み\n  (`arrivalCumulativeMinutes` / `departureCumulativeMinutes`) は `null` です。\n  配布済みの MobileApp のオートモードがこの値で走るので、値を変えません。速度の較正は、\n  到着時間推定の較正を求め直す前の表を `domain/legacy_speed_table.rs` に凍結して\n  使います。\n- `Estimated`: 到着時間推定 (`arrival_estimation`) のモデルで、MobileApp の\n  オートモードと GPX の生成が使います。返す駅列に推定を掛け、停車・通過、最高速度、\n  加減速を推定が使った値に置き換えて、到着・出発の見込みを入れます。見込みは、\n  同じ区間の `estimateArrivalTimes` と同じ値です (`legs` を渡したときは、同じ\n  `legs` を渡した `estimateArrivalTimes` と同じ値)。バスの駅を含む経路は推定の\n  モデルの対象外なので、`Legacy` と同じ値を返します。\n\n2 つのモデルは、加減速、運転余裕率、停車時間、較正テーブル、駅間の距離が違い\nます。`Estimated` は、線路の長さ (`connections`) がある駅間ではそれを走行距離に\n使い、無い駅間だけ直線距離 × 迂回係数で見積もり、その距離で求め直した較正\n(`speed_table` / `segment_speed_table`) を使います。`estimateArrivalTimes` も同じ\n計算です。乗換経路探索 (`connectedRoutes`) も同じ距離と較正で評価します。\n`Legacy` の値で台形の速度プロファイルを作って走らせると、\n`estimateArrivalTimes` より短い時間で走り切ります (#1709)。所要時間を推定に\n合わせたいクライアントは、`Estimated` の見込みを使います。\n\n区間の切り出しには両者で同じ関数を使い、環状線では継ぎ目をまたぐ短いほうの\n弧を選ぶので、両者の駅の並びは一致します (`lineGroupId` を指定した\n`trainRoute` は、従来どおり格納順で切り出します)。次のいずれかに当てはまる\n場合はエラーになります。\n\n- 区間がつながっていない (前の区間の降車駅と次の区間の乗車駅が、別の\n  駅グループにある)\n- 区間の数が 6 (`MAX_RIDES`。`connectedRoutes` が返しうる最大の乗車回数) を\n  超える\n- 両端の駅が `fromStationId` / `toStationId` と一致しない\n- `viaLineIds`・`directionId`・`lineGroupId` と同時に指定されている\n\n### 所要時間のベンチマーク (`travel_times/`)\n\n到着時間推定 (`estimateArrivalTimes` と `trainRoute` の `Estimated`) の所要時間を、実際の列車の所要時間と比べる基準を\n`travel_times/cases.csv` に置いています。速度の較正テーブルや一般則は、1 つの路線に合わせて変えると、同じ\n規則を使うほかの路線の推定も変わります。変更の前後で全体の誤差を測るための仕組み\nです。\n\n- `cargo test -p stationapi-worker` (`src/travel_times.rs`) は、基準ごとの「実際の\n  典型的な所要時間からのずれ」を `travel_times/baseline.csv` の記録と比べ、悪くなる\n  と失敗します。記録は本番と同じ生成データで作るので、比べるのは `generated/` で\n  動くときだけです。\n  CI では `build_worker.yml` が生成データを作ってから走らせます。\n- `make travel-time-report` は、生成データで動く Worker に問い合わせて全件の誤差を\n  出します。推定の規則や較正を変える PR には、変更前と変更後のレポートを載せます。\n\n基準の決め方と記録の更新方法は `travel_times/README.md` にあります。\n\n\n\n\n### 行き先の検索 (`stationsByName`)\n\n`stationsByName` に `fromStationGroupId` を指定すると、その駅から行ける駅だけに\n絞り込みます。返すのは次の駅です。\n\n- 出発駅と系統を共有する駅 (直通で行ける駅)\n- どちらかが系統を持たない場合は、同じ路線の駅\n- 乗り換えれば、その駅の路線の列車で到着できる鉄道駅\n\n3 つ目は、「`viaLineId` にその駅の路線を指定して `connectedRoutes` を呼ぶと\n経路が返る駅」と一致させています。これらの駅は出発駅と系統を共有しないので\n`line_group_cd` は空、`hasTrainTypes` は偽になり、直通で行ける駅と区別\nできます。",
+    "metadata": {
+      "blob_sha": "8b9c337c3c6bcd3baf8ab53fb4fb27e4683a4849",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/architecture.md"
+    },
+    "ordinal": 7,
+    "updated_at": "2026-11-12T12:18:27.650Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/routes.txt:0",
+    "source_id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/routes.txt",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "preprocessor/test_data/nagoya_city_bus/routes.txt",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/preprocessor/test_data/nagoya_city_bus/routes.txt",
+    "text": "route_id,agency_id,route_short_name,route_long_name,route_desc,route_type,route_url,route_color,route_text_color,jp_parent_route_id\n6101,3000020231002,Ｃ－７５８,,,3,,,,\n6201,3000020231002,深夜１,,,3,,,,\n6303,3000020231002,ゆとりーとライン,,,3,,,,\n",
+    "metadata": {
+      "blob_sha": "29d74f5a065dffc3707104bb8c4d158bbd9cdd59",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "preprocessor/test_data/nagoya_city_bus/routes.txt"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T12:18:23.760Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/trips.txt:0",
+    "source_id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/trips.txt",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "preprocessor/test_data/nagoya_city_bus/trips.txt",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/preprocessor/test_data/nagoya_city_bus/trips.txt",
+    "text": "route_id,service_id,trip_id,trip_headsign,trip_short_name,direction_id,block_id,shape_id,wheelchair_accessible,bikes_allowed,jp_trip_desc,jp_trip_desc_symbol,jp_office_id,jp_pattern_id\n6101,平日,6101001_平日_0930,名古屋駅（大須本町通経由）,,1,,,0,,,,,6101001\n6201,平日深夜,6201001_平日深夜_2530,藤が丘（今池経由）,,1,,,0,,,,,6201001\n6303,平日,6303031_平日_0622,高蔵寺（小幡緑地経由）,,1,,,0,,,,,6303031\n6303,平日,6303032_平日_0600,大曽根（小幡緑地経由）,,0,,,0,,,,,6303032\n",
+    "metadata": {
+      "blob_sha": "6fd65cf98dc8886c24c3dc7e764e7bca35f9bff5",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "preprocessor/test_data/nagoya_city_bus/trips.txt"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T12:18:24.019Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/architecture.md:12",
+    "source_id": "TrainLCD/StationAPI:docs/architecture.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/architecture.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/architecture.md",
+    "text": "### じょうてつバス\n\n[HODAのじょうてつバスGTFS](https://ckan.hoda.jp/dataset/gtfs-data/resource/fef98fef-6fe2-472f-bde3-9d4f0a509a4a)を `jotetsu:` 名前空間に取り込みます。\n事業者コード267、都道府県コード1を使い、停車順から運行パターンを作ります。\n\n### 千代田区「風ぐるま」\n\n[日立自動車交通の公開GTFS](https://ckan.odpt.org/dataset/hitachi_automobile_transportation_chiyoda_alllines)を `ward_chiyoda:` 名前空間に取り込み、事業者コード268を使います。\n同じ `shape_id` に停車順の異なる便が含まれるため、運行パターンは便ごとの停車順から作ります。\n\n### 文京区「Bーぐる」\n\n[配布元のGTFS](https://ckan.odpt.org/dataset/hitachi_automobile_transportation_all_lines)を `ward_tokyo_bunkyo:` 名前空間に取り込み、風ぐるまと同じ事業者コード268を使います。\n運行パターンは配布元の `shape_id` で区別します。\n\n### 小田急バス\n\n[小田急バスのODPT GTFS](https://ckan.odpt.org/dataset/odakyu_bus_aii_lines)を `west_odakyu:` 名前空間に取り込み、事業者コード269を使います。\n取得には既存の `ODPT_ACCESS_TOKEN` を使い、運行パターンは便ごとの停車順から作ります。\n\n### 西東京バス\n\n[西東京バスのODPT GTFS](https://ckan.odpt.org/dataset/nishi_tokyo_bus_nt_bus)を `west_tokyo_nishi:` 名前空間に取り込み、事業者コード270を使います。\n取得には既存の `ODPT_ACCESS_TOKEN` を使い、運行パターンは便ごとの停車順から作ります。\n\n### 港区「ちぃばす」\n\n[配布元のGTFS](https://bus.fujikyu.co.jp/rosen/gtfs/)を `ward_minato:` 名前空間に取り込み、事業者コード271を使います。\n同じ停車順に異なる線形IDが付く便があるため、便ごとの停車順を運行パターンのキーにします。\n",
+    "metadata": {
+      "blob_sha": "8b9c337c3c6bcd3baf8ab53fb4fb27e4683a4849",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/architecture.md"
+    },
+    "ordinal": 12,
+    "updated_at": "2026-11-12T12:18:27.650Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/trips.txt:0",
+    "source_id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/trips.txt",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "preprocessor/test_data/nagoya_srt/trips.txt",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/preprocessor/test_data/nagoya_srt/trips.txt",
+    "text": "route_id,service_id,trip_id,trip_headsign,direction_id,block_id,trip_short_name,shape_id,jp_trip_desc,jp_pattern_id\n1,金土日月・祝,1金土日月・祝_10時20分_系統101,通常便,0,,,101,,101\n1,金土日月・祝,1金土日月・祝_11時20分_系統101,通常便,0,,,101,,101\n1,金土日月・祝,1金土日月・祝_12時20分_系統101,通常便,0,,,101,,101\n1,金土日月・祝,1金土日月・祝_13時20分_系統101,通常便,0,,,101,,101\n1,金土日月・祝,1金土日月・祝_14時20分_系統101,通常便,0,,,101,,101\n1,金土日月・祝,1金土日月・祝_15時20分_系統101,通常便,0,,,101,,101\n1,金土日月・祝,1金土日月・祝_16時20分_系統101,通常便,0,,,101,,101\n1,金土日月・祝,1金土日月・祝_17時15分_系統101,通常便,0,,,101,,101\n1,金土日月・祝,1金土日月・祝_09時02分_系統102,始発便,0,,,102,,102\n1,金土日月・祝,1金土日月・祝_09時30分_系統103,次発便,0,,,103,,103\n1,金土日月・祝,1金土日月・祝_18時15分_系統104,最終便,0,,,104,,104\n2,金土日月・祝,1金土日月・祝_08時29分_系統201,始発・次発便,0,,,201,,201\n2,金土日月・祝,1金土日月・祝_09時39分_系統201,始発・次発便,0,,,201,,201\n2,金土日月・祝,1金土日月・祝_10時39分_系統202,通常便,0,,,202,,202\n2,金土日月・祝,1金土日月・祝_11時39分_系統202,通常便,0,,,202,,202\n2,金土日月・祝,1金土日月・祝_12時39分_系統202,通常便,0,,,202,,202\n2,金土日月・祝,1金土日月・祝_13時39分_系統202,通常便,0,,,202,,202\n2,金土日月・祝,1金土日月・祝_14時39分_系統202,通常便,0,,,202,,202\n2,金土日月・祝,1金土日月・祝_15時39分_系統202,通常便,0,,,202,,202\n2,金土日月・祝,1金土日月・祝_16時39分_系統202,通常便,0,,,202,,202\n",
+    "metadata": {
+      "blob_sha": "7e76c418746bbd1f46da08b0d0e7ad44ac6ffaca",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "preprocessor/test_data/nagoya_srt/trips.txt"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T12:18:18.356Z"
+  },
+  {
+    "id": "TrainLCD/BFF#15:0",
+    "source_id": "TrainLCD/BFF#15",
+    "repo": "TrainLCD/BFF",
+    "kind": "pr",
+    "title": "chore: GraphQLスキーマのTrainTypeKindにBusRouteを追加",
+    "url": "https://github.com/TrainLCD/BFF/pull/15",
+    "text": "## Summary\n- 660825c で proto と generated ファイルに追加された `BusRoute` を、GraphQLスキーマ (`schema.graphql`) と生成済みSDL (`src/schema.ts`) にも反映\n\n## Test plan\n- [ ] `npm run schema:generate` 等で再生成しても差分が出ないことを確認\n- [ ] スキーマが期待通りロードされることを確認\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n## リリースノート\n\n* **新機能**\n  * バス路線のサポートを追加し、アプリケーション内でバス路線タイプを区別して扱えるようになりました。\n\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/TrainLCD/BFF/pull/15)\n\n<!-- review_stack_entry_end -->\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->\n\n## Comment: coderabbitai[bot]\nhttps://github.com/TrainLCD/BFF/pull/15#issuecomment-4452828845\n\n\n<!-- This is an auto-generated comment: summarize by coderabbit.ai -->\nNo actionable comments were generated in the recent review. 🎉\n\n<details>\n<summary>ℹ️ Recent review info</summary>\n\n<details>\n<summary>⚙️ Run configuration</summary>\n\n**Configuration used**: Organization UI\n\n**Review profile**: CHILL\n\n**Plan**: Pro\n\n**Run ID**: `ed094388-f080-4e8a-83bd-d5804a537ab3`\n\n</details>\n\n<details>\n<summary>📥 Commits</summary>\n\nReviewing files that changed from the base of the PR and between cc71954b8747077a811e8048e0ac827626f3cc57 and 13872e53a72b29b2b556750d940744ee39513869.\n\n</details>\n\n<details>\n<summary>📒 Files selected for processing (2)</summary>\n\n* `schema.graphql`\n* `src/schema.ts`\n\n</details>\n\n</details>\n\n---\n<!-- walkthrough_start -->\n\n<details>\n<summary>📝 Walkthrough</summary>\n\n## Walkthrough\n\nGraphQL スキーマが拡張され、`TrainTypeKind` および `LineType` 列挙型に `BusRoute` という新しい値が追加されました。これにより、バス路線を GraphQL スキーマで表現できるようになります。\n\n## Changes\n\n**GraphQL スキーマ列挙型拡張**\n\n|Layer / File(s)|Summary|\n|---|---|\n|**Bus Route Type Support** <br> `schema.graphql`, `src/schema.ts`|`TrainTypeKind` と `LineType` 列挙型に `BusRoute` 値が追加され、GraphQL スキーマ定義全体でバス路線型がサポートされます。|\n\n## Possibly related PRs\n\n- [TrainLCD/BFF#14](https://github.com/TrainLCD/BFF/pull/14): このPRの GraphQL スキーマへの `BusRoute` 追加は、取得PR内のプロト更新における `TrainTypeKind` への `BusRoute = 7` 追加（および生成される型）と直接関連しています。\n\n## Poem\n\n> 🐰 バスも路線も仲間入り、\n> GraphQL スキーマは拡がった！\n> 電車だけじゃない、バスも走る、\n> 新しい型値で、さらに便利に 🚌\n\n🎯 1 (Trivial) | ⏱️ ~3 minutes\n\n</details>",
+    "metadata": {
+      "author": "TinyKitten",
+      "base_branch": "master",
+      "draft": false,
+      "head_branch": "chore/add-bus-route-to-graphql-schema",
+      "labels": [],
+      "merge_commit_sha": "8e94aaa51936ca42b2fd3633d3b3417cd104a926",
+      "merged_at": "2026-05-14T17:01:51Z",
+      "number": 15,
+      "release_status": "unknown",
+      "state": "closed",
+      "state_reason": null
+    },
+    "ordinal": 0,
+    "updated_at": "2026-05-14T17:01:54Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:0",
+    "source_id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "preprocessor/test_data/nagoya_city_bus/stops.txt",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/preprocessor/test_data/nagoya_city_bus/stops.txt",
+    "text": "stop_id,stop_code,stop_name,stop_desc,stop_lat,stop_lon,zone_id,stop_url,location_type,parent_station,platform_code\n01173301,,荒田,,35.24105,137.014094,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41441,0,,\n01173701,,荒田,,35.240758,137.013969,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41441,0,,\n02015303,,池下,,35.166933,136.947005,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_02015,0,,5\n02095301,,一社,,35.168458,136.9966,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_02095,0,,1\n021903S2,,今池,,35.169047,136.937673,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_02190,0,,2\n05052101,,大須赤門通,,35.160461,136.906031,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_05052,0,,1\n05058101,,大須万松寺通,,35.158371,136.905867,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_05058,0,,1\n05059501,,大須本町通,,35.159445,136.901766,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_05059,0,,1\n050600G1,,大曽根,,35.191716,136.937402,05060,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_05060,0,,\n050600G2,,大曽根,,35.191809,136.937483,05060,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_05060,0,,\n052622G1,,小幡緑地,,35.21881,136.982907,05262,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_05262,0,,\n052626G1,,小幡緑地,,35.218723,136.982907,05262,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_05262,0,,\n11010301,,覚王山,,35.166607,136.952383,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_11010,0,,1\n110681G1,,金屋,,35.202572,136.956696,11068,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41242,0,,\n110685G1,,金屋,,35.202494,136.956746,11068,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41242,0,,\n11151300,,上島,,35.236205,137.002469,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41442,0,,\n11151301,,上島,,35.236734,137.004265,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41442,0,,\n11151701,,上島,,35.236671,137.004784,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41442,0,,\n11151702,,上島,,35.236097,137.002762,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41442,0,,\n11152301,,上志段味,,35.253383,137.033942,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_11152,0,,1\n11152701,,上志段味,,35.253262,137.034138,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_11152,0,,2\n11175301,,上前津,,35.157587,136.904189,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_11175,0,,1\n11180301,,上社",
+    "metadata": {
+      "blob_sha": "00ec9a925c808354d8d1016bb712e5ea31fd79db",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "preprocessor/test_data/nagoya_city_bus/stops.txt"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T12:18:24.396Z"
+  },
+  {
+    "id": "TrainLCD/Website#186:5",
+    "source_id": "TrainLCD/Website#186",
+    "repo": "TrainLCD/Website",
+    "kind": "pr",
+    "title": "fix(lp): バス対応の文言を「都営バスのみ対応」に変更",
+    "url": "https://github.com/TrainLCD/Website/pull/186",
+    "text": "39f6n3/mgUC4E0UYtRISm5koeT4sqbGjg8bSVrQ2uChCyEEHgMNEmPWhtjRRBNAKgWe4TE83yPzDG6kGGluKIADwZOFcKUcHJigAGdUANByRsMaABbcwA0ZHrkdiuQAAHKAAuEwAu/KAB4oxBFscoxkAJ0ODokiAAhAhMbo8GsSLLKxKCqlUqp9WqjVWr556oALrlJLlUya99ZoLIaotFxJBZnzM6UCRVqz1nP02fcmQXVEp7P6gdIaxVJnqAefAWgiAHkZPHnQB50aSSFQMP0t5LQBCShaJKGUbyZQ8meTKNotA2jsltc87DbR43PJ8FKNAnRbUCA6GgJjDA+QykOZe+a4HIPQdg+ieDpUOP9N4I8tgFBSAPLBKIFZ0HEMcYMCcgwNRPpIFsHu1ZdAD1TKsPgUCdAbmQB8GgDwDxAVKcgCpxAAB5KQFAKCQaUBgAzRmTMkDM8p2gyyI04hVbZ8cANOyUAwMZmkHIDMnP1eZz6w8bC7XUHscCNArAUHcLgLwznjOmai4gWAvwPC0HUys2wGXXPuYs9iWgNhsAYG2Msmk9mm6IE2InVZBmwLYDc1FirVWMCpa8M16TbWKAdbK59br1XtjSAYPZ7gn4MADda74TLnXlNFwwCsugANEAOGkPVgz31RsxVAgtlZNhpAXC7AZo55maiKZqPdizUnVl1DQGwfbk3EDTfgLNg+UUWsrKBTd+76LaS4DhENkbQPlNZ24DFYLc39snfsCs77TJ6BQBVUoWL3TACYBMgBARBYBgC8FIDwX72moDICoeZGhAcPeU8wRK+30TOAwDiOn9PPoongDMYLHgTsvbe1wMbU2ZsI6B5Fh7d3OdPZWYLolwu+uAllxzh7IO6SIAhytznMO4fuJfPt2wCRAD9DIAEoYsqAGuGB0Rb4iGjSIAOAZqH80APAMeZihwKqIxBIgBuOXVI7QAd26ABC3NIgBja0AF0epRACzyoAAjNdKemDIjZGCZg0nzPmgQAzQx4UALsM8FACzDHhLKCRACEcoATtMLaAEsEwAFK5KJjFUBIgAOC0AMP6aRZYR5TAHCx+Zt1lbV4zpQzPWfs578DtkTAMB+CIH8BXhnlvD+U9z3nxmBeven59EJ6WJfD+l2r2X8v3tebAjiBKfnSCq+BxisHmuuDte12r3XmB9dOeF3UCCPhqv71jtPar9B1gJ2V7Ae5egPwLwBxCCEgCQYzbADkFxA/BrXEJgE/CcSAL4FHJEI/TzBgbzJuBQRAxgf7WnOfCzNkRAfADwPAA+fbBLE4GAzAw/RrQzfOJxQEN/UEObZAZgJAY4bApg5gOOCCRAdxRAHweQJgnA5QUgBOYg3LfLAgqHCzPvVfFnCgNnJuM/efezRffnf7PfYXDArAogTXTfIHbfYHXfFffbbFDbegLbHbGJf7NQizC/cHa/YbW/YHe/eHCg4XJHRAVAtHIEUQWKB4SADACCNbKwlAbbDrZAfjNkBg7/BgvgJxVAc4S4dJEgAAR2iM0AcM+gUIH2UKHzkK5w0PWCX20PMOF3CM2yiOkEHG22kEQCmWXge0l3uxMOUzMKFwsyszwE8S+CYCZD+1/TwMG0IPV0vy13GI8Mf0R3+2R1R05CaAYCCMBFCMgGqJ/1qJiMoGYN+EqUSIThSIuDJzZCyOkByPGPyOFyUJUKIFyIXzKK0Okx0Is1+FwCsx8AGMZBIGa1/XqIeG22aIl3MzPUO3DVwFsA+y+x+wN2F1tQ6DeTQHaGow6BlAw1eQYGeVtRlA6B5AwxlB8FoB5BUB+R5AdQxOeUY0lAYB8DRNoA6B8EFDaFtR8DeT5BICwzeQEB8DaBaGIw50+iO0hJsCV32xlBlFtT5DZNtVoD5BaBIDQxlDQFtRIDw0JKpM+VwylAYFoDeURJID5GeR5BpKlEIxVI6B5LaBVKw2IxIH5GwylDaGXl1UvREweTEwk1l2g0ExAwgEmgeR7DhEeQvxDNpFRHkzOWFLHGDNoEHFwDOzHn41oC03UBVWq1wBuT5FdJQ1A1GUDNWIQ1B0eV9L6VA3WCjj5yLI5Bg3AKQAPmrIjOQzOXRHsxoGNVuXlLeXZCMz5DAEtPNTAARIRLAE6CM1HO+R5DeQYFVI6BICIz1UvQrKC2M2rJoFrL/GOBfAeVLL0CAA -->\n\n<!-- internal state end -->\n\n## Review: coderabbitai[bot]\nhttps://github.com/TrainLCD/Website/pull/186#pullrequestreview-4464282347\n\nAPPROVED\n\n\n",
+    "metadata": {
+      "author": "TinyKitten",
+      "base_branch": "dev",
+      "draft": false,
+      "head_branch": "fix/lp-bus-support-wording",
+      "labels": [],
+      "merge_commit_sha": "348ad4fa28c6c5f9913a708a15c249f2013fe166",
+      "merged_at": "2026-06-10T03:44:38Z",
+      "number": 186,
+      "release_status": "unknown",
+      "state": "closed",
+      "state_reason": null
+    },
+    "ordinal": 5,
+    "updated_at": "2026-06-10T03:44:40Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:CONTRIBUTING.md:0",
+    "source_id": "TrainLCD/StationAPI:CONTRIBUTING.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "CONTRIBUTING.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/CONTRIBUTING.md",
+    "text": "# Contributing to StationAPI\n\nStationAPIへのコントリビュートに興味を持っていただきありがとうございます！\n\n## はじめに\n\nStationAPIは日本の鉄道駅・バス停の情報を提供する GraphQL API です。Cloudflare Workers 上で動きます。\nコード・データの両面でコントリビューションを歓迎しています。\n\n## 開発環境のセットアップ\n\n### 必要なツール\n\n- **Rust** (stable toolchain): `rustup default stable`\n- **wasm32 ターゲット**: `rustup target add wasm32-unknown-unknown`\n- **worker-build**: `cargo install worker-build --locked`\n- **wrangler** (ローカル実行・デプロイ用): `npm i -g wrangler`\n\nデータベースは不要です。データは `generated/*.csv` としてビルド時に WASM へ埋め込みます。\n\n### ローカルでの起動\n\n```bash\n\n\n# 1. Worker が読むデータを作る (data/*.csv と GTFS から組み立てる)\nmake data\n\n# 2. Worker をビルドしてローカルで動かす\nmake build\nmake dev        # http://127.0.0.1:8787\n```\n\n`generated/` が無いまま `make build` すると `data/*.csv` にフォールバックします。\nその場合は各駅停車の生成系統とバスのデータが欠けた状態になります (警告が出ます)。\n\nバスの一部フィードは `ODPT_ACCESS_TOKEN` を必要とします。設定が無い場合は\nトークン不要な都営バスだけが取り込まれます。鉄道だけで十分なときは\n`DISABLE_BUS_FEATURE=true make data` としてください。\n\n## コントリビューションの流れ\n\n### 1. Issueの確認・作成\n\n- 既存のIssueを確認し、重複がないか確認してください\n- 新しい機能やバグ修正に取り組む前に、Issueを作成して相談することをお勧めします\n\n### 2. ブランチの作成\n\n以下の命名規則に従ってブランチを作成してください：\n\n| 種類 | プレフィックス | 例 |\n|------|------------|-----|\n| 新機能 | `feature/` | `feature/add-route-sort` |\n| バグ修正 | `fix/` | `fix/station-query-error` |\n| データ変更 | `data/` | `data/update-numbering` |\n| 雑務 | `chore/` | `chore/update-deps` |\n| リリース | `release/` | `release/v1.2.0` |\n\n### 3. 変更の実装\n\n#### コード変更の場合\n\n- Rustの標準的なコーディング規約に従ってください\n- 新しいクエリを追加する場合は [AGENTS.md](AGENTS.md) のアーキテクチャパターンを参照してください\n- 公開スキーマを変える場合は `schema/public.graphql` も更新してください。\n  CI が Worker の SDL と突き合わせ、差分があれば失敗します\n\n#### データ変更の場合\n\n- データの構造については [data/README.md](data/README.md) を参照してください\n- CSVファイルは `data/` ディレクトリに `N!table.csv` の命名規則で配置されています\n- データバリデーションは `cargo run -p data_validator` で実行できます\n\n### 4. コミット前のチェック\n\nコミットする前に以下のチェックを必ず実行してください：\n\n```bash\nmake fmt      # フォーマットチェック\nmake clippy   # Lint (wasm32 ターゲットを含む)\nmake test     # テスト\n```\n\n### 5. Pull Requestの作成\n\n- `dev` ブランチに向けてPRを作成してください\n- PRテンプレートに従って説明を記入してください\n- 関連するIssueがあればリンクしてください\n\n## データコントリビューション\n\n鉄道データの修正・追加は特に歓迎しています。詳細は [data/README.md](data/README.md) を参照してください。\n\n## 質問・相談\n\n- [Discord コミュニティ](https://discord.gg/tsemdME9Nz)で質問やディスカッションができます\n- Issueでの質問も歓迎しています\n\n## ライセンス\n\nコントリビューションは本プロジェクトのライセンスに従います。\n",
+    "metadata": {
+      "blob_sha": "c35b686d89c24c0b3c91308c81d485cc26d4b60f",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "CONTRIBUTING.md"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T12:18:27.636Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:4",
+    "source_id": "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/cloudflare-workers-migration.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/cloudflare-workers-migration.md",
+    "text": "`GetRoutesMinimal` は、BFF のスキーマに対応するクエリがなく、どこからも\n呼ばれていなかったため削除しました。proto は submodule なので、\n[TrainLCD/gRPCProto#30](https://github.com/TrainLCD/gRPCProto/pull/30) で\n削除し、マージ済みです。\n\n---\n\n## 運用上の注意\n\n**データを更新するたびに再デプロイが必要です。** Worker はデータを WASM に\n埋め込んでいるため、`data/*.csv` や GTFS が変わったらビルドし直さなければ\nなりません。オンプレミス版のように、起動時の取り込みで自動的に反映される\nわけではありません。\n\n**環境の使い分け。** 他の Worker に揃えて、env を省略したときの環境を staging に\nしています。\n\n```text\nstaging : wrangler deploy --env=\"\"          -> stationapi-stg\n本番    : wrangler deploy --env production  -> stationapi\n```\n\nwrangler 4 は、複数の環境がある状態で `--env` を省略すると警告を出します。\nそのため staging にデプロイするときも `--env=\"\"` を明示します。\n\n現在は、デプロイ先をブランチで固定しています。`dev` への push で\n`deploy_staging.yml` が staging へ、`master` への push で `deploy_production.yml`\nが本番へデプロイします。手元からは `make deploy` (staging) と\n`make deploy-production` (本番) を使い、どちらも対応するブランチ以外からは\n実行できません。詳しくは [AGENTS.md](../AGENTS.md) の「Running and Deploying」を\n参照してください。\n\n**custom domain は二重に登録できません。** ドメインを別の Worker へ移すときは、\n先に元の Worker から外してデプロイしておく必要があります。\n\n---\n\n## 残作業\n\nいずれも完了しています。\n\n- [x] **[#1638](https://github.com/TrainLCD/StationAPI/issues/1638) 本番へ適用する** — 2026年8月27日にクローズ。現在は `deploy_production.yml` が `master` から本番へデプロイしている\n- [x] [#1636](https://github.com/TrainLCD/StationAPI/issues/1636) のパニックを修正する — #1640 で `build_route_tree_map` が `line_group_cd` を持たない駅を読み飛ばすようにした\n- [x] [#1637](https://github.com/TrainLCD/StationAPI/issues/1637) の取り込み時間 — PostgreSQL をやめたことで解消した (7 分半 → 7 秒)\n- [x] CI ワークフローを実行する — `build_worker.yml` と、デプロイ用の `deploy_staging.yml` / `deploy_production.yml` が稼働している。`ODPT_ACCESS_TOKEN` は `staging` / `production` の環境 Secret に設定してあり、デプロイ時は 1 つでも取り込めないフィードがあれば失敗する (`fail-on-missing-bus-feeds`)\n\n---\n\n## 追記: データパイプラインの純 Rust 化\n\ngRPC の削除にあわせて、PostgreSQL への取り込み時に行っていたデータ生成を\n`preprocessor` crate へ移しました。移植が正しいことは、**PostgreSQL 版が出力した\n`generated/*.csv` を正解データとして比較する**ことで確かめています。\n\n結果 (39,204 駅 / 1,601 路線 / 65,281 station_station_types):\n\n| テーブル | 結果 |\n|---|---|\n| companies / lines / aliases / line_aliases | **バイト単位で完全に一致** |\n| types | `id` 以外の全列が一致。8 行で `id` だけが異なる |\n| station_station_types | **2,587 系統すべてで停車順が一致** |\n| stations | `e_sort` 以外の全列が一致。バス停 273 件 (11 系統) で `e_sort` だけが異なる |\n\n違いはいずれも、**元の SQL が順序を決めていなかった箇所**から生じています。",
+    "metadata": {
+      "blob_sha": "2a4c9b6423f06dc0df1e9ea0895acbf81b681205",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/cloudflare-workers-migration.md"
+    },
+    "ordinal": 4,
+    "updated_at": "2026-11-12T12:18:24.657Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/calendar.txt:0",
+    "source_id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/calendar.txt",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "preprocessor/test_data/nagoya_city_bus/calendar.txt",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/preprocessor/test_data/nagoya_city_bus/calendar.txt",
+    "text": "service_id,monday,tuesday,wednesday,thursday,friday,saturday,sunday,start_date,end_date\n平日,1,1,1,1,1,0,0,20260328,20270430\n平日深夜,0,0,0,0,0,0,0,20260328,20270430\n",
+    "metadata": {
+      "blob_sha": "efbf9ad085583dac12fce43a06ab9e913a8c32b6",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "preprocessor/test_data/nagoya_city_bus/calendar.txt"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T12:18:29.453Z"
+  },
+  {
+    "id": "TrainLCD/Website#186:6",
+    "source_id": "TrainLCD/Website#186",
+    "repo": "TrainLCD/Website",
+    "kind": "pr",
+    "title": "fix(lp): バス対応の文言を「都営バスのみ対応」に変更",
+    "url": "https://github.com/TrainLCD/Website/pull/186",
+    "text": "## Changed files\nmodified: apps/lp/src/components/pages/FAQPage.tsx\nmodified: apps/lp/src/components/sections/ServiceArea.astro",
+    "metadata": {
+      "author": "TinyKitten",
+      "base_branch": "dev",
+      "draft": false,
+      "head_branch": "fix/lp-bus-support-wording",
+      "labels": [],
+      "merge_commit_sha": "348ad4fa28c6c5f9913a708a15c249f2013fe166",
+      "merged_at": "2026-06-10T03:44:38Z",
+      "number": 186,
+      "release_status": "unknown",
+      "state": "closed",
+      "state_reason": null
+    },
+    "ordinal": 6,
+    "updated_at": "2026-06-10T03:44:40Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/nearby-bus-stops.md:1",
+    "source_id": "TrainLCD/StationAPI:docs/nearby-bus-stops.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/nearby-bus-stops.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/nearby-bus-stops.md",
+    "text": "- **アルゴリズム**: haversine 公式 (地球を半径 6,371km の球とみなす)\n- **半径**: 300m (定数 `NEARBY_BUS_STOP_RADIUS_METERS`)\n- **基準点**: 取得した各鉄道駅の座標\n\n候補の検索は駅グループごとに代表の座標 1 点で行います。同じ駅グループでも\n路線ごとに座標が少しずつ違うため、検索半径は 300m に「代表の座標と各駅の座標の\n最大の隔たり」を足したものにしています。そのうえで、採用するかどうかは駅ごとの\n座標から 300m 以内かどうかで判定します。こうしないと、代表の座標からは半径の\n外でも、同じグループの別の駅からは内側にあるバス停を取りこぼします。\n\n## 使用例\n\n### 鉄道駅のみを取得\n\n```graphql\nquery {\n  stationGroupStations(groupId: 1130201, transportType: Rail) {\n    id\n    name\n    transportType\n  }\n}\n```\n\n### バス停のみを取得\n\n駅グループは鉄道とバスで分かれているため、バス停だけを探すときは座標や\n名前で検索します。\n\n```graphql\nquery {\n  stationsNearby(latitude: 35.619772, longitude: 139.728439, limit: 10, transportType: Bus) {\n    id\n    name\n    transportType\n  }\n}\n```\n\n### 鉄道駅と近傍のバス路線を取得 (未指定時と同じ)\n\n```graphql\nquery {\n  stationGroupStations(groupId: 1130201, transportType: RailAndBus) {\n    id\n    name\n    transportType\n    lines {\n      id\n      nameShort\n      transportType\n    }\n  }\n}\n```\n\n## 実装詳細\n\n### 関連ファイル\n\n- `schema/public.graphql`: 公開スキーマ\n- `src/graphql/query.rs`: GraphQL のリゾルバ。`to_filter` で `transportType` を\n  `TransportTypeFilter` に変換する\n- `stationapi/src/use_case/interactor/query.rs`: ビジネスロジック。駅の絞り込みと\n  近傍のバス路線の追加\n- `src/repository.rs`: 近傍のバス停の検索 (`get_bus_stops_near_stations`)\n- `src/index.rs`: グリッド索引による座標検索 (`within_radius`、`nearest`)\n\n### 定数\n\n```rust\n// stationapi/src/use_case/interactor/query.rs\nconst NEARBY_BUS_STOP_RADIUS_METERS: f64 = 300.0;\n```\n\n### ヘルパーメソッド\n\n```rust\n// stationapi/src/use_case/interactor/query.rs\n/// 駅に路線・事業者・駅番号・列車種別を付け、RailAndBus のときは近傍のバス路線を\n/// `lines` に加える\nasync fn update_station_vec_with_attributes_inner(\n    &self,\n    mut stations: Vec<Station>,\n    line_group_id: Option<u32>,\n    transport_type: TransportTypeFilter,\n    skip_types_join: bool,\n    prefetched_group_stations: Option<Vec<Station>>,\n) -> Result<Vec<Station>, UseCaseError>\n\n/// 駅グループの座標ごとに、半径内のバス停を近い順に最大 limit_per_station 件返す\nasync fn get_bus_stops_near_stations(\n    &self,\n    coords: &[(u32, f64, f64)],\n    limit_per_station: u32,\n    radius_meters: f64,\n) -> Result<Vec<(u32, Station)>, UseCaseError>\n```\n\nバス停の検索は `src/index.rs` の `within_radius` で行います。全件は走査せず、\nバス停だけを載せたグリッド索引 (`Grid`、緯度経度 0.05° 四方のマス) で半径の\n内側のマスだけを調べます。詳しくは\n[アーキテクチャドキュメントの「座標による検索」](./architecture.md#座標による検索)\nを参照してください。\n\n## バス停の `has_train_types`",
+    "metadata": {
+      "blob_sha": "26d03b82bd4b0200eab445582f56ee141ced8844",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/nearby-bus-stops.md"
+    },
+    "ordinal": 1,
+    "updated_at": "2026-11-12T12:18:28.796Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:1",
+    "source_id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "preprocessor/test_data/nagoya_city_bus/stops.txt",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/preprocessor/test_data/nagoya_city_bus/stops.txt",
+    "text": ",,35.173836,137.008491,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_11180,0,,5\n112581G1,,川宮,,35.210298,136.961992,11258,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41243,0,,\n112585G1,,川宮,,35.210267,136.962049,11258,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41243,0,,\n112603G1,,川村,,35.214226,136.968751,11260,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_11260,0,,\n112607G1,,川村,,35.214175,136.968759,11260,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_11260,0,,\n12076301,,吉根,,35.233649,136.999401,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41250,0,,\n12076701,,吉根,,35.233725,136.999763,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41250,0,,\n12077301,,吉根口,,35.229578,136.995829,12077,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41248,0,,\n12077701,,吉根口,,35.228268,136.994595,12077,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41248,0,,\n15033901,,高蔵寺,,35.263935,137.043378,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_15033,0,,降車\n15033902,,高蔵寺,,35.263935,137.043378,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_15033,0,,3\n210103S5,,栄,,35.169188,136.909675,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_21010,0,,12\n210105E2,,栄,,35.171308,136.908988,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_21010,0,,19\n21012102,,栄大津,,35.168137,136.906862,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_21012,0,,4\n21012503,,栄大津,,35.167951,136.907153,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_21012,0,,1\n22135301,,志段味交通広場,,35.249825,137.028265,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_22135,0,,3\n22135701,,志段味交通広場,,35.249645,137.028318,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=b_22135,0,,4\n22139301,,志段味支所北,,35.245496,137.019997,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41445,0,,\n22139701,,志段味支所北,,35.245238,137.019943,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41445,0,,\n22143301,,志段味西小学校,,35.238615,137.009707,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41452,0,,\n22143701,,志段味西小学校,,35.238569,137.010003,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41452,0,,\n22258301,,下島,,35.23172,136.997393,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41249,0,,\n22258701,,下島,,35.231659,136.997627,Z_210,https://map.kotsu.city.nagoya.jp/map/QR.jsp?from=g_41249,0,,\n224601W1,,白川通大津,,35.163",
+    "metadata": {
+      "blob_sha": "00ec9a925c808354d8d1016bb712e5ea31fd79db",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "preprocessor/test_data/nagoya_city_bus/stops.txt"
+    },
+    "ordinal": 1,
+    "updated_at": "2026-11-12T12:18:24.396Z"
+  },
+  {
+    "id": "TrainLCD/gRPCProto#23:0",
+    "source_id": "TrainLCD/gRPCProto#23",
+    "repo": "TrainLCD/gRPCProto",
+    "kind": "pr",
+    "title": "TrainTypeKindにBusRoute = 7追加",
+    "url": "https://github.com/TrainLCD/gRPCProto/pull/23",
+    "text": "https://github.com/TrainLCD/StationAPI/pull/1516\n\n## Changed files\nmodified: stationapi.proto",
+    "metadata": {
+      "author": "TinyKitten",
+      "base_branch": "main",
+      "draft": false,
+      "head_branch": "feature/add-bus-route-kind",
+      "labels": [],
+      "merge_commit_sha": "e688075c99566978d3bea9ebc0e7f7ac194b566a",
+      "merged_at": "2026-05-14T15:36:49Z",
+      "number": 23,
+      "release_status": "unknown",
+      "state": "closed",
+      "state_reason": null
+    },
+    "ordinal": 0,
+    "updated_at": "2026-05-14T15:36:52Z"
+  },
+  {
+    "id": "TrainLCD/Website#186:3",
+    "source_id": "TrainLCD/Website#186",
+    "repo": "TrainLCD/Website",
+    "kind": "pr",
+    "title": "fix(lp): バス対応の文言を「都営バスのみ対応」に変更",
+    "url": "https://github.com/TrainLCD/Website/pull/186",
+    "text": "<!-- pre_merge_checks_walkthrough_end -->\n<!-- finishing_touch_checkbox_start -->\n\n<details>\n<summary>✨ Finishing Touches</summary>\n\n<details>\n<summary>📝 Generate docstrings</summary>\n\n- [ ] <!-- {\"checkboxId\": \"7962f53c-55bc-4827-bfbf-6a18da830691\"} --> Create stacked PR\n- [ ] <!-- {\"checkboxId\": \"3e1879ae-f29b-4d0d-8e06-d12b7ba33d98\"} --> Commit on current branch\n\n</details>\n<details>\n<summary>🧪 Generate unit tests (beta)</summary>\n\n- [ ] <!-- {\"checkboxId\": \"f47ac10b-58cc-4372-a567-0e02b2c3d479\", \"radioGroupId\": \"utg-output-choice-group-unknown_comment_id\"} -->   Create PR with unit tests\n- [ ] <!-- {\"checkboxId\": \"6ba7b810-9dad-11d1-80b4-00c04fd430c8\", \"radioGroupId\": \"utg-output-choice-group-unknown_comment_id\"} -->   Commit unit tests in branch `fix/lp-bus-support-wording`\n\n</details>\n\n</details>\n\n<!-- finishing_touch_checkbox_end -->\n<!-- tips_start -->\n\n---\n\n\n<sub>Comment `@coderabbitai help` to get the list of available commands and usage tips.</sub>\n\n<!-- tips_end -->\n<!-- internal state start -->",
+    "metadata": {
+      "author": "TinyKitten",
+      "base_branch": "dev",
+      "draft": false,
+      "head_branch": "fix/lp-bus-support-wording",
+      "labels": [],
+      "merge_commit_sha": "348ad4fa28c6c5f9913a708a15c249f2013fe166",
+      "merged_at": "2026-06-10T03:44:38Z",
+      "number": 186,
+      "release_status": "unknown",
+      "state": "closed",
+      "state_reason": null
+    },
+    "ordinal": 3,
+    "updated_at": "2026-06-10T03:44:40Z"
+  },
+  {
+    "id": "TrainLCD/Website#186:4",
+    "source_id": "TrainLCD/Website#186",
+    "repo": "TrainLCD/Website",
+    "kind": "pr",
+    "title": "fix(lp): バス対応の文言を「都営バスのみ対応」に変更",
+    "url": "https://github.com/TrainLCD/Website/pull/186",
+    "text": "\n<!-- DwQgtGAEAqAWCWBnSTIEMB26CuAXA9mAOYCmGJATmriQCaQDG+Ats2bgFyQAOFk+AIwBWJBrngA3EsgEBPRvlqU0AgfFwA6NPEgQAfACgjoCEYDEZyAAUASpETZWaCrKPR1AGxJcAZvAAeABQe3ACUXIALDICdDIB/2oA7+oB2DIDhpoAAUYBJDIAwDIC/CYBtqtEJgP4M8YCwDIDWDICQmoAvZpCQBgByjgKUXACMABwAbDUGAKo2ADJcsLi43IgcAPQTROqw2AIaTMwT0FTwGP0AwgAiEwDqJAKI6iQT3NgeHhPtXbU9iM0w67IA0uo0WLUAyvjYFAwkSACKgYBiwXwBCYhMACbCIMAObjcfAUXBgADuKNo6yIkEASYQwZykXBAkFgrhKCTdL64ahwrj4bhkbqbCgkah0dCcSAAJgADDyOmA+UKWnzoHyAMwcAAsfI4PJ5AC0jIAgy0AgZEcAxQQBHpoANbWSKQy0UAkt4JQDfnoBVpUA0kaAVutSoB7BnigHUGQBmDIApBkAUQyAPwZANoMgGSGYppQCADLloo6Xa7ACIMgGiGQDKDIALBkAMgyAXHlAPEMMcAFhGAP+cKpVAJoMMcAQAxGKqAcO9AAJGWqgaCRiCh3AmiH+EyWyPIGFw9e4aFI9YAYgBBACKVl7JA0Xf8kEAKASQIfDjKASwYEoB72MAW76lSNR735wDSDIB8f+KCUAe2qAFW80pVAA2mJZrdYbTZbbfwHa7TdE4hf9a+lAk8ABg5smgWiILgFD4LOkD9FYCSAK0MgA/DIAywyxIAhjGAN0MgD1DIA7QyAOcMgDPDAkgAXNoAE4mBAAVC0oSXjepaVIAoYqAJ3agAQ/6kgCQ/9WkBRoAWgyADEMCSVoAQQwZN6gD6DOGgAmDFGroOmGUSFJGXrBoAugwJIAa3IJNEG4RnEbpen6/pFsUCZRoAYgw5nmJYGCpqkcbYkCADrygAIRoAQmYJIAGFGAJDxpQZIAfBuAGi7kAAOJkMoND0OisyQJsHhoNgShRYoJDHhhgA3DIAHQyAMMMgATDIAQgyepZ+jGOAUBkPQ+A+DgBDECFVBhQorDsFwvD8MIH6SNIQLyEwShUKo6haDohUmFAcCoKgmCVYQpDkLVnJLGwnZcFQ6L2I4zDOPIcgKD1KhqJo2i6GAhhFaYBi1mMD7NgwrYsO27DduOA4jmOpCTog/hagARN9BgWJAg4AJLVTNHL0A4TguPwFVgpgfZGAugBbDPBaUJBk8QboA3wzxIAFQyAFcMgBFDMUgDVDIAYwyAC0MuN0cua6btuu6Hse56pNRzrBtE8SlJJrrZHkclFHExR7uJGTWRpUQbg6gBU5iUCaAHBmbmFoxebOt6zoiUWgCu8r6rrBoAyfqAKbmqOACJJgDKCRuhSAOYMpoWja9pOjp0aAFYMUbFIAF6YJDmaSAHb+gCyDIA28aABIMqvq0Y5iWIOHg0LV8BfpABBx7AgJKAwMXR7H5WQCQ/jIqinIojw8weP+meduo8DSEYUCO86Rj9OsHUwxgpC0FwADULQTGALRGAAoqB8DrXV3WAmyf4kCtJA+D4KLcv0+DogY32fZXp3nfWISPtdz6vvWDxiDHGDfr+/4kIB7IgWB+BfT9f2A8DoWcuD62QxnjdwwYAAGP4UH+AFARf4EP6QDgkhVChE3Ik0ALUMUQsoW2DDEFCgA0TQTI7GM5tAA1UbLNIgBa30AIDGzpxLiTZnJeIgAR70AE9qmRZLyQdopUWmlNz2zdDuAMZRADuioAZXlABoyirNWRYDao2tlaO02lmHO2KG5QAD/EOkAFJKgATNMAKoMPFgxXmdFGQAhuaADe5QAG3I+zFvEJIpRfaB0AJEMPFoy7ksmHf6kdQoH2QPHXAidIDJ1TtQexUNM7ZxnnnPg5wBBFwYCXcQ4gK7akgNXWu9dkBvzoG3DuXde790HnNRKkBR7lwnlPGeXAACydB4COEXj9bUR0TolQwGVCqsUqrTQfvQeajV0loBWk/DanVtrKD6vtQaZThowAQMgcaWAalTRqqDeqC1uRKFpPALwDS0kBPwAwAA1qtCG8gQR9g6cPXqe0BqHWOgAbQAN6fS2SQAGtBPocHObDEgAB9FoABWBgABOZ5fI3mSjaHyBgMpPoABpPo9icTcz6a9LpPlui+e6ZxHoTAXC9CcU4gWfVAs4XAddyA3M6MC0q2KSC4o6MCtpLhwWACcowAyvoLnPAkQA1OaAD4dJI3s/as3ZnEKhvMaGAHh/6yUsZZulloALk9CyAAiGEyVReHqzRcPAAQh4ZZKzNi3S8P4dQshwWKvRJ9AAvoCs5FyrngouQ8nkPgGBtB8M8loAB2W1bQBBoDRaC2A4LIUbyujdZgd1Oy7zal+CY",
+    "metadata": {
+      "author": "TinyKitten",
+      "base_branch": "dev",
+      "draft": false,
+      "head_branch": "fix/lp-bus-support-wording",
+      "labels": [],
+      "merge_commit_sha": "348ad4fa28c6c5f9913a708a15c249f2013fe166",
+      "merged_at": "2026-06-10T03:44:38Z",
+      "number": 186,
+      "release_status": "unknown",
+      "state": "closed",
+      "state_reason": null
+    },
+    "ordinal": 4,
+    "updated_at": "2026-06-10T03:44:40Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:4",
+    "source_id": "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/gtfs-bus-integration-research.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/gtfs-bus-integration-research.md",
+    "text": "### 3.10 多言語対応の差異\n\n#### 現在の多言語フィールド\n\n```rust\nstation_name: String,              // 日本語\nstation_name_k: String,            // カタカナ\nstation_name_r: Option<String>,    // ローマ字\nstation_name_zh: Option<String>,   // 中国語\nstation_name_ko: Option<String>,   // 韓国語\n```\n\n#### GTFSの多言語対応\n\n- 翻訳は `translations.txt` で提供されるが、このファイル自体がオプショナルである。\n- 都営バスの GTFS にすべての言語が含まれる保証はない。\n\n#### 懸念点\n\n- 多言語データが欠けている場合の扱い (NULL を許容するか)。\n- 既存の言語サポートの水準とどう揃えるか。\n- ローマ字を自動生成するロジックを検討する必要がある。\n\n---\n\n### 3.11 「乗り換え」の複雑化\n\n#### 現在の接続モデル\n\n```sql\n-- connections テーブル\nstation_cd1  -- 駅コード1\nstation_cd2  -- 駅コード2\ndistance     -- 駅間距離（メートル）\n```\n\n#### バス導入後の複雑性\n\n| 乗り換えパターン | 現在 | バス導入後 |\n|-----------------|------|-----------|\n| 鉄道 ↔ 鉄道 | 対応済み | 継続 |\n| 鉄道 ↔ バス | - | **新規対応必要** |\n| バス ↔ バス | - | **新規対応必要** |\n\n#### 追加考慮事項\n\n- 徒歩圏内にあるバス停をまとめる\n- 時刻表に基づいて乗り換えられるかを判定する\n- 乗り換えにかかる時間を推定する\n- GTFS の `transfers.txt` を活用する\n\n---\n\n## 4. 対応アプローチ案\n\n### 4.1 アプローチ比較\n\n| アプローチ | 概要 | メリット | デメリット |\n|-----------|------|---------|-----------|\n| **A. 完全分離** | GTFS データを別の DB で管理し、API も分ける | 既存部分に影響しない。段階的に開発できる | コードが重複する。まとめて検索しにくい |\n| **B. 統合拡張** | 既存のスキーマを拡張し、統一した API で提供する | API が一本になる。乗換検索がしやすい | 大規模なリファクタリングが要る。複雑になる |\n| **C. アダプタ層** | GTFS 標準の形のまま保持し、変換層を設ける | GTFS 標準に準拠し、外部との互換性がある | 変換のオーバーヘッドがかかる |\n\n### 4.2 推奨アプローチ\n\n#### 段階的な統合拡張（B案のバリエーション）\n\n#### Phase 1: 基盤整備\n\n- transport_type を導入する (鉄道 = 0、バス = 1)\n- ID 体系の統一を検討する\n- GTFS のパーサーを実装する\n\n#### Phase 2: バス停留所の導入\n\n- stations テーブルを拡張する\n- 座標検索を最適化する\n- バス停用のインデックスを追加する\n\n#### Phase 3: 路線・時刻表の導入\n\n- GTFS のテーブル群を追加する\n- 時刻表を検索する API を追加する\n- 運行カレンダーに対応する\n\n#### Phase 4: 統合検索\n\n- 鉄道とバスをまたぐ乗換検索\n- 最適な経路の探索\n\n---\n\n## 5. まとめ\n\n### 主要懸念点\n\n1. **データモデルの拡張**: 時刻表・便・カレンダーという概念を加える必要がある\n2. **ID体系**: 数値と文字列の違いを吸収し、名前空間の衝突を避ける\n3. **データ量**: バス停の追加による DB の肥大化と性能の低下\n4. **API設計**: 後方互換性と新機能のバランス\n5. **更新運用**: GTFS データを定期的に取り込むパイプライン\n6. **乗り換え検索**: 鉄道とバスをまたぐ複雑な経路検索\n\n### 次のステップ\n\n1. 都営バス GTFS の実データを取得して分析する\n2. ID 体系の統一方針を決める\n3. スキーマ設計を詳細化する\n4. プロトタイプを実装して検証する\n\n---\n\n## 参考資料\n\n### GTFS関連\n\n- [GTFS.org - General Transit Feed Specification](https://gtfs.org/)\n- [GTFS Reference](https://gtfs.org/documentation/schedule/reference/)\n- [GTFS.JP - 標準的なバス情報フォーマット](https://www.gtfs.jp/)\n\n### 都営バス・東京交通データ\n\n- [公共交通オープンデータセンター (ODPT)](https://www.odpt.org/)\n- [東京公共交通オープンデータチャレンジ](https://tokyochallenge.odpt.org/)\n\n### 国土交通省",
+    "metadata": {
+      "blob_sha": "c01f19af15d9677821d94736654b87b2d302703c",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/gtfs-bus-integration-research.md"
+    },
+    "ordinal": 4,
+    "updated_at": "2026-11-12T12:18:15.687Z"
+  },
+  {
+    "id": "TrainLCD/Website#186:1",
+    "source_id": "TrainLCD/Website#186",
+    "repo": "TrainLCD/Website",
+    "kind": "pr",
+    "title": "fix(lp): バス対応の文言を「都営バスのみ対応」に変更",
+    "url": "https://github.com/TrainLCD/Website/pull/186",
+    "text": "| Project | Deployment | Actions | Updated (UTC) |\n| :--- | :----- | :------ | :------ |\n| [trainlcd-lp-stg](https://vercel.com/tinykitten/trainlcd-lp-stg) | ![Ready](https://vercel.com/static/status/ready.svg) [Ready](https://vercel.com/tinykitten/trainlcd-lp-stg/9ofkcWmJBS454xoBTtWxJWkDEaY1) | [Preview](https://trainlcd-lp-stg-git-fix-lp-bus-support-wording-tinykitten.vercel.app), [Comment](https://vercel.live/open-feedback/trainlcd-lp-stg-git-fix-lp-bus-support-wording-tinykitten.vercel.app?via=pr-comment-feedback-link) | Jun 10, 2026 3:42am |\n| [trainlcd-status-stg](https://vercel.com/tinykitten/trainlcd-status-stg) | ![Ready](https://vercel.com/static/status/ready.svg) [Ready](https://vercel.com/tinykitten/trainlcd-status-stg/KRXmAmnW62LTcYiQfxyfCYJQg5LB) | [Preview](https://trainlcd-status-stg-git-fix-lp-bus-support-wording-tinykitten.vercel.app), [Comment](https://vercel.live/open-feedback/trainlcd-status-stg-git-fix-lp-bus-support-wording-tinykitten.vercel.app?via=pr-comment-feedback-link) | Jun 10, 2026 3:42am |\n\n<a href=\"https://vercel.com/vercel-agent/request-review?owner=TrainLCD&repo=Website&pr=186\" rel=\"noreferrer\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://agents-vade-review.vercel.sh/request-review-dark.svg\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://agents-vade-review.vercel.sh/request-review-light.svg\"><img src=\"https://agents-vade-review.vercel.sh/request-review-light.svg\" alt=\"Request Review\"></picture></a>\n\n\n\n\n## Comment: coderabbitai[bot]\nhttps://github.com/TrainLCD/Website/pull/186#issuecomment-4666217008\n\n\n<!-- This is an auto-generated comment: summarize by coderabbit.ai -->\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/TrainLCD/Website/pull/186?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)\n\n<!-- review_stack_entry_end -->\nNo actionable comments were generated in the recent review. 🎉\n\n<details>\n<summary>ℹ️ Recent review info</summary>\n\n<details>\n<summary>⚙️ Run configuration</summary>\n\n**Configuration used**: Organization UI\n\n**Review profile**: CHILL\n\n**Plan**: Pro\n\n**Run ID**: `1218c745-6c1b-4efd-9c80-7b232007f645`\n\n</details>\n\n<details>\n<summary>📥 Commits</summary>",
+    "metadata": {
+      "author": "TinyKitten",
+      "base_branch": "dev",
+      "draft": false,
+      "head_branch": "fix/lp-bus-support-wording",
+      "labels": [],
+      "merge_commit_sha": "348ad4fa28c6c5f9913a708a15c249f2013fe166",
+      "merged_at": "2026-06-10T03:44:38Z",
+      "number": 186,
+      "release_status": "unknown",
+      "state": "closed",
+      "state_reason": null
+    },
+    "ordinal": 1,
+    "updated_at": "2026-06-10T03:44:40Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:README.md:2",
+    "source_id": "TrainLCD/StationAPI:README.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "README.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/README.md",
+    "text": "akyu Bus routes and stops use the [GTFS feed from Odakyu Bus Co., Ltd.](https://ckan.odpt.org/dataset/odakyu_bus_aii_lines)\n  ([Public Transportation Open Data Basic License](https://developer.odpt.org/terms/data_basic_license.html)), processed for TrainLCD.\n- Nishi Tokyo Bus routes and stops use the [GTFS feed from Nishi Tokyo Bus Co., Ltd.](https://ckan.odpt.org/dataset/nishi_tokyo_bus_nt_bus)\n  ([Public Transportation Open Data Basic License](https://developer.odpt.org/terms/data_basic_license.html)), processed for TrainLCD.\n- Minato Chiibus routes and stops use the [GTFS feed from Fuji Express](https://bus.fujikyu.co.jp/rosen/gtfs/)\n  ([CC BY](https://search.ckan.jp/datasets/catalog.data.metro.tokyo.lg.jp__dataset:t131032d0000000243)), processed for TrainLCD.\n- Each additional bus GTFS feed lists its data source and license in [`data/gtfs-feeds/`](data/gtfs-feeds/).\n- Gunma GTFS stop prefectures are assigned using [prefecture boundaries derived by Kyodo News](https://github.com/kyodo-official/japan-choropleth/tree/eccecca8f37d0569e13b56f62d71b137c75ea2f5)\n  from the MLIT [2025 administrative area dataset](https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2025.html) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)).\n- Some of the reference travel times in `travel_times/cases.csv` are derived from\n  the Toei Subway GTFS (Bureau of Transportation, Tokyo Metropolitan Government,\n  CC BY 4.0) and from the Tokyo Metro, Metropolitan Intercity Railway (Tsukuba\n  Express), Tokyo Waterfront Area Rapid Transit (Rinkai Line), and Tama Toshi\n  Monorail GTFS feeds published by the Public Transportation Open Data Center\n  under the Public Transportation Open Data Basic License.\n\n## Contributors ✨\n\nThanks goes to these wonderful people ([emoji key](https://allcontributors.org/emoji-key)):",
+    "metadata": {
+      "blob_sha": "50023f245d42083d49074eb365ef8e9347527e26",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "README.md"
+    },
+    "ordinal": 2,
+    "updated_at": "2026-11-12T12:18:27.455Z"
+  },
+  {
+    "id": "TrainLCD/BFF#14:0",
+    "source_id": "TrainLCD/BFF#14",
+    "repo": "TrainLCD/BFF",
+    "kind": "pr",
+    "title": "chore: TrainTypeKindにBusRouteを追加",
+    "url": "https://github.com/TrainLCD/BFF/pull/14",
+    "text": "## Summary\n- protoサブモジュールを更新し、`TrainTypeKind` に `BusRoute=7` を追加\n- それに伴う生成コード（`src/generated/stationapi.d.ts` / `stationapi.js`）の追従更新\n\n## Test plan\n- [ ] 生成コードがprotoの変更と整合しているか確認\n- [ ] 既存のTrainTypeKind値（0〜6）に影響がないか確認\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n## リリースノート\n\n* **Chores**\n  * 内部のプロトコル定義を更新しました。\n\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/TrainLCD/BFF/pull/14)\n\n<!-- review_stack_entry_end -->\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->\n\n## Comment: coderabbitai[bot]\nhttps://github.com/TrainLCD/BFF/pull/14#issuecomment-4452379402\n\n\n<!-- This is an auto-generated comment: summarize by coderabbit.ai -->\nNo actionable comments were generated in the recent review. 🎉\n\n<details>\n<summary>ℹ️ Recent review info</summary>\n\n<details>\n<summary>⚙️ Run configuration</summary>\n\n**Configuration used**: Organization UI\n\n**Review profile**: CHILL\n\n**Plan**: Pro\n\n**Run ID**: `62cef44e-c9ca-477a-a251-e3ade6239a19`\n\n</details>\n\n<details>\n<summary>📥 Commits</summary>\n\nReviewing files that changed from the base of the PR and between fb88657293a1371eb20535dc1163ad94c94f143c and 660825c59eba2a51e34628b6bc9b39040676d3c7.\n\n</details>\n\n<details>\n<summary>⛔ Files ignored due to path filters (2)</summary>\n\n* `src/generated/stationapi.d.ts` is excluded by `!**/generated/**`\n* `src/generated/stationapi.js` is excluded by `!**/generated/**`\n\n</details>\n\n<details>\n<summary>📒 Files selected for processing (1)</summary>\n\n* `proto`\n\n</details>\n\n</details>\n\n---\n<!-- walkthrough_start -->\n\n<details>\n<summary>📝 Walkthrough</summary>\n\n## Walkthrough\n\nこのプルリクエストは、`proto` サブプロジェクトの参照を新しいコミットに更新します。サブプロジェクトの更新により、リポジトリで使用される生成されたプロトコルバッファ定義が変わる可能性があります。\n\n## Changes\n\n**Proto サブプロジェクト更新**\n\n|Layer / File(s)|Summary|\n|---|---|\n|**Proto サブプロジェクト参照の更新** <br> `proto`|Proto サブプロジェクトが `5b54b5fbba06e3c45d4fbd06c084763f464f2561` から `e688075c99566978d3bea9ebc0e7f7ac194b566a` に更新されました。|\n\n## Estimated code review effort\n\n🎯 1 (Trivial) | ⏱️ ~2 minutes\n\n## Poem\n\n> 🐰 小さなプロト、更新されて、\n> 新しい定義を携えて、\n> サブプロジェクトの輝き増して、\n> コミットが一つ、道を示して。\n> 変わりゆくプロトコルのその先へ！\n\n</details>",
+    "metadata": {
+      "author": "TinyKitten",
+      "base_branch": "master",
+      "draft": false,
+      "head_branch": "chore/add-bus-route-schema",
+      "labels": [],
+      "merge_commit_sha": "cc71954b8747077a811e8048e0ac827626f3cc57",
+      "merged_at": "2026-05-14T16:05:30Z",
+      "number": 14,
+      "release_status": "unknown",
+      "state": "closed",
+      "state_reason": null
+    },
+    "ordinal": 0,
+    "updated_at": "2026-05-14T16:05:32Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md:0",
+    "source_id": "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md",
+    "text": "# 日本中央バス\n\nStationAPIの路線・停留所・運行パターンは、日本中央バス株式会社の[GTFSデータ](https://ckan.odpt.org/dataset/nippon_chuo_bus_maebashi_area)（[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.ja)）を加工して作成しています。\n\n[事業者が運休を案内している高速バス](https://ncb.jp/highway/info/)のうち、群馬～仙台線と東京・さいたま・群馬～富山・金沢線は取り込み対象から除外しています（2026-11-10確認）。\n",
+    "metadata": {
+      "blob_sha": "04eb329d9f5b6886bcd4594ce38fd07a2cad6d50",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T12:18:15.311Z"
+  },
+  {
+    "id": "TrainLCD/BFF#15:4",
+    "source_id": "TrainLCD/BFF#15",
+    "repo": "TrainLCD/BFF",
+    "kind": "pr",
+    "title": "chore: GraphQLスキーマのTrainTypeKindにBusRouteを追加",
+    "url": "https://github.com/TrainLCD/BFF/pull/15",
+    "text": "U2SklCQEgSaFQ9GTX2IUCp+mmoDZ2XAwbQ3hpLlG2ZFUO0RMTLMtgFBSCzKxM0sNsaSTxqGQYJoF0kC2E1c0ug2q2AqSsKGC0UymxKTuJs5dkBV2IAAPJSAoJ6cEZBD0RmPSQU9K7aCNKpJ6b6yKb1oFIPdFSlAgoeDpJyQ9Qy8VnourCmwWT1AAHVKwkCsBQdwuAvCPufa+89iA/DnFoBuppthMN2hfVB6itAuIYF2I0ukX6iCIC/KIJph7cBCTI2+kNVG0NeCY801j7HsMXQo1Rt0mJoqBT4yxrgT7SNCbNBgJpdB7qIAcNIOjh6rrybSrgKTGoHCy05VwAZZ6mhLqaBZ89M6mktDQGwTTYmPRekCp+eM/HsOWdOQyIzsZBOmYsxdbWrEgqBU01J+wTSvQ5HoFAZFShYPbUAJgEyAEBEFgGALwUgPBuvkKgMgKhHUaC2f5ldzBNqadShQDANFiuWZXf4eA8xgNSds/ZrgwmorOdivXSzkHLPmbq9BtzNm7MkE0zxn41nauDe5bgMoAnsAccG0FzA+CMCadsIAfoZAAlDIACYZADXDGIwAMAxYwiDjJIqR/o+w+SUX5VQY6AFgGf56NGHGOSIAbjlACBkYATodqiADgzQAXR6FEZkLRByC1UeYC2VpQFXnDVe+tNzzAQmCaUa0GMbMmsMlfPQ1prSkWujc01QjD/m+sWYG556zrWMfnpowwT9NEbK/tIIjgLs35tcDY4tyHK6Vshe6+1lo+AmzcTEBrCMlR1KIUm19Ug9BSKJyrJqJS2BcLvvp2xxnTBmckA0JAN4kXuDcEZ+rhn30FA68+sxorPPz0BEQPgDweABfnsQ+oH4pvNffWQBLvg+4Iyi8CsgTsqnGcTnssLxA8tEARnkPubXyhSB4Xt34DwllWelfK+1yr8OiAZ5x56PHHgCdtfPZ7+jnLSeQ4pwFqnhP2vbyU/QFTan7HDfz15ubPmudLc83ztbYXhsRai1yDoiUyg/F0gppvKBVOLeQHqAITZJfy5knGVAZwLjF3kkxG32OLrQ5pxdHPNXbcXVxxkfHw3qeaen8puf0g/yqekIgHduAesWbJ2Z/fdfS8XUvXgJrPrkwDkK5iPFbu5vvuzt3n5nVuev3qFu1uFogIbtFr8KIJNHcCFKaBkDPkgK3pAIvj8BLtxKvn7qNDwOcNlgEDvlSHvnAQflnueifgjmfhfs1tfvXjjngJehGG8CASQF+CPE/ncKpm/h/k0DimekatplSLYI5hJi7sJmgEmhGKmqmvSj0LyLQD2JKKoKofyAwF0BGHWiQJKJoQwEmsKAILQAIAqL2H2CYX2D0JKMYYskYcYXQC4asn2F0OWmNrIbgLYBNppj0BGM2mgBgUKCobyAqEmvWvyGgJKOmmKF0DhGgL0MYUKE+mgGKCQAII2rQLyEmtEUKLQFWlKGgCof4kmqmimloQIPXFIQmhABWCQOOpQFOtZmGsOn6q0ZarMrshPjGvSDQCMTyh2gYCMqxHIZgXQH+LgBqL4lGtuuoMitxO/hwPyM0REgMUMXcOMWMb0ftEAA -->\n\n<!-- internal state end -->\n\n## Review: coderabbitai[bot]\nhttps://github.com/TrainLCD/BFF/pull/15#pullrequestreview-4291818773\n\nAPPROVED\n\n\n\n\n## Changed files\nmodified: schema.graphql\nmodified: src/schema.ts",
+    "metadata": {
+      "author": "TinyKitten",
+      "base_branch": "master",
+      "draft": false,
+      "head_branch": "chore/add-bus-route-to-graphql-schema",
+      "labels": [],
+      "merge_commit_sha": "8e94aaa51936ca42b2fd3633d3b3417cd104a926",
+      "merged_at": "2026-05-14T17:01:51Z",
+      "number": 15,
+      "release_status": "unknown",
+      "state": "closed",
+      "state_reason": null
+    },
+    "ordinal": 4,
+    "updated_at": "2026-05-14T17:01:54Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/README.md:0",
+    "source_id": "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/README.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "preprocessor/test_data/nagoya_city_bus/README.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/preprocessor/test_data/nagoya_city_bus/README.md",
+    "text": "# 名古屋市バスのGTFS-JPテストデータ\n\n2026年3月28日改正版から、Ｃ－７５８、ゆとりーとライン、深夜１の検証に必要な行を抜粋しています。\n\n- 提供元は名古屋市交通局です。\n- [市バスGTFS-JPデータ（2026年3月28日改正）](https://data.bodik.jp/dataset/231002_7109030000_bus-gtfs-jp/resource/125a1d12-7df6-489c-abde-911856e05d1b)\n- [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)\n",
+    "metadata": {
+      "blob_sha": "bdfe43687daf642facd05d62ad5ff74e5646ad96",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "preprocessor/test_data/nagoya_city_bus/README.md"
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-12T12:18:17.513Z"
+  },
+  {
+    "id": "TrainLCD/StationAPI:docs/architecture.md:11",
+    "source_id": "TrainLCD/StationAPI:docs/architecture.md",
+    "repo": "TrainLCD/StationAPI",
+    "kind": "doc",
+    "title": "docs/architecture.md",
+    "url": "https://github.com/TrainLCD/StationAPI/blob/2de676a67968cf4367920f4b25cf0d75c92ecb2e/docs/architecture.md",
+    "text": "```bash\nmake deploy             # wrangler deploy --env=\"\"         -> stationapi-stg\nmake deploy-production  # wrangler deploy --env production -> stationapi\n```\n\nwrangler 4 は、複数の環境が定義されている状態で `--env` を省略すると警告を\n出します。そのため、staging にデプロイするときも `--env=\"\"` を明示しています。\n\n### 注意点\n\n- **データを更新するたびに再デプロイが必要。** データを WASM に埋め込んで\n  いるため\n- **custom domain は二重に登録できない。** ドメインを別の Worker に移すときは、\n  先に元の Worker から外してデプロイしておく必要がある\n- **`generated/` は git 管理外。** クローンした直後には存在しないので、\n  `make data` で生成する。存在しないまま `worker-build` を実行すると\n  `data/*.csv` にフォールバックし、各駅停車の系統とバスが欠けた状態で\n  ビルドされる (警告は出る)\n\n---\n\n## 関連ドキュメント\n\n- [Cloudflare Workers 移行の記録](./cloudflare-workers-migration.md)\n- [技術負債分析レポート](./technical_debt.md)\n- [近傍バス停検索機能](./nearby-bus-stops.md)\n- [乗換経路探索 (RAPTOR) の設計](./route-search.md)\n- [データ貢献ガイドライン](../data/README.md)\n\n### 名古屋市SRT\n\n名古屋市住宅都市局の[GTFS（2026年9月11日版）](https://ckan.odpt.org/dataset/nagoya_housing_city_planning_bureau_nagoya_srt_all_lines/resource/a7588aea-27fd-4962-b39a-912209f19a1b)を取り込みます。\n名駅－栄ルートと名駅－名城ルートはバスとして登録します。\n`nagoya_srt:` の接頭辞を使い、事業者コード256（名古屋市SRT）に割り当てます。\nGTFSの任意列の省略や列順の違いに対応するため、列名で読み込みます。\n停留所の翻訳と路線の英語名は `translations.txt` を使います。\nSRTの便区分（通常便など）は行先に使わず、循環便は路線名、その他は終点を使います。\n運行日と出発時刻は既存のバス取込と同様に判定しません。\n\n### 名古屋市バス\n\n名古屋市交通局の[市バスGTFS-JP（2026年3月28日改正）](https://data.bodik.jp/dataset/231002_7109030000_bus-gtfs-jp/resource/125a1d12-7df6-489c-abde-911856e05d1b)を取り込みます。\n`nagoya_city_bus:` の接頭辞を使い、事業者コード257（名古屋市バス）に割り当てます。\n`shape_id` が空なので `jp_pattern_id` で運行パターンを区別します。\n運行曜日も追加運行日も無い便は取り込みから外します。\n同じ系統・停留所のポールは、座標を保持したまま `stationTrainTypes` の候補をまとめます。\nGTFS の `platform_code` は停留所名と別に保持し、GraphQL の `Station.platformCode` と `StationNested.platformCode` で返します。\n親停留所にコードがない場合は、同じ系統で使う子停留所のコードがすべて一致するときに引き継ぎます。\n検索時の運行日や出発時刻は判定しません。\n\n### 北海道中央バス\n\n[HODAの北海道中央バスGTFS](https://ckan.hoda.jp/dataset/gtfs-data/resource/dbadfccc-670e-49b9-be77-c3f346ee3160)を取り込みます。\n`hokkaido_chuo:` の接頭辞を使い、事業者コード258、都道府県コード1に割り当てます。\n`shape_id` が空の便は `stop_sequence` 順の停留所ID列から運行パターンを作ります。\n同じ停留所を異なる順番で回る便を区別するため、このフィードでは停留所の集合によるパターンの統合を行いません。\n\n### 北海道高速バス\n\n[HODAの高速バスGTFS](https://ckan.hoda.jp/dataset/gtfs-data/resource/ccfd2358-c804-4cfe-b4fe-278c3f035c64)を、一般路線と別の `hokkaido_express:` 名前空間に取り込みます。\n`routes.txt` の `agency_id` で路線の事業者を決め、北海道中央バスは一般路線と同じ事業者コード258を使います。\n同じ路線に複数の事業者が共同運行で関わる場合も、配布データの路線と事業者の組をそのまま使います。\n未登録の `agency_id` がある場合はこのフィードの読み込みを失敗させ、デプロイ時に欠損を検出します。\n停留所の都道府県コードは1とし、一般路線と同様に停車順から運行パターンを作ります。",
+    "metadata": {
+      "blob_sha": "8b9c337c3c6bcd3baf8ab53fb4fb27e4683a4849",
+      "branch": "dev",
+      "commit": "2de676a67968cf4367920f4b25cf0d75c92ecb2e",
+      "path": "docs/architecture.md"
+    },
+    "ordinal": 11,
+    "updated_at": "2026-11-12T12:18:27.650Z"
+  },
+  {
+    "id": "TrainLCD/EvaluationPublic:population:0",
+    "source_id": "TrainLCD/EvaluationPublic:population",
+    "repo": "TrainLCD/EvaluationPublic",
+    "kind": "doc",
+    "title": "評価用・蒼海地域の交通事業者台帳",
+    "url": "https://example.invalid/evaluation/population",
+    "text": "架空の評価資料。2026年11月15日現在、蒼海地域の対象事業者は AO-01、AO-02、AO-03、AO-04 の4社。この地域における事業者の完全一覧である。単位は事業者。全国の一覧ではない。",
+    "metadata": {
+      "fixture_only": true
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-15T00:00:00Z"
+  },
+  {
+    "id": "TrainLCD/EvaluationPublic:supported:0",
+    "source_id": "TrainLCD/EvaluationPublic:supported",
+    "repo": "TrainLCD/EvaluationPublic",
+    "kind": "doc",
+    "title": "評価用・蒼海地域の有効化一覧",
+    "url": "https://example.invalid/evaluation/supported",
+    "text": "架空の評価資料。2026年11月15日現在、蒼海地域の本番有効化済み事業者は AO-01 と AO-03 の2社。これが有効化済み事業者の全件。AO-01を重複登録しても同じ事業者として扱う。データ保存と本番有効化は区別する。",
+    "metadata": {
+      "fixture_only": true
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-15T00:00:00Z"
+  },
+  {
+    "id": "TrainLCD/EvaluationPublic:historical:0",
+    "source_id": "TrainLCD/EvaluationPublic:historical",
+    "repo": "TrainLCD/EvaluationPublic",
+    "kind": "doc",
+    "title": "評価用・蒼海地域の過去の対応",
+    "url": "https://example.invalid/evaluation/historical",
+    "text": "架空の評価資料。2025年11月15日時点では蒼海地域で AO-01 のみが本番有効だった。2026年の状態を示す資料ではない。",
+    "metadata": {
+      "fixture_only": true
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-15T00:00:00Z"
+  },
+  {
+    "id": "TrainLCD/EvaluationPublic:unmerged:0",
+    "source_id": "TrainLCD/EvaluationPublic:unmerged",
+    "repo": "TrainLCD/EvaluationPublic",
+    "kind": "doc",
+    "title": "評価用・未公開の導入案",
+    "url": "https://example.invalid/evaluation/unmerged",
+    "text": "架空の評価資料。AO-04対応は未マージの提案で、本番有効化はしていない。2026年11月15日時点。",
+    "metadata": {
+      "fixture_only": true
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-15T00:00:00Z"
+  },
+  {
+    "id": "TrainLCD/EvaluationPrivate:private-orion:0",
+    "source_id": "TrainLCD/EvaluationPrivate:private-orion",
+    "repo": "TrainLCD/EvaluationPrivate",
+    "kind": "doc",
+    "title": "秘密の星雲モノレール",
+    "url": "https://example.invalid/evaluation/private-orion",
+    "text": "PRIVATE_ORION_MARKER 秘密の星雲モノレールの開通予定は2027年4月。非公開資料。",
+    "metadata": {
+      "fixture_only": true
+    },
+    "ordinal": 0,
+    "updated_at": "2026-11-15T00:00:00Z"
+  }
+]

@@ -1,0 +1,409 @@
+{
+  "version": 2,
+  "created_before_model_runs": true,
+  "reason": "Initial 20 heldout questions failed the unrelated-result gate and now serve as development evidence. These 20 new questions are fixed before the precision fix is evaluated. Same selection-biased corpus; not cross-domain generalization.",
+  "questions": [
+    {
+      "id": "A9",
+      "group": "A",
+      "split": "evaluation",
+      "query": "強制位置情報更新機能",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp#761:0"
+        ],
+        [
+          "TrainLCD/MobileApp#764:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp#761:0",
+        "TrainLCD/MobileApp#764:0"
+      ],
+      "fact": "要望761と実装764のリンクを回収する。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "A10",
+      "group": "A",
+      "split": "evaluation",
+      "query": "位置情報を手動で今すぐ取得し直す機能の提案と実装はどれ？",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp#761:0"
+        ],
+        [
+          "TrainLCD/MobileApp#764:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp#761:0",
+        "TrainLCD/MobileApp#764:0"
+      ],
+      "fact": "手動更新の要望と対応PRを言い換えて回収する。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "A11",
+      "group": "A",
+      "split": "evaluation",
+      "query": "GPXの水平精度の独自拡張",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp:docs/location-simulation.md:2"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp:docs/location-simulation.md:2",
+        "TrainLCD/MobileApp:docs/location-simulation.md:4"
+      ],
+      "fact": "trainlcd:accuracyはメートル単位の水平精度。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "A12",
+      "group": "A",
+      "split": "evaluation",
+      "query": "テスト走行のXMLに測位誤差をメートルで持たせるには？",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp:docs/location-simulation.md:2"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp:docs/location-simulation.md:2",
+        "TrainLCD/MobileApp:docs/location-simulation.md:4"
+      ],
+      "fact": "GPX標準hdopとは区別してextensionsの独自要素を使う。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "B9",
+      "group": "B",
+      "split": "evaluation",
+      "query": "ウィジェットの保存時刻はiOSとAndroidで単位が何倍違う？",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp:docs/home-screen-widgets.md:2"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:2"
+      ],
+      "fact": "iOSはUnix秒、AndroidはUnixミリ秒で1000倍。取得する根拠の評価であり算術機能の評価ではない。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "B10",
+      "group": "B",
+      "split": "evaluation",
+      "query": "背景測位のイベント履歴と受信・配信サンプルはそれぞれ何件まで残る？",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0"
+        ],
+        [
+          "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1"
+      ],
+      "fact": "イベント最大40件と受信・配信各最大40件を別区間から回収する。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "B11",
+      "group": "B",
+      "split": "evaluation",
+      "query": "FライナーGPXの最長欠測はETA棄却の90秒の保険を超える？",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp:docs/location-simulation.md:4"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp:docs/location-simulation.md:4",
+        "TrainLCD/MobileApp:docs/location-simulation.md:6",
+        "TrainLCD/MobileApp:docs/location-simulation.md:2",
+        "TrainLCD/MobileApp:docs/location-simulation.md:5",
+        "TrainLCD/MobileApp:docs/location-simulation.md:3"
+      ],
+      "fact": "最長327秒、90秒を超える区間5箇所と記載。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "B12",
+      "group": "B",
+      "split": "evaluation",
+      "query": "全国のバス対応率を計算するために、対応範囲と母数の根拠を確認したい",
+      "required_groups": [
+        [
+          "TrainLCD/StationAPI:docs/architecture.md:3"
+        ],
+        [
+          "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/BFF#14:0",
+        "TrainLCD/BFF#15:0",
+        "TrainLCD/StationAPI:CONTRIBUTING.md:0",
+        "TrainLCD/StationAPI:README.md:2",
+        "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md:0",
+        "TrainLCD/StationAPI:docs/architecture.md:0",
+        "TrainLCD/StationAPI:docs/architecture.md:1",
+        "TrainLCD/StationAPI:docs/architecture.md:11",
+        "TrainLCD/StationAPI:docs/architecture.md:12",
+        "TrainLCD/StationAPI:docs/architecture.md:2",
+        "TrainLCD/StationAPI:docs/architecture.md:3",
+        "TrainLCD/StationAPI:docs/architecture.md:5",
+        "TrainLCD/StationAPI:docs/architecture.md:7",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:0",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:2",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:4",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:1",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:2",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:3",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:4",
+        "TrainLCD/StationAPI:docs/nearby-bus-stops.md:0",
+        "TrainLCD/StationAPI:docs/nearby-bus-stops.md:1",
+        "TrainLCD/StationAPI:docs/nearby-bus-stops.md:2",
+        "TrainLCD/Website#186:0",
+        "TrainLCD/Website#186:2",
+        "TrainLCD/gRPCProto#23:0"
+      ],
+      "fact": "対応の定義・例示を回収する。全国母集団はこのコーパスに存在しない。割合は算出不能。",
+      "mandatory": true,
+      "mode": "normal"
+    },
+    {
+      "id": "C9",
+      "group": "C",
+      "split": "evaluation",
+      "query": "Issue #420 の長いトンネルで追跡が切れる問題への修正は？",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp#420:0"
+        ],
+        [
+          "TrainLCD/MobileApp#423:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp#420:0",
+        "TrainLCD/MobileApp#423:0"
+      ],
+      "fact": "Issue420とcloses420のPR423を回収する。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "C10",
+      "group": "C",
+      "split": "evaluation",
+      "query": "Androidのプリセットウィジェットはリサイズできる？",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp:docs/home-screen-widgets.md:2"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:2",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3"
+      ],
+      "fact": "AndroidはスクロールできるためresizeMode noneで2x2固定。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "C11",
+      "group": "C",
+      "split": "evaluation",
+      "query": "正方形レイアウトのETAが一部取れないときの表示は？",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+      ],
+      "fact": "一部未取得は--、全件未取得なら列非表示。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "C12",
+      "group": "C",
+      "split": "evaluation",
+      "query": "背景測位の診断でread-failedになっても他の診断項目はコピーできる？",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:1"
+      ],
+      "fact": "取得失敗と他の診断項目のコピー可否。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "D9",
+      "group": "D",
+      "split": "evaluation",
+      "query": "地下鉄の位置が暴れるIssue #1138では何が原因と推定され、PR #1145でどう変えた？",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp#1138:0"
+        ],
+        [
+          "TrainLCD/MobileApp#1145:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp#1138:0",
+        "TrainLCD/MobileApp#1145:0",
+        "TrainLCD/MobileApp#3:0"
+      ],
+      "fact": "原因推定と修正、解決の裏付けなしを区別する。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "D10",
+      "group": "D",
+      "split": "evaluation",
+      "query": "駅番号を持たない昔のウィジェット保存データはどう表示される？",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp:docs/home-screen-widgets.md:1"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:1",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:2",
+        "TrainLCD/MobileApp:docs/home-screen-widgets.md:3"
+      ],
+      "fact": "番号のない旧データは空欄で読み込み、番号が両方ない場合は最小幅を設けない。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "D11",
+      "group": "D",
+      "split": "evaluation",
+      "query": "GTFS導入の調査案と、実際に採用されたデータ統合方式は同じ？",
+      "required_groups": [
+        [
+          "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:3",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:0",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:2",
+        "TrainLCD/StationAPI:docs/architecture.md:3",
+        "TrainLCD/StationAPI:docs/architecture.md:0",
+        "TrainLCD/StationAPI:docs/architecture.md:2",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:2",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:1",
+        "TrainLCD/StationAPI:docs/architecture.md:5",
+        "TrainLCD/StationAPI:docs/architecture.md:1",
+        "TrainLCD/StationAPI:docs/architecture.md:7",
+        "TrainLCD/StationAPI:docs/architecture.md:12",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:4",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:4",
+        "TrainLCD/StationAPI:docs/architecture.md:11"
+      ],
+      "fact": "冒頭追記は案と実装が異なり、専用テーブルでなく既存テーブルへ投影したと説明。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "D12",
+      "group": "D",
+      "split": "evaluation",
+      "query": "2026年11月3日の通常測位10m制限の復活はAndroidにも適用された？",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp:docs/changelog.md:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp:docs/changelog.md:0",
+        "TrainLCD/MobileApp:docs/changelog.md:3",
+        "TrainLCD/MobileApp:docs/background-location-diagnostics.md:0"
+      ],
+      "fact": "iOS通常背景測位へ10mを復活。Androidと省電力オプションは維持。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "E9",
+      "group": "E",
+      "split": "evaluation",
+      "query": "Shorのアルゴリズムで量子フーリエ変換を使う証明を示して",
+      "required_groups": [],
+      "relevant_ids": [],
+      "fact": "コーパスに根拠なし。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "E10",
+      "group": "E",
+      "split": "evaluation",
+      "query": "星雲モノレールはいつ営業を始める予定？",
+      "required_groups": [],
+      "relevant_ids": [],
+      "fact": "非公開fixtureだけに根拠がある。",
+      "mandatory": true,
+      "mode": "normal"
+    },
+    {
+      "id": "E11",
+      "group": "E",
+      "split": "evaluation",
+      "query": "架空の蒼海地域の台帳の4社を、現実の全国の全事業者数として使える？",
+      "required_groups": [
+        [
+          "TrainLCD/EvaluationPublic:population:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/EvaluationPublic:population:0",
+        "TrainLCD/EvaluationPublic:supported:0"
+      ],
+      "fact": "架空・地域限定の台帳を現実の全国の母数へ置き換えない。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "E12",
+      "group": "E",
+      "split": "evaluation",
+      "query": "バス対応の網羅率を調べたい",
+      "required_groups": [],
+      "relevant_ids": [],
+      "fact": "不正応答を0件に変換しない境界対照。",
+      "mandatory": true,
+      "mode": "malformed"
+    }
+  ],
+  "label_correction": "A1/A2 remove phone-layout passage (PR #53 discussion_r4577037411). Coverage questions exclude test-only GTFS fixtures, deployment/checklist/changed-file-only and encoded state passages: they do not establish actual supported scope. Original annotations, queries and required groups retained in *-original.json; only relevance annotations corrected."
+}

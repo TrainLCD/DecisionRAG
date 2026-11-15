@@ -1,0 +1,412 @@
+{
+  "version": 4,
+  "created_before_model_runs": true,
+  "scope": "New questions fixed before two-role retrieval is evaluated. Some facts overlap; no document-level independence. Adds new fact-level questions and two coverage paraphrases.",
+  "questions": [
+    {
+      "id": "A25",
+      "group": "A",
+      "split": "evaluation",
+      "query": "線路長をN02から計算した値より優先する手動補正の登録先はどこ？",
+      "required_groups": [
+        [
+          "TrainLCD/StationAPI:docs/architecture.md:3"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/StationAPI:docs/architecture.md:3"
+      ],
+      "fact": "8!connections.csvの行が優先される。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "A26",
+      "group": "A",
+      "split": "evaluation",
+      "query": "東急バスのJSONを古いキャッシュで補える場合と、ODPTのトークンを空にした場合の違いは？",
+      "required_groups": [
+        [
+          "TrainLCD/StationAPI:docs/architecture.md:3"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/StationAPI:docs/architecture.md:3"
+      ],
+      "fact": "空文字列なら期限切れキャッシュを使わず取得を試みる。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "A27",
+      "group": "A",
+      "split": "evaluation",
+      "query": "バス由来のstation_cdとstation_g_cdは、ハッシュが衝突した場合も同じ処理ですか？",
+      "required_groups": [
+        [
+          "TrainLCD/StationAPI:docs/architecture.md:3"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/StationAPI:docs/architecture.md:3",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+      ],
+      "fact": "station_g_cd以外は次の空き値へずらし一意にする。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "A28",
+      "group": "A",
+      "split": "evaluation",
+      "query": "日本中央バスのGTFSにある路線を全部表示しない理由と対象路線は？",
+      "required_groups": [
+        [
+          "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md:0"
+      ],
+      "fact": "群馬仙台と東京さいたま群馬富山金沢を除外。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "B25",
+      "group": "B",
+      "split": "evaluation",
+      "query": "TrainLCDが全国のバスをカバーしている比率について、算出前に対応の定義を確認したい",
+      "required_groups": [
+        [
+          "TrainLCD/StationAPI:docs/architecture.md:3"
+        ],
+        [
+          "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/BFF#14:0",
+        "TrainLCD/BFF#15:0",
+        "TrainLCD/StationAPI:CONTRIBUTING.md:0",
+        "TrainLCD/StationAPI:README.md:2",
+        "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md:0",
+        "TrainLCD/StationAPI:docs/architecture.md:0",
+        "TrainLCD/StationAPI:docs/architecture.md:1",
+        "TrainLCD/StationAPI:docs/architecture.md:11",
+        "TrainLCD/StationAPI:docs/architecture.md:12",
+        "TrainLCD/StationAPI:docs/architecture.md:2",
+        "TrainLCD/StationAPI:docs/architecture.md:3",
+        "TrainLCD/StationAPI:docs/architecture.md:5",
+        "TrainLCD/StationAPI:docs/architecture.md:7",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:0",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:2",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:4",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:1",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:2",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:3",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:4",
+        "TrainLCD/StationAPI:docs/nearby-bus-stops.md:0",
+        "TrainLCD/StationAPI:docs/nearby-bus-stops.md:1",
+        "TrainLCD/StationAPI:docs/nearby-bus-stops.md:2",
+        "TrainLCD/Website#186:0",
+        "TrainLCD/Website#186:2",
+        "TrainLCD/gRPCProto#23:0"
+      ],
+      "fact": "対応の定義・例示を回収する。全国母集団はこのコーパスに存在しない。割合は算出不能。",
+      "mandatory": true,
+      "mode": "normal"
+    },
+    {
+      "id": "B26",
+      "group": "B",
+      "split": "evaluation",
+      "query": "バス対応率の分子を決めるには、どのデータが読み込まれずに欠けるかも確認したい",
+      "required_groups": [
+        [
+          "TrainLCD/StationAPI:docs/architecture.md:3"
+        ],
+        [
+          "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/BFF#14:0",
+        "TrainLCD/BFF#15:0",
+        "TrainLCD/StationAPI:CONTRIBUTING.md:0",
+        "TrainLCD/StationAPI:README.md:2",
+        "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md:0",
+        "TrainLCD/StationAPI:docs/architecture.md:0",
+        "TrainLCD/StationAPI:docs/architecture.md:1",
+        "TrainLCD/StationAPI:docs/architecture.md:11",
+        "TrainLCD/StationAPI:docs/architecture.md:12",
+        "TrainLCD/StationAPI:docs/architecture.md:2",
+        "TrainLCD/StationAPI:docs/architecture.md:3",
+        "TrainLCD/StationAPI:docs/architecture.md:5",
+        "TrainLCD/StationAPI:docs/architecture.md:7",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:0",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:2",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:4",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:1",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:2",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:3",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:4",
+        "TrainLCD/StationAPI:docs/nearby-bus-stops.md:0",
+        "TrainLCD/StationAPI:docs/nearby-bus-stops.md:1",
+        "TrainLCD/StationAPI:docs/nearby-bus-stops.md:2",
+        "TrainLCD/Website#186:0",
+        "TrainLCD/Website#186:2",
+        "TrainLCD/gRPCProto#23:0"
+      ],
+      "fact": "対応の定義・例示を回収する。全国母集団はこのコーパスに存在しない。割合は算出不能。",
+      "mandatory": true,
+      "mode": "normal"
+    },
+    {
+      "id": "B27",
+      "group": "B",
+      "split": "evaluation",
+      "query": "線路長を求められた駅間の件数と計算対象の全件数を比較する資料は？",
+      "required_groups": [
+        [
+          "TrainLCD/StationAPI:docs/architecture.md:3"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/StationAPI:docs/architecture.md:3"
+      ],
+      "fact": "約10400/11000という入力値。算術機能の検証ではない。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "B28",
+      "group": "B",
+      "split": "evaluation",
+      "query": "東京〜博多で線路データから得た距離と公称距離を比べたい。双方の値は？",
+      "required_groups": [
+        [
+          "TrainLCD/StationAPI:docs/architecture.md:3"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/StationAPI:docs/architecture.md:3"
+      ],
+      "fact": "1066kmと1069kmの比較入力。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "C25",
+      "group": "C",
+      "split": "evaluation",
+      "query": "名古屋市バス向けテストfixtureが扱う3系統を列挙して",
+      "required_groups": [
+        [
+          "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/README.md:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/README.md:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/routes.txt:0"
+      ],
+      "fact": "C758・ゆとりーとライン・深夜1の3系統。テストの質問ではテスト資料が正解。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "C26",
+      "group": "C",
+      "split": "evaluation",
+      "query": "Galaxy Z Flipのカバー画面から起動するためのdisplay IDは何番？",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp:docs/square-running-screen.md:0"
+      ],
+      "fact": "launchDisplayId=1。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "C27",
+      "group": "C",
+      "split": "evaluation",
+      "query": "GPXで測位を止める再生処理はAndroidのどの範囲の端末で実機検証されている？",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp:docs/location-simulation.md:6"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp:docs/location-simulation.md:6",
+        "TrainLCD/MobileApp:docs/location-simulation.md:4"
+      ],
+      "fact": "1機種の確認で全機種を保証しない。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "C28",
+      "group": "C",
+      "split": "evaluation",
+      "query": "PR #423による修正とIssue #420の症状を結び付けて調べたい",
+      "required_groups": [
+        [
+          "TrainLCD/MobileApp#420:0"
+        ],
+        [
+          "TrainLCD/MobileApp#423:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/MobileApp#420:0",
+        "TrainLCD/MobileApp#423:0"
+      ],
+      "fact": "closes420と長いトンネルでの位置追跡停止。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "D25",
+      "group": "D",
+      "split": "evaluation",
+      "query": "GTFS調査時のDB・RPC構成と、Cloudflare移行後の構成を区別して教えて",
+      "required_groups": [
+        [
+          "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0",
+          "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:0",
+          "TrainLCD/StationAPI:docs/architecture.md:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:0",
+        "TrainLCD/StationAPI:docs/architecture.md:0",
+        "TrainLCD/StationAPI:docs/cloudflare-workers-migration.md:2",
+        "TrainLCD/StationAPI:docs/architecture.md:1"
+      ],
+      "fact": "GraphQL/Workersへ移行して旧構成を廃止。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "D26",
+      "group": "D",
+      "split": "evaluation",
+      "query": "Website #186の都営バスのみという説明はStationAPI側の複数事業者対応と矛盾しない？",
+      "required_groups": [
+        [
+          "TrainLCD/Website#186:0"
+        ],
+        [
+          "TrainLCD/StationAPI:docs/architecture.md:2"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/Website#186:0",
+        "TrainLCD/Website#186:2",
+        "TrainLCD/StationAPI:docs/architecture.md:2",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0",
+        "TrainLCD/StationAPI:docs/architecture.md:11",
+        "TrainLCD/StationAPI:docs/architecture.md:12"
+      ],
+      "fact": "旧FAQと複数事業者を含む実装の不一致。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "D27",
+      "group": "D",
+      "split": "evaluation",
+      "query": "運休により日本中央バスの一部路線を除外した調査の日付は？",
+      "required_groups": [
+        [
+          "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md:0"
+      ],
+      "fact": "2026-11-10確認。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "D28",
+      "group": "D",
+      "split": "evaluation",
+      "query": "GTFSの運行日カレンダーは調査案に載っているだけか、本実装にも含まれるか？",
+      "required_groups": [
+        [
+          "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:0",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:1",
+        "TrainLCD/StationAPI:docs/gtfs-bus-integration-research.md:3"
+      ],
+      "fact": "実装ではcalendarの運行日管理は取り込んでいない。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "E25",
+      "group": "E",
+      "split": "evaluation",
+      "query": "カロンの鉱物組成の観測結果を教えて",
+      "required_groups": [],
+      "relevant_ids": [],
+      "fact": "根拠なし。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "E26",
+      "group": "E",
+      "split": "evaluation",
+      "query": "星雲モノレールの開通予定を公開情報で調べて",
+      "required_groups": [],
+      "relevant_ids": [],
+      "fact": "非公開fixtureのみ。公開検索へ出さない。",
+      "mandatory": true,
+      "mode": "normal"
+    },
+    {
+      "id": "E27",
+      "group": "E",
+      "split": "evaluation",
+      "query": "架空の蒼海地域4事業者という数字を、日本全国の総事業者数として使える？",
+      "required_groups": [
+        [
+          "TrainLCD/EvaluationPublic:population:0"
+        ]
+      ],
+      "relevant_ids": [
+        "TrainLCD/EvaluationPublic:population:0",
+        "TrainLCD/EvaluationPublic:supported:0"
+      ],
+      "fact": "架空地域限定で全国母集団ではない。",
+      "mandatory": false,
+      "mode": "normal"
+    },
+    {
+      "id": "E28",
+      "group": "E",
+      "split": "evaluation",
+      "query": "バスをどこまでカバーしているかの資料を検索して",
+      "required_groups": [],
+      "relevant_ids": [],
+      "fact": "上流停止を0件に変換しない対照。",
+      "mandatory": true,
+      "mode": "outage"
+    }
+  ],
+  "description": "Paraphrase holdout frozen before observing v8 results. Same corpus and facts; not unseen-document generalization."
+}
