@@ -1,0 +1,7 @@
+{
+  "name": "trainlcd-answer-topic-evaluation",
+  "main": "answer-topic-worker.js",
+  "compatibility_date": "2026-11-06",
+  "workers_dev": false,
+  "ai": { "binding": "AI" }
+}

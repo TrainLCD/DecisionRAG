@@ -6,6 +6,7 @@ on:
       - backend/src/instructions.txt
       - backend/src/writingGuide.txt
       - scripts/evaluate-answer-topic.mjs
+      - scripts/answer-topic-worker.*
       - test/fixtures/answer-topic/**
       - .github/workflows/answer-topic-evaluation.yml
 permissions:
@@ -23,11 +24,28 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - run: npm ci
       - name: Compare baseline and candidate on fixed evidence
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: node scripts/evaluate-answer-topic.mjs
+        run: |
+          npx --no-install wrangler dev --remote --config scripts/answer-topic-worker.json --ip 127.0.0.1 --port 8799 > /tmp/answer-topic-worker.log 2>&1 &
+          worker_pid=$!
+          trap 'kill "$worker_pid" 2>/dev/null || true' EXIT
+          ready=false
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail http://127.0.0.1:8799/health; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != true ]; then
+            echo "Evaluation Worker did not become ready"
+            exit 1
+          fi
+          ANSWER_EVALUATION_URL=http://127.0.0.1:8799/run node scripts/evaluate-answer-topic.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
