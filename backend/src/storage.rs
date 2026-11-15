@@ -563,6 +563,22 @@ fn semantic_candidates(passages: &[Value]) -> Result<(Vec<Value>, Vec<usize>)> {
     Ok((candidates, parents))
 }
 
+// Restore original passage order for equal scores after the source-ordered
+// Markdown scan. Stable sorting also preserves unit order within a passage.
+fn sort_semantic_rows(rows: &mut [Value], parents: &[usize]) {
+    rows.sort_by(|a, b| {
+        b["score"]
+            .as_f64()
+            .unwrap()
+            .total_cmp(&a["score"].as_f64().unwrap())
+            .then_with(|| {
+                let a = s(a, "id").parse::<usize>().unwrap();
+                let b = s(b, "id").parse::<usize>().unwrap();
+                parents[a].cmp(&parents[b])
+            })
+    });
+}
+
 /// Semantic selection runs once over all selected evidence units before pagination.
 pub async fn rank_semantic(
     judge: &crate::judge::Judge<'_, impl Host>,
@@ -599,7 +615,7 @@ pub async fn rank_semantic(
     if candidates.is_empty() {
         return Ok(Vec::new());
     }
-    let rows = judge
+    let mut rows = judge
         .score(
             query,
             &candidates,
@@ -611,6 +627,7 @@ pub async fn rank_semantic(
             traces,
         )
         .await?;
+    sort_semantic_rows(&mut rows, &parents);
     if let Some(trace) = traces.last_mut() {
         let mut selected = HashSet::new();
         trace["selected"] = json!(
@@ -651,6 +668,36 @@ pub async fn rank_semantic(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn semantic_ties_preserve_original_passage_order() {
+        let passages = vec![
+            json!({"source_id":"b","ordinal":0,"text":"B"}),
+            json!({"source_id":"a","ordinal":0,"text":"A"}),
+            json!({"source_id":"c","ordinal":0,"text":"C"}),
+        ];
+        let (candidates, parents) = semantic_candidates(&passages).unwrap();
+        assert_eq!(parents, vec![1, 0, 2]);
+        let mut rows: Vec<_> = candidates
+            .iter()
+            .map(|c| json!({"id":c["id"],"score":0.9}))
+            .collect();
+        sort_semantic_rows(&mut rows, &parents);
+        assert_eq!(
+            rows.iter()
+                .map(|r| parents[s(r, "id").parse::<usize>().unwrap()])
+                .collect::<Vec<_>>(),
+            vec![0, 1, 2]
+        );
+        rows[2]["score"] = json!(0.95);
+        sort_semantic_rows(&mut rows, &parents);
+        assert_eq!(
+            rows.iter()
+                .map(|r| parents[s(r, "id").parse::<usize>().unwrap()])
+                .collect::<Vec<_>>(),
+            vec![2, 0, 1]
+        );
+    }
+
     #[test]
     fn inference_units_preserve_every_byte_and_separate_sections() {
         let text = format!(

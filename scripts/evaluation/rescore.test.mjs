@@ -52,3 +52,29 @@ test('same recall count does not permit changing the identity of required facts'
     assert.throws(()=>f.run(),/Required facts/);
   } finally {rmSync(f.dir,{recursive:true,force:true});}
 });
+
+test('correction rejects removing the last relevant required fact', () => {
+  const f=fixture();
+  try {
+    f.annotations.questions[0].relevant_ids=['phone'];
+    writeFileSync(f.questions,JSON.stringify(f.annotations));
+    assert.throws(()=>f.run(),/Each required group/);
+  } finally {rmSync(f.dir,{recursive:true,force:true});}
+});
+
+test('correction permits removing one alternative while retaining a relevant required fact', () => {
+  const f=fixture();
+  try {
+    const original=JSON.parse(readFileSync(f.original));
+    original.questions[0].required_groups=[['watch','phone']];
+    const bytes=JSON.stringify(original);
+    writeFileSync(f.original,bytes);
+    const report=JSON.parse(readFileSync(f.input));
+    report.questions_sha256=createHash('sha256').update(bytes).digest('hex');
+    writeFileSync(f.input,JSON.stringify(report));
+    f.annotations.questions[0].required_groups=[['watch','phone']];
+    writeFileSync(f.questions,JSON.stringify(f.annotations));
+    f.run();
+    assert.equal(JSON.parse(readFileSync(f.output)).results[0].unrelated_at_10,0.5);
+  } finally {rmSync(f.dir,{recursive:true,force:true});}
+});

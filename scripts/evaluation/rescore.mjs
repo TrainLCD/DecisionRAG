@@ -20,6 +20,7 @@ if (questions.size !== originals.size) throw Error('Question set cannot change d
 for (const [id, q] of questions) {
   const original = originals.get(id);
   if (!original || ['query', 'mode', 'mandatory', 'required_groups'].some(key => JSON.stringify(q[key]) !== JSON.stringify(original[key]))) throw Error('Required facts and question contracts cannot change during annotation correction');
+  if (q.required_groups.some(g => !g.some(id => q.relevant_ids.includes(id)))) throw Error('Each required group needs at least one relevant id');
   if (q.relevant_ids.some(id => !original.relevant_ids.includes(id))) throw Error('This correction only removes false relevance');
 }
 for (const row of report.results) {
