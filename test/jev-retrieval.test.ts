@@ -139,10 +139,52 @@ test('answer SSE keeps semantic sources even when generation is unavailable', as
     const response = await f.request({ query: 'バス対応の網羅率' }, '/answer', true);
     assert.equal(response.status, 200);
     const wire = await response.text();
+    assert.ok(wire.indexOf('event: sources') >= 0);
     assert.ok(wire.indexOf('event: sources') < wire.indexOf('event: result'));
     const result = JSON.parse(wire.split('event: result\ndata: ')[1]!.trim());
     assert.equal(result.hit_count, 2);
     assert.equal(result.status, 'generation_unavailable');
     assert.equal(result.retrieval, 'jev-semantic-v1');
+  } finally { restore(); f.sqlite.close(); }
+});
+
+test('empty-result expansion reuses document decisions and still returns a legitimate empty result', async () => {
+  const f = await setup();
+  let screenedDocuments = 0;
+  let scoredPassages = 0;
+  const restore = mockFetch((_url, init) => {
+    const body = JSON.parse(String(init?.body));
+    const entries = Object.keys(body.state.candidates);
+    const documentStage = Object.values<any>(body.questions)[0].instructions.includes('Could this document');
+    if (documentStage) screenedDocuments += entries.length;
+    else scoredPassages += entries.length;
+    return Response.json({ model: 'jev-1.14.0', answers: Object.fromEntries(entries.map(id => [id, { type: 'noul', noul: 0.01 }])), usage: { input_tokens: 10, output_tokens: 1 } });
+  });
+  try {
+    const response = await f.request({ query: '資料にない話題' });
+    assert.equal(response.status, 200);
+    const result: any = await response.json();
+    assert.equal(result.status, 'empty');
+    assert.equal(result.hit_count, 0);
+    assert.equal(screenedDocuments, 43, 'Each document must be screened only once');
+    assert.equal(scoredPassages, 30 + 43, 'The wider passage scan must actually run');
+    assert.equal(result.trace.filter((t: any) => t.stage === 'document_screening').length, 1);
+  } finally { restore(); f.sqlite.close(); }
+});
+
+test('large candidate descriptions fail during collection before sending any model request', async () => {
+  const f = await setup(0);
+  const insert = f.sqlite.prepare("INSERT INTO sources(id,repo,kind,title,url,body,metadata,updated_at) VALUES(?,'TrainLCD/App','doc','長い文書','https://example.test',?,'{}','2026-11-15')");
+  const body = '文'.repeat(4000);
+  f.sqlite.exec('BEGIN');
+  for (let i = 0; i < 1000; i++) insert.run(`large${i}`, body);
+  f.sqlite.exec('COMMIT');
+  let calls = 0;
+  const restore = mockFetch(() => { calls++; throw Error('must reject before inference'); });
+  try {
+    const response = await f.request({ query: '文書の網羅率' });
+    assert.equal(response.status, 422);
+    assert.equal((await response.json() as any).error, 'decision_candidate_budget_exceeded');
+    assert.equal(calls, 0);
   } finally { restore(); f.sqlite.close(); }
 });

@@ -10,6 +10,7 @@ pub const MODEL: &str = "jev-1.14.0";
 // The service remains authoritative about tokenization; never truncate a candidate.
 const MAX_BYTES: usize = 24_000;
 const MAX_CALLS: usize = 512;
+pub const MAX_CANDIDATE_BYTES: usize = 8_000_000;
 const MAX_TOTAL_BYTES: usize = 8_000_000;
 const CONCURRENCY: usize = 4;
 const DEADLINE_MS: f64 = 120_000.;

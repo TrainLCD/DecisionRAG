@@ -208,11 +208,14 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
             measured.storage_ms(),
         ));
     }
-    let mut ids = if let Some(previous) = &previous {
-        array(&previous["ids"])?
-            .iter()
-            .map(|v| v.as_str().unwrap().to_string())
-            .collect()
+    let plan = if let Some(previous) = &previous {
+        storage::SearchPlan {
+            ids: array(&previous["ids"])?
+                .iter()
+                .map(|v| v.as_str().unwrap().to_string())
+                .collect(),
+            expanded_ids: Vec::new(),
+        }
     } else {
         storage::plan(
             h,
@@ -225,6 +228,7 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
         )
         .await?
     };
+    let mut ids = plan.ids;
     let mut passages = storage::passages(h, &ids, scope.as_ref()).await?;
     let order: HashMap<_, _> = ids
         .iter()
@@ -243,16 +247,7 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
     {
         let mut found = storage::rank_semantic(judge, query, &passages, &mut traces).await?;
         if found.is_empty() && ids.len() >= 30 {
-            let mut expanded = storage::plan(
-                h,
-                query,
-                scope.as_ref(),
-                (max, 120),
-                Some(judge),
-                &vocabulary,
-                &mut traces,
-            )
-            .await?;
+            let mut expanded = plan.expanded_ids;
             for id in &ids {
                 if !expanded.contains(id) {
                     expanded.push(id.clone());

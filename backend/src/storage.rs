@@ -188,6 +188,10 @@ pub async fn purge(h: &impl Host, repo: &str) -> Result<()> {
     .await?;
     Ok(())
 }
+pub struct SearchPlan {
+    pub ids: Vec<String>,
+    pub expanded_ids: Vec<String>,
+}
 pub async fn plan(
     h: &impl Host,
     query: &str,
@@ -196,7 +200,7 @@ pub async fn plan(
     judge: Option<&crate::judge::Judge<'_, impl Host>>,
     vocabulary: &[Value],
     traces: &mut Vec<Value>,
-) -> Result<Vec<String>> {
+) -> Result<SearchPlan> {
     let (max, seed_limit) = limits;
     let start = now();
     let measured = TimedDbHost::new(h);
@@ -205,6 +209,7 @@ pub async fn plan(
     let mut candidates = Vec::new();
     let mut scored = Vec::new();
     let mut semantic_candidates = Vec::new();
+    let mut candidate_bytes = 0usize;
     loop {
         let sql = format!(
             "SELECT s.id,s.kind,s.title,s.metadata, CASE WHEN s.kind='doc' THEN substr(s.body,1,1400)||' … '||substr(s.body,max(1,length(s.body)/4),400)||' … '||substr(s.body,max(1,length(s.body)/2),400)||' … '||substr(s.body,max(1,3*length(s.body)/4),400)||' … '||substr(s.body,-400) ELSE substr(s.body,1,480) END AS introduction, substr(s.body,1,60)||' … '||substr(s.body,max(1,length(s.body)/2-20),40)||' … '||substr(s.body,-40) AS sample FROM sources s JOIN repositories r ON s.repo=r.repo WHERE {} AND (s.kind<>'pr' OR instr(s.body,char(10)||'PENDING'||char(10))=0) AND s.id>? ORDER BY s.id LIMIT ?",
@@ -229,6 +234,12 @@ pub async fn plan(
         after = next;
         let descriptions:Vec<_>=rows.iter().map(|r|json!({"id":r["id"],"description":format!("{}\n{} ({})\n{}\nBody excerpts: {}\n{}",s(r,"title"),s(r,"id"),s(r,"kind"),s(r,"metadata"),s(r,"sample"),s(r,"introduction"))})).collect();
         if judge.is_some() {
+            for description in &descriptions {
+                candidate_bytes = candidate_bytes.saturating_add(description.to_string().len());
+                if candidate_bytes > crate::judge::MAX_CANDIDATE_BYTES {
+                    return Err(Error::new(422, "decision_candidate_budget_exceeded"));
+                }
+            }
             semantic_candidates.extend(descriptions);
         } else {
             for chunk in descriptions.chunks(64) {
@@ -296,7 +307,21 @@ pub async fn plan(
             measured.storage_ms(),
         ));
     }
-    Ok(ids)
+    // Reuse this search's document decisions when widening the passage scan.
+    // Re-scoring the same documents wastes the request budget and can change
+    // the candidate population merely because the model is nondeterministic.
+    let expanded_ids = if judge.is_some() {
+        let expanded = decision(
+            json!({"op":"select_scored","candidates":candidates,"scores":scored,"limit":120}),
+        )?;
+        array(&expanded["ids"])?
+            .iter()
+            .filter_map(|v| v.as_str().map(String::from))
+            .collect()
+    } else {
+        Vec::new()
+    };
+    Ok(SearchPlan { ids, expanded_ids })
 }
 pub async fn passages(h: &impl Host, ids: &[String], scope: Option<&Scope>) -> Result<Vec<Value>> {
     if ids.is_empty() {
