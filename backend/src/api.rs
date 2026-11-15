@@ -186,6 +186,13 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
     {
         return Err(Error::new(409, "search_results_changed"));
     }
+    if semantic
+        && previous
+            .as_ref()
+            .is_some_and(|p| p["answer_mode"].as_bool().unwrap_or(false) != (path == "/answer"))
+    {
+        return Err(Error::new(409, "search_results_changed"));
+    }
     let semantic_judge = if semantic {
         Some(judge::Judge::new(h, c)?)
     } else {
@@ -274,7 +281,13 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
     }
     let revision = digest(
         serde_json::to_string(&if semantic {
-            json!([passages, engine, semantic_judge.as_ref().unwrap().model()])
+            json!([
+                passages,
+                engine,
+                semantic_judge.as_ref().unwrap().model(),
+                crate::aggregate::REGISTRY,
+                storage::scope_params(scope.as_ref())
+            ])
         } else {
             json!([passages, vocabulary])
         })
@@ -321,10 +334,21 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
         storage::rank(query, &passages, &page, &vocabulary, &mut traces)?
     };
     let hit_count = if semantic { all.len() } else { evidence.len() };
+    let aggregation = if let Some(previous) = &previous {
+        previous["aggregation"].clone()
+    } else if path == "/answer" {
+        if let Some(judge) = &semantic_judge {
+            crate::aggregate::resolve(judge, scope.as_ref(), query, &mut traces).await?
+        } else {
+            Value::Null
+        }
+    } else {
+        Value::Null
+    };
     let mut pagination = Value::Null;
     if paginated {
         let next = if offset + size < all.len() {
-            json!(cursor::encode(h,&json!({"query":query,"scope":scope_key,"ids":ids,"offset":offset+size,"revision":revision,"engine":engine,"results":frozen,"expires":previous.as_ref().map(|p|p["expires"].clone()).unwrap_or(json!(now()+15.*60000.))}),&c.api_token).await?)
+            json!(cursor::encode(h,&json!({"query":query,"scope":scope_key,"ids":ids,"offset":offset+size,"revision":revision,"engine":engine,"results":frozen,"aggregation":aggregation,"answer_mode":path == "/answer","expires":previous.as_ref().map(|p|p["expires"].clone()).unwrap_or(json!(now()+15.*60000.))}),&c.api_token).await?)
         } else {
             Value::Null
         };
@@ -340,13 +364,15 @@ async fn search(h: &impl Host, c: &Config, request: &Value, path: &str) -> Resul
             p["text_html"] = json!(markup);
         }
     }
-    let mut state = json!({"query":query,"evidence":evidence,"hit_count":hit_count,"retrieval":engine,"retrieval_details":{"engine":engine,"coverage":"bounded","cached":previous.is_some()},"pagination":pagination,"trace":traces,"start":start,"timings":{"scope_ms":scope_ms,"storage_ms":storage_ms.max(0.),"model_ms":0,"generation_ms":0,"retrieval_ms":now()-start}});
+    let mut state = json!({"query":query,"aggregation":aggregation,"evidence":evidence,"hit_count":hit_count,"retrieval":engine,"retrieval_details":{"engine":engine,"coverage":"bounded","cached":previous.is_some()},"pagination":pagination,"trace":traces,"start":start,"timings":{"scope_ms":scope_ms,"storage_ms":storage_ms.max(0.),"model_ms":0,"generation_ms":0,"retrieval_ms":now()-start}});
     if path == "/answer" && s(&request["headers"], "accept").contains("text/event-stream") {
         return Ok(
             json!({"stream":true,"state":state,"status":200,"headers":{"Content-Type":"text/event-stream; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}}),
         );
     }
-    let result = if path == "/answer" {
+    let result = if !state["aggregation"].is_null() {
+        crate::aggregate::answer(&state["aggregation"])
+    } else if path == "/answer" {
         answer::answer(h, c, query, &evidence, false, &mut traces).await?
     } else {
         json!({"status":if evidence.is_empty(){"empty"}else{"retrieved"}})
@@ -406,6 +432,9 @@ fn finish(mut state: Value, result: Value) -> Value {
     if !state["pagination"].is_null() {
         out["pagination"] = state["pagination"].clone();
     }
+    if !state["aggregation"].is_null() {
+        out["aggregation"] = state["aggregation"].clone();
+    }
     out["elapsed_ms"] = json!(now() - state["start"].as_f64().unwrap_or(now()));
     out["retrieval"] = state["retrieval"].clone();
     out["retrieval_details"] = state["retrieval_details"].clone();
@@ -415,15 +444,19 @@ fn finish(mut state: Value, result: Value) -> Value {
 pub async fn stream(h: &impl Host, c: &Config, mut state: Value) -> Result<()> {
     h.call("emit",json!({"event":"sources","data":{"evidence":state["evidence"],"hit_count":state["hit_count"],"pagination":state["pagination"],"elapsed_ms":now()-state["start"].as_f64().unwrap_or(now())}})).await?;
     let mut traces = array(&state["trace"])?.clone();
-    let result = answer::answer(
-        h,
-        c,
-        s(&state, "query"),
-        array(&state["evidence"])?,
-        true,
-        &mut traces,
-    )
-    .await?;
+    let result = if !state["aggregation"].is_null() {
+        crate::aggregate::answer(&state["aggregation"])
+    } else {
+        answer::answer(
+            h,
+            c,
+            s(&state, "query"),
+            array(&state["evidence"])?,
+            true,
+            &mut traces,
+        )
+        .await?
+    };
     state["trace"] = json!(traces);
     h.call(
         "emit",

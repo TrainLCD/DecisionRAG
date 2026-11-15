@@ -67,5 +67,12 @@ try{
  assert.doesNotMatch(await answerPanel.textContent(), /removed ticket summary|各チケットの要約/);
  assert.equal(searches,3,'Draft rendering must not search or regenerate');
  await page.evaluate(result=>renderResult(result,'answer','draft links'),result);
+ // Structured insufficiency must remain visible after sources -> result and paging.
+ const aggregationResult={...result,status:'insufficient_evidence',answer:'公開GTFS提供バス事業者の完全な母集団が確定していないため、対応率は算出できません。',answer_html:undefined,aggregation:{status:'missing_population',value:null,source_refs:[]}};
+ await page.evaluate(data=>{renderAnswerProgress('sources',data,'網羅率');renderResult(data,'answer','網羅率');},aggregationResult);
+ assert.match(await answerPanel.textContent(),/完全な母集団/);
+ await next.click();assert.match(await answerPanel.textContent(),/算出できません/);
+ assert.equal(searches,3,'Aggregation paging does not invoke retrieval or generation');
+ await page.screenshot({path:'test-results/aggregation-missing-population.png',fullPage:true});
  assert.deepEqual(errors,[]);await writeFile('test-results/browser.json',JSON.stringify({backend:'Rust/WASM',hits:result.hit_count,per_page:10,pagination_requests:0,errors},null,2));console.log('Browser passed: real Rust/WASM, SSE, totals, 10 per page, no regeneration, empty result.');
 }catch(error){await mkdir('test-results',{recursive:true});await page?.screenshot({path:'test-results/failure.png',fullPage:true}).catch(()=>{});throw error;}finally{await browser?.close();server.kill();}

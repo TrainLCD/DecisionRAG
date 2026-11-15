@@ -248,3 +248,103 @@ test('real Rust ingestion and retrieval retain fence and heading scope across sa
     assert.deepEqual(f.sqlite.prepare("SELECT id,text FROM passages WHERE source_id='TrainLCD/App:scope.md' ORDER BY ordinal").all(), stored);
   } finally {restore(); f.sqlite.close();}
 });
+
+function aggregationDecisions(body: any, intent = true, metric = true) {
+  const result = decisions(body);
+  const questions = JSON.stringify(body.questions);
+  if (questions.includes('numeric count, percentage')) {
+    for (const value of Object.values(result.answers)) value.noul = intent ? 0.99 : 0.01;
+  } else if (questions.includes('precisely the metric')) {
+    for (const value of Object.values(result.answers)) value.noul = metric ? 0.99 : 0.01;
+  }
+  return result;
+}
+
+test('aggregation cannot turn retrieved feeds into an operator denominator; JSON and SSE agree', async () => {
+  const f = await setup(2);
+  const restore = mockFetch((_url, init) => Response.json(aggregationDecisions(JSON.parse(String(init?.body)))));
+  try {
+    const query = '公開GTFSを提供する日本のバス事業者のうち本番配信中の割合は？';
+    const json: any = await (await f.request({query}, '/answer')).json();
+    assert.equal(json.hit_count, 3);
+    assert.equal(json.aggregation.status, 'missing_population');
+    assert.equal(json.aggregation.value, null);
+    assert.equal(json.aggregation.denominator, null);
+    assert.equal(json.aggregation.missing_requirements.length, 2);
+    assert.equal(json.status, 'insufficient_evidence');
+    assert.match(json.answer, /算出できません/);
+    assert.ok(!json.trace.some((t: any) => t.stage === 'generate_answer'));
+    const wire = await (await f.request({query}, '/answer', true)).text();
+    assert.ok(wire.indexOf('event: sources') < wire.indexOf('event: result'));
+    const streamed = JSON.parse(wire.split('event: result\ndata: ')[1]!.trim());
+    assert.deepEqual(streamed.aggregation, json.aggregation);
+    assert.equal(streamed.answer, json.answer);
+    assert.equal(streamed.evidence.length, 3);
+    assert.ok(!wire.includes('event: draft'), 'No unchecked numeric prose is streamed');
+  } finally {restore(); f.sqlite.close();}
+});
+
+test('aggregation survives continuation without model calls and cannot cross endpoints', async () => {
+  const f = await setup(); let calls = 0;
+  const restore = mockFetch((_url, init) => {calls++; return Response.json(aggregationDecisions(JSON.parse(String(init?.body))));});
+  try {
+    const query = '公開GTFSの本番対応事業者の割合';
+    const first: any = await (await f.request({query,paginated:true}, '/answer')).json();
+    const initialCalls = calls;
+    const second: any = await (await f.request({query,paginated:true,cursor:first.pagination.next_cursor}, '/answer')).json();
+    assert.deepEqual(second.aggregation, first.aggregation);
+    assert.equal(calls, initialCalls);
+    assert.equal(second.hit_count, 42);
+    const wrong = await f.request({query,paginated:true,cursor:first.pagination.next_cursor}, '/search');
+    assert.equal(wrong.status, 409);
+  } finally {restore(); f.sqlite.close();}
+});
+
+test('ambiguous quantitative questions retain evidence and request a definition', async () => {
+  const f = await setup(1);
+  const restore = mockFetch((_url, init) => Response.json(aggregationDecisions(JSON.parse(String(init?.body)), true, false)));
+  try {
+    const response: any = await (await f.request({query:'バス対応の網羅率'}, '/answer')).json();
+    assert.equal(response.aggregation.status, 'needs_clarification');
+    assert.equal(response.aggregation.value, null);
+    assert.equal(response.evidence.length, 2);
+  } finally {restore(); f.sqlite.close();}
+});
+
+test('non-numeric answers keep the existing generation behavior', async () => {
+  const f = await setup(1);
+  const restore = mockFetch((_url, init) => Response.json(aggregationDecisions(JSON.parse(String(init?.body)), false)));
+  try {
+    const response: any = await (await f.request({query:'バス対応の仕組みを説明して'}, '/answer')).json();
+    assert.equal(response.status, 'generation_unavailable');
+    assert.equal(response.aggregation, undefined);
+    assert.equal(response.evidence.length, 2);
+  } finally {restore(); f.sqlite.close();}
+});
+
+test('aggregation model failure remains an explicit error', async () => {
+  const f = await setup(1);
+  const restore = mockFetch((_url, init) => {
+    const body = JSON.parse(String(init?.body));
+    if (JSON.stringify(body.questions).includes('numeric count, percentage')) return new Response('', {status:503});
+    return Response.json(decisions(body));
+  });
+  try { assert.equal((await f.request({query:'バス対応の網羅率'}, '/answer')).status, 502); }
+  finally {restore(); f.sqlite.close();}
+});
+
+test('unsupported quantitative domains do not silently become bus coverage', async () => {
+  const f = await setup(1);
+  const restore = mockFetch((_url, init) => {
+    const body = JSON.parse(String(init?.body));
+    const result = aggregationDecisions(body, true, false);
+    if (JSON.stringify(body.questions).includes('after clarifying')) for (const value of Object.values(result.answers)) value.noul = 0.01;
+    return Response.json(result);
+  });
+  try {
+    const response: any = await (await f.request({query:'駅の数は何件ですか'}, '/answer')).json();
+    assert.equal(response.aggregation.status, 'unsupported_metric');
+    assert.equal(response.aggregation.value, null);
+    assert.match(response.answer, /未登録/);
+  } finally {restore(); f.sqlite.close();}
+});

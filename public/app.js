@@ -523,9 +523,24 @@ function renderResult(data, mode, query) {
     panel.hidden = false;
     const hasAnswer = ["answered", "summarized"].includes(data.status);
     panel.append(element("h3", "", hasAnswer ? "質問への回答" : label[0]));
-    panel.append(hasAnswer && typeof data.answer === "string"
+    panel.append((hasAnswer || data.aggregation) && typeof data.answer === "string"
       ? linkAnswerCitations(markdownContent(data.answer, data.answer_html))
       : element("p", "", hasAnswer ? "資料から質問への回答を確認できませんでした。検索結果の本文をご確認ください。" : label[1]));
+  }
+  if (data.aggregation && Array.isArray(data.aggregation.source_refs)) {
+    const panel = $("answer-panel");
+    for (const ref of data.aggregation.source_refs) {
+      let url;
+      try {
+        const parsed = new URL(ref);
+        if (parsed.protocol !== "https:" || parsed.username || parsed.password) continue;
+        url = parsed.href;
+      } catch { continue; }
+      if (!url) continue;
+      const link = element("a", "", "集計の出典");
+      link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer";
+      const row = element("p", ""); row.append(link); panel.append(row);
+    }
   }
   renderEvidencePage();
   const trace = Array.isArray(data.trace) ? data.trace : [];

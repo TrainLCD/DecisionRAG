@@ -1,3 +1,4 @@
+pub mod aggregate;
 pub mod answer;
 pub mod api;
 pub mod cursor;
