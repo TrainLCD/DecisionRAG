@@ -28,6 +28,8 @@ for (const q of questions.filter(q => (split === 'all' || q.split === split) && 
   }
   const selected = new Set(); const db = f.env.DB;
   f.env.DB = { ...db, prepare(sql) { const stmt = db.prepare(sql); const bind = stmt.bind.bind(stmt); stmt.bind = (...values) => { if (sql.includes('FROM passages') && sql.includes('json_each(?)')) { try { const ids = JSON.parse(values[0]); if (Array.isArray(ids)) for (const id of ids) selected.add(id); } catch {} } return bind(...values); }; return stmt; } };
+  const requiredSources = q.required_groups.flat().map(id => corpus.find(p => p.id === id)?.source_id).filter(Boolean);
+  const decisionSamples = [];
   let modelCalls=0, leaked=false; const usage = new UsageLedger();
   const restore = mockFetch(async (url, init) => {
     if (url.startsWith('https://api.github.com/')) return Response.json(publicRepos.map(full_name => ({full_name, private:false, visibility:'public'})));
@@ -40,6 +42,15 @@ for (const q of questions.filter(q => (split === 'all' || q.split === split) && 
     try { response = await transport(proxy+'/judge', { method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:init.body,signal:AbortSignal.timeout(40000) }); }
     catch (error) { usage.failure(); throw error; }
     await usage.response(response);
+    if (q.mandatory && q.mode === 'normal' && response.ok) {
+      const request = JSON.parse(String(init.body));
+      const reply = await response.clone().json();
+      for (const [id, description] of Object.entries(request.state.candidates)) {
+        if (requiredSources.some(source => String(description).includes(`source=${source};`))) {
+          decisionSamples.push({candidate: description, score: reply.answers?.[id]?.noul ?? null});
+        }
+      }
+    }
     return response;
   });
   const start=performance.now();
@@ -52,5 +63,6 @@ for (const q of questions.filter(q => (split === 'all' || q.split === split) && 
     const fault=q.mode!=='normal';
     const record={id:q.id,group:q.group,split:q.split,query:q.query,run,engine,status:response.status,error:data.error??null,model_calls:modelCalls,leaked,elapsed_ms:performance.now()-start,hits:data.hit_count??null,ids,required_count:q.required_groups.length,recalled_count:q.required_groups.length-missing.length,missing:missingStages,unrelated_at_10:top.length?falseTop.length/top.length:0,unrelated_ids:falseTop,empty_with_evidence:q.required_groups.length>0&&response.status===200&&data.hit_count===0,mandatory:q.mandatory,mode:q.mode,control_pass: fault ? engine==='jev'&&response.status===502&&data.hit_count===undefined : null,...usage.snapshot()};
     report.results.push(record); console.log(JSON.stringify(record));
+    if (missing.length && q.mandatory) console.log(JSON.stringify({diagnostic_question:q.id,run,decision_samples:decisionSamples}));
   } finally {restore();f.sqlite.close();writeFileSync('evaluation-results/'+split+'.json',JSON.stringify(report,null,2)+'\n');}
 }

@@ -167,7 +167,7 @@ test('empty-result expansion reuses document decisions and still returns a legit
     assert.equal(result.status, 'empty');
     assert.equal(result.hit_count, 0);
     assert.equal(screenedDocuments, 43, 'Each document must be screened only once');
-    assert.equal(scoredPassages, 2 * (30 + 43), 'The wider scan must judge the title and body units of each passage');
+    assert.equal(scoredPassages, 30 + 43, 'The wider scan must judge each short passage with its source header');
     assert.equal(result.trace.filter((t: any) => t.stage === 'document_screening').length, 1);
   } finally { restore(); f.sqlite.close(); }
 });

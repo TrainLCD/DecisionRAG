@@ -483,7 +483,17 @@ fn semantic_candidates(passages: &[Value]) -> Result<(Vec<Value>, Vec<usize>)> {
         let mut units = evidence_units(s(p, "text"));
         // A title is a source-level fact, not evidence in every body fragment.
         if p["ordinal"] == 0 {
-            units.insert(0, format!("Source title: {}", s(p, "title")));
+            let header = format!(
+                "Source header: {}\nIdentity: {}\nMetadata: {}\n",
+                s(p, "title"),
+                s(p, "source_id"),
+                p["metadata"]
+            );
+            if let Some(first) = units.first_mut() {
+                first.insert_str(0, &header);
+            } else {
+                units.push(header);
+            }
         }
         for unit in units.into_iter().filter(|unit| !unit.trim().is_empty()) {
             let description = format!(
@@ -594,7 +604,10 @@ mod tests {
         ];
         let (candidates, parents) = semantic_candidates(&passages).unwrap();
         assert_eq!(parents, vec![0, 1]);
-        assert!(s(&candidates[0], "description").ends_with("Source title: Feature added"));
+        assert!(
+            s(&candidates[0], "description")
+                .contains("Evidence to judge:\nSource header: Feature added")
+        );
         assert!(s(&candidates[1], "description").ends_with("Evidence to judge:\nopaque payload"));
     }
     #[test]
