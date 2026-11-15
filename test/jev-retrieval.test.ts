@@ -369,3 +369,23 @@ test('search cursor can enter answer mode once and then freezes metric decisions
     assert.equal(calls,classified);
   } finally {restore(); f.sqlite.close();}
 });
+
+test('public repository membership invalidates cursors even when selected passages are unchanged', async () => {
+  const f = await setup(); let publicRepos = ['TrainLCD/App']; let calls = 0;
+  const restore = mockFetch((url, init) => {
+    if (url.includes('api.github.com')) return Response.json(publicRepos.map(full_name=>({full_name,private:false,visibility:'public'})));
+    calls++;
+    return Response.json(aggregationDecisions(JSON.parse(String(init?.body))));
+  });
+  try {
+    const query='公開GTFSの本番対応事業者の割合';
+    const first: any = await (await f.request({query,paginated:true,include_feedback:false}, '/answer')).json();
+    assert.ok(first.pagination.next_cursor);
+    const before=calls;
+    publicRepos.push('TrainLCD/NewlyPublic');
+    const response=await f.request({query,paginated:true,include_feedback:false,cursor:first.pagination.next_cursor}, '/answer');
+    assert.equal(response.status,409);
+    assert.equal((await response.json() as any).error,'search_results_changed');
+    assert.equal(calls,before);
+  } finally {restore();f.sqlite.close();}
+});
