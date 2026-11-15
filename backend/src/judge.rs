@@ -22,6 +22,7 @@ pub struct Judge<'a, H> {
     start: f64,
     calls: Cell<usize>,
     bytes: Cell<usize>,
+    premises_needed: Cell<Option<bool>>,
 }
 pub fn enabled(c: &Config) -> Result<bool> {
     match c.retrieval_engine.as_str() {
@@ -41,6 +42,7 @@ impl<'a, H: Host> Judge<'a, H> {
             start: now(),
             calls: Cell::new(0),
             bytes: Cell::new(0),
+            premises_needed: Cell::new(None),
         })
     }
     pub fn model(&self) -> &str {
@@ -50,13 +52,24 @@ impl<'a, H: Host> Judge<'a, H> {
             &self.c.jev_model
         }
     }
+    pub async fn needs_premises(&self, query: &str, traces: &mut Vec<Value>) -> Result<bool> {
+        if let Some(needed) = self.premises_needed.get() {
+            return Ok(needed);
+        }
+        let rows = self.score(query, &[json!({"id":"premises","description":"Determine the evidence requirements of the original query."})], "query_planning", traces).await?;
+        let needed = rows[0]["score"].as_f64().unwrap() > 0.5;
+        self.premises_needed.set(Some(needed));
+        Ok(needed)
+    }
     fn request(&self, query: &str, items: &[Value], stage: &str) -> Value {
         let mut candidates = Map::new();
         let mut questions = Map::new();
         for (i, item) in items.iter().enumerate() {
             let id = format!("c{i}");
             candidates.insert(id.clone(), item["description"].clone());
-            let task = if stage == "document_screening" {
+            let task = if stage == "query_planning" {
+                "Does the query require measuring or comparing the extent, fraction, count, completeness or membership of a collection, so that inclusion/exclusion and data-availability premises are necessary? This includes a metric named without a question mark. A simple feature, procedure, issue lookup or unrelated factual question does not require this collection-premise check. Judge the requested reasoning, not whether a particular word appears."
+            } else if stage == "document_screening" {
                 "Could this document contain any useful evidence for the query? Descriptions are incomplete; retain uncertain or partial evidence."
             } else if stage == "premise_scoring" {
                 "Does this passage explicitly state a necessary premise for interpreting or computing an answer to the query: a definition of the measured unit, an inclusion or exclusion rule, a condition that makes records available or missing, documented membership of part of the requested set, or dated evidence that limits or changes a claimed scope? At least one such specific fact is sufficient. It need not give the final answer, a total, or the entire requested collection. Generic implementation background, test-only sample rows, tooling logs and facts about unrelated entities are not premises. Preserve the fact's date and limitations; a subset never proves completeness of the whole. The title may state a fact only for ordinal 0; for later ordinals it only identifies the subject and the body must contribute the fact."
@@ -140,7 +153,7 @@ impl<'a, H: Host> Judge<'a, H> {
             let mut probe = batch.clone();
             probe.push(item.clone());
             if !batch.is_empty()
-                && (probe.len() > 60
+                && (probe.len() > if stage == "premise_scoring" { 1 } else { 60 }
                     || self.request(query, &probe, stage).to_string().len() > MAX_BYTES)
             {
                 batches.push(std::mem::take(&mut batch));

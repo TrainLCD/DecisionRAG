@@ -474,7 +474,7 @@ pub async fn rank_semantic(
         .filter(|p| scores[s(p, "id")] <= 0.5)
         .cloned()
         .collect();
-    if !premises.is_empty() {
+    if !premises.is_empty() && judge.needs_premises(query, traces).await? {
         for row in judge
             .score(query, &premises, "premise_scoring", traces)
             .await?
