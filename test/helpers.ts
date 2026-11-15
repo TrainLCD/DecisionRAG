@@ -27,7 +27,7 @@ export function fixture() {
   } } as unknown as D1Database;
   const jobs: SyncJob[] = [];
   const env: Env = { DB: db, SYNC_QUEUE: { send: async (job: SyncJob) => { jobs.push(job); } } as unknown as Queue<SyncJob>,
-    API_TOKEN: 'test-private-token', WEBHOOK_SECRET: 'test-webhook-secret', GITHUB_TOKEN: 'test-github-token',
+    ANSWER_CONTEXT_ENGINE: 'none', API_TOKEN: 'test-private-token', WEBHOOK_SECRET: 'test-webhook-secret', GITHUB_TOKEN: 'test-github-token',
     GITHUB_ORG: 'TrainLCD', AI: { async run(model: string, input: Record<string, unknown>) {
       if (model !== '@cf/cloudflare/clef-flash' && model !== '@cf/cloudflare/clef') throw new Error('Generation is not configured in this fixture');
       if (!mockUpstream) throw new Error('Missing decision mock');

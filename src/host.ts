@@ -41,7 +41,7 @@ async function readText(body: ReadableStream<Uint8Array> | null, max: number, si
     }
 }
 export function configuration(env: Env, preview: boolean) {
-    return JSON.stringify({ api_token: env.API_TOKEN ?? '', webhook_secret: env.WEBHOOK_SECRET ?? '', github_token: env.GITHUB_TOKEN ?? '', github_org: env.GITHUB_ORG ?? '',
+    return JSON.stringify({ typesafe_api_key: env.TYPESAFE_API_KEY ?? '', jev_model: env.JEV_MODEL ?? 'jev-1.14.0', answer_context_engine: env.ANSWER_CONTEXT_ENGINE ?? 'jev', api_token: env.API_TOKEN ?? '', webhook_secret: env.WEBHOOK_SECRET ?? '', github_token: env.GITHUB_TOKEN ?? '', github_org: env.GITHUB_ORG ?? '',
         answer_api_key: env.ANSWER_API_KEY ?? '', answer_model: env.ANSWER_MODEL ?? '', answer_base_url: env.ANSWER_BASE_URL ?? '',
         max_screened_documents: env.MAX_SCREENED_DOCUMENTS ?? null, support_threshold: env.SUPPORT_THRESHOLD ?? null, conflict_threshold: env.CONFLICT_THRESHOLD ?? null, ai: !!env.AI, preview });
 }
