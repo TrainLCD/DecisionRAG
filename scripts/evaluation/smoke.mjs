@@ -20,7 +20,7 @@ for (const query of ['バス対応の網羅率', 'バス対応の網羅率はど
       row.pages.push(page);
       if (response.status || status !== 200) throw Error(`Search failed with status ${status}`);
       if (cursor && (!page.cached || page.calls !== 0 || data.trace?.length !== 0 || page.hits !== row.pages[0].hits)) throw Error('Cursor did not preserve results without inference');
-      if (ids.some(id => row.ids.includes(id))) throw Error('Duplicate evidence across pages');
+      if (new Set(ids).size !== ids.length || ids.some(id => row.ids.includes(id))) throw Error('Duplicate evidence within or across pages');
       row.ids.push(...ids);
       cursor = data.pagination?.next_cursor;
     } while (cursor);

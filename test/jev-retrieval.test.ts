@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import worker from '../src/index.js';
 import { fixture, mockFetch } from './helpers.js';
 import { saveSource } from './reference/store.js';
+import { sync } from './rust-services.js';
 
 async function setup(n = 41) {
   const f = fixture();
@@ -217,4 +218,33 @@ test('subject eligibility gates collection evidence without changing the origina
     assert.ok(result.trace.some((t:any)=>t.stage==='collection_subject'));
     assert.ok(result.trace.some((t:any)=>t.stage==='query_collection'));
   } finally { restore(); f.sqlite.close(); }
+});
+
+
+test('real Rust ingestion and retrieval retain fence and heading scope across saved passages', async () => {
+  const f = await setup(0);
+  f.sqlite.exec("UPDATE repositories SET docs_commit='snapshot'");
+  const body = '## Android only\n```python\n' + 'x'.repeat(2500) + '\n# a\nvalue = 1\n# b\nvalue = 2\n```\n\n### More details\n' + 'detail '.repeat(100) + '\n\nContinuation paragraph.';
+  const descriptions = new Set<string>();
+  const restore = mockFetch((url, init) => {
+    if (url.includes('api.github.com')) return Response.json({encoding: 'base64', content: Buffer.from(body).toString('base64')});
+    const request = JSON.parse(String(init?.body));
+    for (const description of Object.values<string>(request.state.candidates)) if (description.includes('Evidence to judge:')) descriptions.add(description);
+    return Response.json({model: 'jev-1.14.0', answers: Object.fromEntries(Object.keys(request.state.candidates).map(id => [id, {type: 'noul', noul: 0.9}])), usage: {input_tokens: 10, output_tokens: 1}});
+  });
+  try {
+    await sync(f.env, {type: 'doc', repo: 'TrainLCD/App', path: 'scope.md', sha: 'blob', commit: 'snapshot'});
+    const stored = f.sqlite.prepare("SELECT id,text FROM passages WHERE source_id='TrainLCD/App:scope.md' ORDER BY ordinal").all();
+    assert.ok(stored.length > 1);
+    const response = await f.request({query: 'Android implementation'});
+    assert.equal(response.status, 200);
+    const result: any = await response.json();
+    for (const p of stored) assert.ok(result.evidence.some((e: any) => e.id === p.id && e.text === p.text));
+    const code = [...descriptions].find(d => d.includes('# a'));
+    assert.ok(code?.includes('# b'));
+    assert.ok(code?.includes('Section scope (applies to this evidence):\n## Android only\n'));
+    const continued = [...descriptions].find(d => d.includes('Continuation paragraph.'));
+    assert.ok(continued?.includes('Section scope (applies to this evidence):\n## Android only\n### More details\n'));
+    assert.deepEqual(f.sqlite.prepare("SELECT id,text FROM passages WHERE source_id='TrainLCD/App:scope.md' ORDER BY ordinal").all(), stored);
+  } finally {restore(); f.sqlite.close();}
 });

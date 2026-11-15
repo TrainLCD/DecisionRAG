@@ -441,46 +441,86 @@ pub fn rank(
 
 // Keep paragraphs/tables/code intact while separating independent sections. The
 // stored passage remains the citation unit; these are inference-only views.
-fn evidence_units(text: &str) -> Vec<String> {
+#[derive(Default)]
+struct EvidenceContext {
+    fence: Option<(u8, usize)>,
+    headings: Vec<(usize, String)>,
+}
+
+fn evidence_units_with_context(text: &str, context: &mut EvidenceContext) -> Vec<(String, String)> {
     let mut units = Vec::new();
     let mut current = String::new();
-    let mut fence: Option<(u8, usize)> = None;
+    let mut scope = context
+        .headings
+        .iter()
+        .map(|(_, h)| h.as_str())
+        .collect::<Vec<_>>()
+        .join("\n");
     for line in text.split_inclusive('\n') {
-        let heading = line.trim_start().starts_with('#');
-        if fence.is_none()
+        let trimmed_heading = line.trim_start();
+        let level = trimmed_heading.bytes().take_while(|b| *b == b'#').count();
+        let heading =
+            (1..=6).contains(&level) && trimmed_heading[level..].starts_with(char::is_whitespace);
+        if context.fence.is_none()
             && !current.is_empty()
             && (heading || (line.trim().is_empty() && current.chars().count() >= 600))
         {
-            units.push(std::mem::take(&mut current));
+            units.push((std::mem::take(&mut current), std::mem::take(&mut scope)));
+        }
+        if context.fence.is_none() && heading {
+            context.headings.retain(|(parent, _)| *parent < level);
+            context.headings.push((level, line.trim().to_string()));
+        }
+        if current.is_empty() {
+            scope = context
+                .headings
+                .iter()
+                .map(|(_, h)| h.as_str())
+                .collect::<Vec<_>>()
+                .join("\n");
         }
         let trimmed = line.trim_start_matches(' ');
         let marker = trimmed.as_bytes().first().copied().unwrap_or(0);
         let width = trimmed.bytes().take_while(|b| *b == marker).count();
         if line.len() - trimmed.len() <= 3 && matches!(marker, b'`' | b'~') && width >= 3 {
-            match fence {
+            match context.fence {
                 Some((open, length))
                     if marker == open && width >= length && trimmed[width..].trim().is_empty() =>
                 {
-                    fence = None
+                    context.fence = None
                 }
-                None => fence = Some((marker, width)),
+                None => context.fence = Some((marker, width)),
                 _ => {}
             }
         }
         current.push_str(line);
     }
     if !current.is_empty() {
-        units.push(current);
+        units.push((current, scope));
     }
     units
+}
+
+#[cfg(test)]
+fn evidence_units(text: &str) -> Vec<String> {
+    evidence_units_with_context(text, &mut EvidenceContext::default())
+        .into_iter()
+        .map(|(text, _)| text)
+        .collect()
 }
 
 fn semantic_candidates(passages: &[Value]) -> Result<(Vec<Value>, Vec<usize>)> {
     let mut candidates = Vec::new();
     let mut parents = Vec::new();
     let mut bytes = 0usize;
-    for (parent, p) in passages.iter().enumerate() {
-        let mut units = evidence_units(s(p, "text"));
+    let mut contexts: HashMap<&str, EvidenceContext> = HashMap::new();
+    // Storage loads complete sources in ordinal order. Preserve each source's
+    // Markdown scope across its stored citation boundaries.
+    let mut ordered: Vec<_> = passages.iter().enumerate().collect();
+    ordered.sort_by_key(|(_, p)| (s(p, "source_id"), p["ordinal"].as_u64().unwrap_or(0)));
+    for (parent, p) in ordered {
+        let context = contexts.entry(s(p, "source_id")).or_default();
+        let mut units = evidence_units_with_context(s(p, "text"), context);
         // A title is a source-level fact, not evidence in every body fragment.
         if p["ordinal"] == 0 {
             let header = format!(
@@ -490,14 +530,22 @@ fn semantic_candidates(passages: &[Value]) -> Result<(Vec<Value>, Vec<usize>)> {
                 p["metadata"]
             );
             if let Some(first) = units.first_mut() {
-                first.insert_str(0, &header);
+                first.0.insert_str(0, &header);
             } else {
-                units.push(header);
+                units.push((header, String::new()));
             }
         }
-        for unit in units.into_iter().filter(|unit| !unit.trim().is_empty()) {
+        for (unit, scope) in units
+            .into_iter()
+            .filter(|(unit, _)| !unit.trim().is_empty())
+        {
+            let section = if scope.is_empty() {
+                String::new()
+            } else {
+                format!("Section scope (applies to this evidence):\n{scope}\n")
+            };
             let description = format!(
-                "Context only (not evidence): title={}; source={}; repository={}; metadata={}\nEvidence to judge:\n{}",
+                "Context only (not evidence): title={}; source={}; repository={}; metadata={}\n{section}Evidence to judge:\n{}",
                 s(p, "title"),
                 s(p, "source_id"),
                 s(p, "repo"),
@@ -632,6 +680,55 @@ mod tests {
         assert!(units[0].contains("# still code"));
         let text = format!("{}\n\n", "x".repeat(700));
         assert_eq!(evidence_units(&text).concat(), text);
+    }
+    #[test]
+    fn saved_passage_boundaries_keep_fences_and_section_scope() {
+        let body = format!(
+            "## Android only\n```python\n{}\n# a\nvalue = 1\n# b\nvalue = 2\n```\n",
+            "x".repeat(2500)
+        );
+        let passages: Vec<_> = split_passages(&body).into_iter().enumerate()
+            .map(|(i, text)| json!({"id":format!("code:{i}"),"source_id":"code","ordinal":i,"text":text})).collect();
+        assert!(passages.len() > 1);
+        let (candidates, parents) = semantic_candidates(&passages).unwrap();
+        let tail = candidates
+            .iter()
+            .find(|c| s(c, "description").contains("# a"))
+            .unwrap();
+        assert!(s(tail, "description").contains("# b"));
+        assert!(
+            s(tail, "description")
+                .contains("Section scope (applies to this evidence):\n## Android only")
+        );
+        assert_eq!(parents.len(), passages.len());
+        for (candidate, parent) in candidates.iter().zip(parents) {
+            assert!(s(candidate, "description").ends_with(s(&passages[parent], "text")));
+        }
+    }
+    #[test]
+    fn paragraph_units_inherit_nested_scope_without_leaking_between_sources() {
+        let text = format!(
+            "## Android only\n### Background\n{}\n\nSupport continues here.\n## iOS only\nDifferent scope.",
+            "details ".repeat(90)
+        );
+        let passages = vec![
+            json!({"source_id":"a","ordinal":0,"text":text}),
+            json!({"source_id":"b","ordinal":0,"text":"Independent source."}),
+        ];
+        let (candidates, _) = semantic_candidates(&passages).unwrap();
+        let continuation = candidates
+            .iter()
+            .find(|c| s(c, "description").contains("Support continues here."))
+            .unwrap();
+        assert!(s(continuation, "description").contains(
+            "Section scope (applies to this evidence):\n## Android only\n### Background\n"
+        ));
+        let ios = candidates
+            .iter()
+            .find(|c| s(c, "description").contains("Different scope."))
+            .unwrap();
+        assert!(!s(ios, "description").contains("Android only"));
+        assert!(!s(candidates.last().unwrap(), "description").contains("Section scope"));
     }
     #[test]
     fn title_evidence_belongs_only_to_the_first_passage() {
