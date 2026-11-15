@@ -81,7 +81,7 @@ jobs:
       - name: Run frozen split with real model
         env:
           EVALUATION_SPLIT: ${{ startsWith(github.ref_name, 'evaluation/jev-heldout-') && 'evaluation' || 'all' }}
-          EVALUATION_QUESTIONS: ${{ startsWith(github.ref_name, 'evaluation/jev-heldout-') && 'test/fixtures/jev-evaluation/questions-heldout-v5.json' || 'test/fixtures/jev-evaluation/questions-regression-v5.json' }}
+          EVALUATION_QUESTIONS: ${{ startsWith(github.ref_name, 'evaluation/jev-heldout-fresh-') && 'test/fixtures/jev-evaluation/questions-fresh-v8.json' || startsWith(github.ref_name, 'evaluation/jev-heldout-') && 'test/fixtures/jev-evaluation/questions-heldout-v5.json' || 'test/fixtures/jev-evaluation/questions-regression-v5.json' }}
         run: node --loader ./scripts/wasm-test-loader.mjs scripts/evaluation/run.mjs
       - name: Score frozen quality gates
         run: |
