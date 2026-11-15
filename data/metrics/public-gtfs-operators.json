@@ -1,0 +1,9 @@
+{
+  "id": "public_gtfs_operators_production_ratio",
+  "definition": "日本国内で公開GTFSを提供するバス事業者のうち、同じ基準日時点でTrainLCDの本番StationAPIから配信されている事業者の割合",
+  "unit": "operator",
+  "scope": "JP:public-bus-gtfs",
+  "support_definition": "production_served",
+  "population": null,
+  "supported": null
+}

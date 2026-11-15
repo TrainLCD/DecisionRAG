@@ -79,7 +79,13 @@ impl<'a, H: Host> Judge<'a, H> {
         for (i, item) in items.iter().enumerate() {
             let id = format!("c{i}");
             candidates.insert(id.clone(), item["description"].clone());
-            let task = if stage == "query_collection" {
+            let task = if stage == "query_aggregation" {
+                "Does the query request a numeric count, percentage, ratio, or quantitative coverage calculation over a collection? Requests to describe supported features, list examples, explain how to calculate, or compare scalar facts are not numeric aggregation requests."
+            } else if stage == "metric_domain" {
+                "Could this candidate metric answer the quantitative request after clarifying its unspecified scope, denominator or support definition? Reject a different subject, an explicit incompatible unit, operation, geography, population or date. An ambiguous bus coverage request can match a bus operator coverage metric; a count of stations or tickets cannot."
+            } else if stage == "metric_selection" {
+                "Does the query unambiguously request precisely the metric described by this candidate? Require compatible unit, geography, population and production support definition. Do not silently interpret an unspecified denominator as public GTFS providers, a feed as an operator, staging as production, or a historical date as current. Reject ambiguous or unsupported metrics."
+            } else if stage == "query_collection" {
                 "Is the query requesting the extent, coverage, completeness, count, proportion or inventory of a collection? Such a request needs to establish which members are included or omitted. A question about a single implementation detail, bug, identifier, platform feature or a comparison of two scalar values is not a collection request."
             } else if stage == "collection_subject" {
                 "The query concerns a population or collection. Does this evidence concern that population, a member/subset of it, or data representing it? This is a domain/identity check, NOT an answer or task match: a request to calculate coverage needs data collection, import, inclusion/exclusion and failure conditions even though they describe a different operation than calculating a percentage. A source need not mention coverage or provide totals. Use context to identify the population. Respect named datasets, organizations, geography and time: a fictional regional registry is not a real national population, and unrelated real datasets cannot establish the contents of a specifically named registry. Accept subsets as subsets; do not require national completeness of each fact."

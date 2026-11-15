@@ -1,3 +1,5 @@
+import { createHash, createDecipheriv } from 'node:crypto';
+import { encodeCursor } from './reference/search-cursor.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../src/index.js';
@@ -247,4 +249,169 @@ test('real Rust ingestion and retrieval retain fence and heading scope across sa
     assert.ok(continued?.includes('Section scope (applies to this evidence):\n## Android only\n### More details\n'));
     assert.deepEqual(f.sqlite.prepare("SELECT id,text FROM passages WHERE source_id='TrainLCD/App:scope.md' ORDER BY ordinal").all(), stored);
   } finally {restore(); f.sqlite.close();}
+});
+
+function aggregationDecisions(body: any, intent = true, metric = true) {
+  const result = decisions(body);
+  const questions = JSON.stringify(body.questions);
+  if (questions.includes('numeric count, percentage')) {
+    for (const value of Object.values(result.answers)) value.noul = intent ? 0.99 : 0.01;
+  } else if (questions.includes('precisely the metric')) {
+    for (const value of Object.values(result.answers)) value.noul = metric ? 0.99 : 0.01;
+  }
+  return result;
+}
+
+test('aggregation cannot turn retrieved feeds into an operator denominator; JSON and SSE agree', async () => {
+  const f = await setup(2);
+  const restore = mockFetch((_url, init) => Response.json(aggregationDecisions(JSON.parse(String(init?.body)))));
+  try {
+    const query = '公開GTFSを提供する日本のバス事業者のうち本番配信中の割合は？';
+    const json: any = await (await f.request({query}, '/answer')).json();
+    assert.equal(json.hit_count, 3);
+    assert.equal(json.aggregation.status, 'missing_population');
+    assert.equal(json.aggregation.value, null);
+    assert.equal(json.aggregation.denominator, null);
+    assert.equal(json.aggregation.missing_requirements.length, 2);
+    assert.equal(json.status, 'insufficient_evidence');
+    assert.match(json.answer, /算出できません/);
+    assert.ok(!json.trace.some((t: any) => t.stage === 'generate_answer'));
+    const wire = await (await f.request({query}, '/answer', true)).text();
+    assert.ok(wire.indexOf('event: sources') < wire.indexOf('event: result'));
+    const streamed = JSON.parse(wire.split('event: result\ndata: ')[1]!.trim());
+    assert.deepEqual(streamed.aggregation, json.aggregation);
+    assert.equal(streamed.answer, json.answer);
+    assert.equal(streamed.evidence.length, 3);
+    assert.ok(!wire.includes('event: draft'), 'No unchecked numeric prose is streamed');
+  } finally {restore(); f.sqlite.close();}
+});
+
+test('aggregation survives continuation without model calls and preserves search-only responses', async () => {
+  const f = await setup(); let calls = 0;
+  const restore = mockFetch((_url, init) => {calls++; return Response.json(aggregationDecisions(JSON.parse(String(init?.body))));});
+  try {
+    const query = '公開GTFSの本番対応事業者の割合';
+    const first: any = await (await f.request({query,paginated:true}, '/answer')).json();
+    const initialCalls = calls;
+    const second: any = await (await f.request({query,paginated:true,cursor:first.pagination.next_cursor}, '/answer')).json();
+    assert.deepEqual(second.aggregation, first.aggregation);
+    assert.equal(calls, initialCalls);
+    assert.equal(second.hit_count, 42);
+    const wrong = await f.request({query,paginated:true,cursor:first.pagination.next_cursor}, '/search');
+    assert.equal(wrong.status, 200);
+    const searchPage: any = await wrong.json();
+    assert.equal(searchPage.status, 'retrieved');
+    assert.equal(searchPage.aggregation, undefined);
+    assert.equal(calls, initialCalls);
+  } finally {restore(); f.sqlite.close();}
+});
+
+test('ambiguous quantitative questions retain evidence and request a definition', async () => {
+  const f = await setup(1);
+  const restore = mockFetch((_url, init) => Response.json(aggregationDecisions(JSON.parse(String(init?.body)), true, false)));
+  try {
+    const response: any = await (await f.request({query:'バス対応の網羅率'}, '/answer')).json();
+    assert.equal(response.aggregation.status, 'needs_clarification');
+    assert.equal(response.aggregation.value, null);
+    assert.equal(response.evidence.length, 2);
+  } finally {restore(); f.sqlite.close();}
+});
+
+test('non-numeric answers keep the existing generation behavior', async () => {
+  const f = await setup(1);
+  const restore = mockFetch((_url, init) => Response.json(aggregationDecisions(JSON.parse(String(init?.body)), false)));
+  try {
+    const response: any = await (await f.request({query:'バス対応の仕組みを説明して'}, '/answer')).json();
+    assert.equal(response.status, 'generation_unavailable');
+    assert.equal(response.aggregation, undefined);
+    assert.equal(response.evidence.length, 2);
+  } finally {restore(); f.sqlite.close();}
+});
+
+test('aggregation model failure remains an explicit error', async () => {
+  const f = await setup(1);
+  const restore = mockFetch((_url, init) => {
+    const body = JSON.parse(String(init?.body));
+    if (JSON.stringify(body.questions).includes('numeric count, percentage')) return new Response('', {status:503});
+    return Response.json(decisions(body));
+  });
+  try { assert.equal((await f.request({query:'バス対応の網羅率'}, '/answer')).status, 502); }
+  finally {restore(); f.sqlite.close();}
+});
+
+test('unsupported quantitative domains do not silently become bus coverage', async () => {
+  const f = await setup(1);
+  const restore = mockFetch((_url, init) => {
+    const body = JSON.parse(String(init?.body));
+    const result = aggregationDecisions(body, true, false);
+    if (JSON.stringify(body.questions).includes('after clarifying')) for (const value of Object.values(result.answers)) value.noul = 0.01;
+    return Response.json(result);
+  });
+  try {
+    const response: any = await (await f.request({query:'駅の数は何件ですか'}, '/answer')).json();
+    assert.equal(response.aggregation.status, 'unsupported_metric');
+    assert.equal(response.aggregation.value, null);
+    assert.match(response.answer, /未登録/);
+  } finally {restore(); f.sqlite.close();}
+});
+
+test('search cursor can enter answer mode once and then freezes metric decisions', async () => {
+  const f = await setup(61); let calls = 0;
+  const restore = mockFetch((_url, init) => {calls++; return Response.json(aggregationDecisions(JSON.parse(String(init?.body))));});
+  try {
+    const query = '公開GTFSの本番対応事業者の割合';
+    const search: any = await (await f.request({query,paginated:true}, '/search')).json();
+    const before = calls;
+    const answer: any = await (await f.request({query,paginated:true,cursor:search.pagination.next_cursor}, '/answer')).json();
+    assert.equal(answer.aggregation.status, 'missing_population');
+    assert.equal(calls-before,2, 'Only the first answer classifies the metric; retrieval is frozen');
+    const classified=calls;
+    const next: any = await (await f.request({query,paginated:true,cursor:answer.pagination.next_cursor}, '/answer')).json();
+    assert.deepEqual(next.aggregation, answer.aggregation);
+    assert.equal(calls,classified);
+  } finally {restore(); f.sqlite.close();}
+});
+
+test('public repository membership invalidates cursors even when selected passages are unchanged', async () => {
+  const f = await setup(); let publicRepos = ['TrainLCD/App']; let calls = 0;
+  const restore = mockFetch((url, init) => {
+    if (url.includes('api.github.com')) return Response.json(publicRepos.map(full_name=>({full_name,private:false,visibility:'public'})));
+    calls++;
+    return Response.json(aggregationDecisions(JSON.parse(String(init?.body))));
+  });
+  try {
+    const query='公開GTFSの本番対応事業者の割合';
+    const first: any = await (await f.request({query,paginated:true,include_feedback:false}, '/answer')).json();
+    assert.ok(first.pagination.next_cursor);
+    const before=calls;
+    publicRepos.push('TrainLCD/NewlyPublic');
+    const response=await f.request({query,paginated:true,include_feedback:false,cursor:first.pagination.next_cursor}, '/answer');
+    assert.equal(response.status,409);
+    assert.equal((await response.json() as any).error,'search_results_changed');
+    assert.equal(calls,before);
+  } finally {restore();f.sqlite.close();}
+});
+
+test('real WASM rejects a cached aggregate after its source deadline but before cursor expiry', async () => {
+  const f=await setup();let calls=0;
+  const restore=mockFetch((_url,init)=>{calls++;return Response.json(aggregationDecisions(JSON.parse(String(init?.body))));});
+  try {
+    const query='公開GTFSの本番対応事業者の割合';
+    const first:any=await(await f.request({query,paginated:true},'/answer')).json();
+    const raw=Buffer.from(first.pagination.next_cursor,'base64url');
+    const key=createHash('sha256').update('search-cursor-v1:'+f.env.API_TOKEN).digest();
+    const decrypt=createDecipheriv('aes-256-gcm',key,raw.subarray(0,12));
+    decrypt.setAuthTag(raw.subarray(-16));
+    const payload=JSON.parse(Buffer.concat([decrypt.update(raw.subarray(12,-16)),decrypt.final()]).toString());
+    assert.ok(payload.expires>Date.now()+60000);
+    const before=calls;
+    for(const [deadline,expected] of [[new Date(Date.now()+60000).toISOString(),200],[new Date(Date.now()-1000).toISOString(),409],['invalid',409]] as const){
+      // Test-only authenticated cursor represents a previously computed snapshot.
+      const cursor=await encodeCursor({...payload,aggregation:{status:'computed',valid_until:deadline,numerator:1,denominator:1,value:100,definition:'fixture',as_of:'2026-11-16T00:00:00Z'}},f.env.API_TOKEN);
+      const response=await f.request({query,paginated:true,cursor},'/answer');
+      assert.equal(response.status,expected);
+      if(expected===409)assert.equal((await response.json() as any).error,'search_results_changed');
+    }
+    assert.equal(calls,before,'Expiration checks never call the model');
+  }finally{restore();f.sqlite.close();}
 });
