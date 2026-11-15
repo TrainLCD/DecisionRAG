@@ -446,22 +446,57 @@ pub async fn rank_semantic(
     passages: &[Value],
     traces: &mut Vec<Value>,
 ) -> Result<Vec<Value>> {
-    let candidates: Vec<_> = passages.iter().map(|p| json!({
-        "id":p["id"],
-        "description":format!("{}\nSource: {}\nRepository: {}\nMetadata: {}\n{}",s(p,"title"),s(p,"source_id"),s(p,"repo"),p["metadata"],s(p,"text"))
-    })).collect();
+    let mut candidates = Vec::new();
+    let mut candidate_bytes = 0usize;
+    for p in passages {
+        let candidate = json!({
+            "id":p["id"],
+            "description":format!("{}\nSource: {}\nRepository: {}\nOrdinal: {}\nMetadata: {}\n{}",s(p,"title"),s(p,"source_id"),s(p,"repo"),p["ordinal"],p["metadata"],s(p,"text"))
+        });
+        candidate_bytes = candidate_bytes.saturating_add(candidate.to_string().len());
+        if candidate_bytes > crate::judge::MAX_CANDIDATE_BYTES {
+            return Err(Error::new(422, "decision_candidate_budget_exceeded"));
+        }
+        candidates.push(candidate);
+    }
     let rows = judge
         .score(query, &candidates, "passage_scoring", traces)
         .await?;
-    let by_id: HashMap<_, _> = passages.iter().map(|p| (s(p, "id"), p)).collect();
-    let mut out = Vec::new();
-    for row in rows
+    let mut scores: HashMap<String, f64> = rows
         .iter()
-        .filter(|r| r["score"].as_f64().unwrap_or(0.) > 0.5)
-    {
-        let mut p = by_id[s(row, "id")].clone();
+        .map(|r| (s(r, "id").to_string(), r["score"].as_f64().unwrap()))
+        .collect();
+    // A passage can be a necessary premise without directly answering the query.
+    // Only rejected passages need the second semantic role check; both stages
+    // share the same request budget and neither may fail silently.
+    let premises: Vec<_> = candidates
+        .iter()
+        .filter(|p| scores[s(p, "id")] <= 0.5)
+        .cloned()
+        .collect();
+    if !premises.is_empty() {
+        for row in judge
+            .score(query, &premises, "premise_scoring", traces)
+            .await?
+        {
+            let score = scores.get_mut(s(&row, "id")).unwrap();
+            *score = score.max(row["score"].as_f64().unwrap());
+        }
+    }
+    let mut ranked: Vec<_> = passages
+        .iter()
+        .enumerate()
+        .filter_map(|(i, p)| {
+            let score = scores[s(p, "id")];
+            (score > 0.5).then_some((i, p, score))
+        })
+        .collect();
+    ranked.sort_by(|a, b| b.2.total_cmp(&a.2).then(a.0.cmp(&b.0)));
+    let mut out = Vec::new();
+    for (_, p, score) in ranked {
+        let mut p = p.clone();
         p["citation"] = json!(format!("p{}", out.len() + 1));
-        p["relevance"] = row["score"].clone();
+        p["relevance"] = json!(score);
         out.push(p);
     }
     Ok(out)

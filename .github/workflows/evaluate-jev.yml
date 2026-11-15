@@ -81,7 +81,7 @@ jobs:
       - name: Run frozen split with real model
         env:
           EVALUATION_SPLIT: ${{ startsWith(github.ref_name, 'evaluation/jev-heldout-') && 'evaluation' || 'all' }}
-          EVALUATION_QUESTIONS: ${{ startsWith(github.ref_name, 'evaluation/jev-heldout-') && 'test/fixtures/jev-evaluation/questions-v3.json' || 'test/fixtures/jev-evaluation/questions-development.json' }}
+          EVALUATION_QUESTIONS: ${{ startsWith(github.ref_name, 'evaluation/jev-heldout-') && 'test/fixtures/jev-evaluation/questions-v4.json' || 'test/fixtures/jev-evaluation/questions-development-v4.json' }}
         run: node --loader ./scripts/wasm-test-loader.mjs scripts/evaluation/run.mjs
       - name: Score frozen quality gates
         run: |
@@ -92,6 +92,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: jev-fixed-evaluation
+          name: jev-fixed-evaluation-${{ github.run_attempt }}
           path: evaluation-results/**/*.json
           if-no-files-found: error
