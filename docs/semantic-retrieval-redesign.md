@@ -85,9 +85,11 @@ Rustは `N = |U|`、`M = |U ∩ S|`、`rate = M / N × 100` を計算する。`N
 
 ### 5.3 回答へ渡す結果
 
-集計結果は `status / metric_id / definition / numerator / denominator / value / unit / as_of / source_refs / missing_requirements` を持つ。未成立の数値は `null`。状態は `computed / needs_clarification / missing_population / missing_supported_set / incompatible_scope / unsupported_metric` を区別する。
+集計結果は `status / metric_id / definition / numerator / denominator / value / unit / as_of / source_refs / missing_requirements` を持つ。未成立の数値は `null`。状態は `computed / needs_clarification / missing_population / missing_supported_set / incompatible_scope / empty_population / unsupported_metric` を区別する。
 
-計算値・定義・対象・時点・出典はRustの確定した表示として返し、LLMには説明文だけを生成させる。LLMが別の割合を生成しても集計値として採用しない。通常の引用検査に加え、集計IDと根拠集合の版を対応付ける。回答の最大20区間から数を数えさせない。
+母集団の全件取得が確認できても対象数が0なら `empty_population` とし、割合は `null` にする。母集団を取得できない `missing_population` と区別する。
+
+計算値・定義・対象・時点・出典はRustの確定した表示として返し、LLMには説明文だけを生成させる。LLMが別の割合を生成しても集計値として採用しない。通常の引用検査に加え、集計IDと根拠集合の版を対応付ける。回答の最大20区間から数を数えさせない。説明文内の数値も同じ集計IDの確定値・単位と照合し、照合不能または不一致なら説明文を表示せずRustの確定値だけを表示する。これは引用検査とは別の必須検査とする。
 
 ## 6. API・画面・エラー
 
@@ -118,6 +120,8 @@ SSEは `sources → draft → result` を維持する。検索確定後にsource
 | 不足・障害・境界 | 母集団なし、指標曖昧、非公開資料だけに根拠、判定API障害、真に無関係な質問 |
 
 検索評価は必須事実の回収率、根拠IDのRecall@all、無関係率@10、回答可能なのに0件となる率を報告する。段階ごとの脱落を文書選別／本文／順位／データ不足に分解する。集計は単位、重複排除、集合の版、分子・分母・丸め結果を既知の集合と完全一致で検証する。
+
+元の「バス対応の網羅率」を必須回帰ケースに含める。必要根拠は、対応一覧・その対応の定義と時点、母集団の一覧または母集団未確定と判断できる根拠である。既知の評価集合にあるこれらの根拠を3回とも回収することを必須とし、母集団欠損を検索0件へ変換しない。
 
 最低リリース条件: 必須回帰ケースは3回とも必要根拠を回収し、不正な母数・非公開情報の漏出・実行失敗の0件化は0件。評価集合の事実回収率が現行以上かつ無関係率@10の悪化が5ポイント以内であることを暫定ゲートとする。満たさない場合は例外語を追加せず、失敗段階を見直し、新しい未使用評価集合で再評価する。0件でも一般的な完全性の保証とはしない。
 
