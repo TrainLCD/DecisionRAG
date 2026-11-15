@@ -440,26 +440,87 @@ pub fn rank(
 }
 
 /// Semantic selection runs once over the complete selected passage set before pagination.
+// Keep paragraphs/tables/code intact while separating independent sections. The
+// stored passage remains the citation unit; these are inference-only views.
+fn evidence_units(text: &str) -> Vec<String> {
+    let mut units = Vec::new();
+    let mut current = String::new();
+    let mut fenced = false;
+    for line in text.split_inclusive('\n') {
+        let heading = line.trim_start().starts_with('#');
+        if !fenced
+            && !current.is_empty()
+            && (heading || (line.trim().is_empty() && current.chars().count() >= 600))
+        {
+            units.push(std::mem::take(&mut current));
+        }
+        if line.trim_start().starts_with("```") || line.trim_start().starts_with("~~~") {
+            fenced = !fenced;
+        }
+        current.push_str(line);
+    }
+    if !current.trim().is_empty() {
+        units.push(current);
+    }
+    units
+}
+
+fn semantic_candidates(passages: &[Value]) -> Result<(Vec<Value>, Vec<usize>)> {
+    let mut candidates = Vec::new();
+    let mut parents = Vec::new();
+    let mut bytes = 0usize;
+    for (parent, p) in passages.iter().enumerate() {
+        let mut units = evidence_units(s(p, "text"));
+        // A title is a source-level fact, not evidence in every body fragment.
+        if p["ordinal"] == 0 {
+            units.insert(0, format!("Source title: {}", s(p, "title")));
+        }
+        for unit in units {
+            let description = format!(
+                "Context only (not evidence): title={}; source={}; repository={}; metadata={}\nEvidence to judge:\n{}",
+                s(p, "title"),
+                s(p, "source_id"),
+                s(p, "repo"),
+                p["metadata"],
+                unit
+            );
+            bytes = bytes.saturating_add(description.len());
+            if bytes > crate::judge::MAX_CANDIDATE_BYTES {
+                return Err(Error::new(422, "decision_candidate_budget_exceeded"));
+            }
+            candidates.push(json!({"id":candidates.len().to_string(),"description":description}));
+            parents.push(parent);
+        }
+    }
+    Ok((candidates, parents))
+}
+
 pub async fn rank_semantic(
     judge: &crate::judge::Judge<'_, impl Host>,
     query: &str,
     passages: &[Value],
     traces: &mut Vec<Value>,
 ) -> Result<Vec<Value>> {
-    let candidates: Vec<_> = passages.iter().map(|p| json!({
-        "id":p["id"],
-        "description":format!("{}\nSource: {}\nRepository: {}\nMetadata: {}\n{}",s(p,"title"),s(p,"source_id"),s(p,"repo"),p["metadata"],s(p,"text"))
-    })).collect();
+    let (candidates, parents) = semantic_candidates(passages)?;
     let rows = judge
         .score(query, &candidates, "passage_scoring", traces)
         .await?;
-    let by_id: HashMap<_, _> = passages.iter().map(|p| (s(p, "id"), p)).collect();
     let mut out = Vec::new();
+    let mut seen = HashSet::new();
+    // Descending scores: a passage is represented by its strongest explicit
+    // fact, once. No votes, additive length bonus or threshold relaxation.
     for row in rows
         .iter()
         .filter(|r| r["score"].as_f64().unwrap_or(0.) > 0.5)
     {
-        let mut p = by_id[s(row, "id")].clone();
+        let index: usize = s(row, "id")
+            .parse()
+            .map_err(|_| Error::new(502, "invalid_jev_response"))?;
+        let parent = parents[index];
+        if !seen.insert(parent) {
+            continue;
+        }
+        let mut p = passages[parent].clone();
         p["citation"] = json!(format!("p{}", out.len() + 1));
         p["relevance"] = row["score"].clone();
         out.push(p);
@@ -470,6 +531,36 @@ pub async fn rank_semantic(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn inference_units_preserve_every_byte_and_separate_sections() {
+        let text = format!(
+            "{}\n\n### Conditions\n| key | rule |\n| a | omit missing records |\n\n```rust\n# not a heading\n```\n",
+            "background ".repeat(70)
+        );
+        let units = evidence_units(&text);
+        assert_eq!(units.concat(), text);
+        assert!(
+            units
+                .iter()
+                .any(|u| u.starts_with("### Conditions") && u.contains("omit missing records"))
+        );
+        assert!(
+            units
+                .iter()
+                .any(|u| u.contains("```rust\n# not a heading\n```"))
+        );
+    }
+    #[test]
+    fn title_evidence_belongs_only_to_the_first_passage() {
+        let passages = vec![
+            json!({"ordinal":0,"title":"Feature added","text":""}),
+            json!({"ordinal":1,"title":"Feature added","text":"opaque payload"}),
+        ];
+        let (candidates, parents) = semantic_candidates(&passages).unwrap();
+        assert_eq!(parents, vec![0, 1]);
+        assert!(s(&candidates[0], "description").ends_with("Source title: Feature added"));
+        assert!(s(&candidates[1], "description").ends_with("Evidence to judge:\nopaque payload"));
+    }
     #[test]
     fn passage_boundaries_preserve_unicode_and_size_budget() {
         let text = "😀測位".repeat(2000);
