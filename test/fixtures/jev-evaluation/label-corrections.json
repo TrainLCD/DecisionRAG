@@ -1,0 +1,186 @@
+{
+  "reason": "Source-content audit after review; corrections can only remove false relevance, not relax mandatory recall. No model rerun needed for identical saved retrieval IDs.",
+  "review": "https://github.com/TrainLCD/DecisionRAG/pull/53#discussion_r4577037411",
+  "watch": [
+    "A1",
+    "A2"
+  ],
+  "coverage": [
+    {
+      "file": "questions.json",
+      "id": "B1",
+      "removed": [
+        "TrainLCD/BFF#15:4",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/README.md:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/calendar.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/routes.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stop_times.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:1",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/trips.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/routes.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/stop_times.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/trips.txt:0",
+        "TrainLCD/Website#186:1",
+        "TrainLCD/Website#186:3",
+        "TrainLCD/Website#186:4",
+        "TrainLCD/Website#186:5",
+        "TrainLCD/Website#186:6"
+      ]
+    },
+    {
+      "file": "questions.json",
+      "id": "B5",
+      "removed": [
+        "TrainLCD/BFF#15:4",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/README.md:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/calendar.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/routes.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stop_times.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:1",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/trips.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/routes.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/stop_times.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/trips.txt:0",
+        "TrainLCD/Website#186:1",
+        "TrainLCD/Website#186:3",
+        "TrainLCD/Website#186:4",
+        "TrainLCD/Website#186:5",
+        "TrainLCD/Website#186:6"
+      ]
+    },
+    {
+      "file": "questions-development.json",
+      "id": "B1",
+      "removed": [
+        "TrainLCD/BFF#15:4",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/README.md:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/calendar.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/routes.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stop_times.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:1",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/trips.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/routes.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/stop_times.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/trips.txt:0",
+        "TrainLCD/Website#186:1",
+        "TrainLCD/Website#186:3",
+        "TrainLCD/Website#186:4",
+        "TrainLCD/Website#186:5",
+        "TrainLCD/Website#186:6"
+      ]
+    },
+    {
+      "file": "questions-development.json",
+      "id": "B5",
+      "removed": [
+        "TrainLCD/BFF#15:4",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/README.md:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/calendar.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/routes.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stop_times.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:1",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/trips.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/routes.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/stop_times.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/trips.txt:0",
+        "TrainLCD/Website#186:1",
+        "TrainLCD/Website#186:3",
+        "TrainLCD/Website#186:4",
+        "TrainLCD/Website#186:5",
+        "TrainLCD/Website#186:6"
+      ]
+    },
+    {
+      "file": "questions-development.json",
+      "id": "B12",
+      "removed": [
+        "TrainLCD/BFF#15:4",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/README.md:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/calendar.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/routes.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stop_times.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:1",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/trips.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/routes.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/stop_times.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/trips.txt:0",
+        "TrainLCD/Website#186:1",
+        "TrainLCD/Website#186:3",
+        "TrainLCD/Website#186:4",
+        "TrainLCD/Website#186:5",
+        "TrainLCD/Website#186:6"
+      ]
+    },
+    {
+      "file": "questions-v2.json",
+      "id": "B12",
+      "removed": [
+        "TrainLCD/BFF#15:4",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/README.md:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/calendar.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/routes.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stop_times.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:1",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/trips.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/routes.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/stop_times.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/trips.txt:0",
+        "TrainLCD/Website#186:1",
+        "TrainLCD/Website#186:3",
+        "TrainLCD/Website#186:4",
+        "TrainLCD/Website#186:5",
+        "TrainLCD/Website#186:6"
+      ]
+    },
+    {
+      "file": "questions-v3.json",
+      "id": "B13",
+      "removed": [
+        "TrainLCD/BFF#15:4",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/README.md:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/calendar.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/routes.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stop_times.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:1",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/trips.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/routes.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/stop_times.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/trips.txt:0",
+        "TrainLCD/Website#186:1",
+        "TrainLCD/Website#186:3",
+        "TrainLCD/Website#186:4",
+        "TrainLCD/Website#186:5",
+        "TrainLCD/Website#186:6"
+      ]
+    },
+    {
+      "file": "questions-v3.json",
+      "id": "B14",
+      "removed": [
+        "TrainLCD/BFF#15:4",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/README.md:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/calendar.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/routes.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stop_times.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:1",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/trips.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/routes.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/stop_times.txt:0",
+        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/trips.txt:0",
+        "TrainLCD/Website#186:1",
+        "TrainLCD/Website#186:3",
+        "TrainLCD/Website#186:4",
+        "TrainLCD/Website#186:5",
+        "TrainLCD/Website#186:6"
+      ]
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { UsageLedger } from './usage.mjs';
 import worker from '../../dist-test/src/index.js';
 import { fixture, mockFetch } from '../../dist-test/test/helpers.js';
 const corpusBytes = readFileSync('test/fixtures/jev-evaluation/corpus.json');
@@ -27,7 +28,7 @@ for (const q of questions.filter(q => (split === 'all' || q.split === split) && 
   }
   const selected = new Set(); const db = f.env.DB;
   f.env.DB = { ...db, prepare(sql) { const stmt = db.prepare(sql); const bind = stmt.bind.bind(stmt); stmt.bind = (...values) => { if (sql.includes('FROM passages') && sql.includes('json_each(?)')) { try { const ids = JSON.parse(values[0]); if (Array.isArray(ids)) for (const id of ids) selected.add(id); } catch {} } return bind(...values); }; return stmt; } };
-  let modelCalls=0, leaked=false;
+  let modelCalls=0, leaked=false; const usage = new UsageLedger();
   const restore = mockFetch(async (url, init) => {
     if (url.startsWith('https://api.github.com/')) return Response.json(publicRepos.map(full_name => ({full_name, private:false, visibility:'public'})));
     if (url !== 'https://api.typesafe.ai/v1/systemone') throw Error('Unexpected evaluation destination');
@@ -35,7 +36,11 @@ for (const q of questions.filter(q => (split === 'all' || q.split === split) && 
     if (String(init.body).includes('PRIVATE_ORION_MARKER')) { leaked=true; throw Error('Private fixture leaked'); }
     if (q.mode === 'outage') return new Response('unavailable', { status: 500 });
     if (q.mode === 'malformed') return Response.json({model:'jev-1.14.0',usage:{input_tokens:1,output_tokens:1},answers:{}});
-    return transport(proxy+'/judge', { method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:init.body,signal:AbortSignal.timeout(40000) });
+    let response;
+    try { response = await transport(proxy+'/judge', { method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:init.body,signal:AbortSignal.timeout(40000) }); }
+    catch (error) { usage.failure(); throw error; }
+    await usage.response(response);
+    return response;
   });
   const start=performance.now();
   try {
@@ -45,7 +50,7 @@ for (const q of questions.filter(q => (split === 'all' || q.split === split) && 
     const missingStages=missing.map(group=>({ids:group,stage:group.some(id=>selected.has(corpus.find(p=>p.id===id)?.source_id))?'passage_scoring':'document_selection'}));
     const top=ids.slice(0,10); const falseTop=top.filter(id=>!relevant.has(id));
     const fault=q.mode!=='normal';
-    const record={id:q.id,group:q.group,split:q.split,query:q.query,run,engine,status:response.status,error:data.error??null,model_calls:modelCalls,leaked,elapsed_ms:performance.now()-start,hits:data.hit_count??null,ids,required_count:q.required_groups.length,recalled_count:q.required_groups.length-missing.length,missing:missingStages,unrelated_at_10:top.length?falseTop.length/top.length:0,unrelated_ids:falseTop,empty_with_evidence:q.required_groups.length>0&&ids.length===0,mandatory:q.mandatory,mode:q.mode,control_pass: fault ? engine==='jev'&&response.status===502&&data.hit_count===undefined : null,input_tokens:(data.trace??[]).reduce((n,t)=>n+(t.input_tokens??0),0),output_tokens:(data.trace??[]).reduce((n,t)=>n+(t.output_tokens??0),0)};
+    const record={id:q.id,group:q.group,split:q.split,query:q.query,run,engine,status:response.status,error:data.error??null,model_calls:modelCalls,leaked,elapsed_ms:performance.now()-start,hits:data.hit_count??null,ids,required_count:q.required_groups.length,recalled_count:q.required_groups.length-missing.length,missing:missingStages,unrelated_at_10:top.length?falseTop.length/top.length:0,unrelated_ids:falseTop,empty_with_evidence:q.required_groups.length>0&&ids.length===0,mandatory:q.mandatory,mode:q.mode,control_pass: fault ? engine==='jev'&&response.status===502&&data.hit_count===undefined : null,...usage.snapshot()};
     report.results.push(record); console.log(JSON.stringify(record));
   } finally {restore();f.sqlite.close();writeFileSync('evaluation-results/'+split+'.json',JSON.stringify(report,null,2)+'\n');}
 }

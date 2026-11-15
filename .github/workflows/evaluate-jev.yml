@@ -41,6 +41,7 @@ jobs:
       - if: steps.bindgen.outputs.cache-hit != 'true'
         run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
       - run: npm ci
+      - run: node --test scripts/evaluation/*.test.mjs
       - run: npm run build:rust && npx tsc -p tsconfig.test.json
       - name: Prepare expiring evaluation proxy
         run: |
