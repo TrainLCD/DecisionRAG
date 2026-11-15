@@ -86,7 +86,7 @@ impl<'a, H: Host> Judge<'a, H> {
                 "url":"https://api.typesafe.ai/v1/systemone", "method":"POST",
                 "headers":{"Authorization":format!("Bearer {}",self.c.typesafe_api_key),"Content-Type":"application/json"},
                 "body":body,"timeout_ms":remaining.min(25_000.),"max_bytes":1_000_000
-            })).await?;
+            })).await.map_err(|error| fetch_error(error, remaining))?;
             let status = response["status"].as_u64().unwrap_or(0);
             if status == 200 {
                 let value = parse_response(s(&response, "body"))?;
@@ -180,6 +180,14 @@ impl<'a, H: Host> Judge<'a, H> {
         Ok(rows)
     }
 }
+fn fetch_error(error: Error, remaining: f64) -> Error {
+    if remaining < 25_000. && error.status == 502 && error.code == "upstream_timeout" {
+        Error::new(504, "decision_deadline_exceeded")
+    } else {
+        error
+    }
+}
+
 // Deserialize before converting to Value: Value silently overwrites duplicate
 // JSON keys, which could turn conflicting decisions into an accepted score.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -323,6 +331,20 @@ mod tests {
         ] {
             assert!(parse_response(raw).is_err());
         }
+    }
+    #[test]
+    fn only_deadline_limited_fetch_timeouts_become_504() {
+        let deadline = fetch_error(Error::new(502, "upstream_timeout"), 24_999.);
+        assert_eq!(deadline.status, 504);
+        assert_eq!(deadline.code, "decision_deadline_exceeded");
+        assert_eq!(
+            fetch_error(Error::new(502, "upstream_timeout"), 25_000.).status,
+            502
+        );
+        assert_eq!(
+            fetch_error(Error::new(502, "other_error"), 1.).code,
+            "other_error"
+        );
     }
     #[test]
     fn retry_after_is_not_shortened() {

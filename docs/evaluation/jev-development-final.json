@@ -3,7 +3,7 @@
   "model_mode": "real",
   "commit": "c492d51b53532e9d0f61a2ca660fab3b1be05ef2",
   "corpus_sha256": "980b2f9b3f3ff11d465bf3cd84c41c6fc3c3dddee9d50b36baccebe7c8dc2319",
-  "questions_sha256": "ef6bbf66ef437ca6e8c66fb852e56fa831709aaba80926b6e3149100f891fb29",
+  "questions_sha256": "41588f7cfedd1c505b44ed10d20503a94d4b3daea612190879c8b9666fd4fab1",
   "split": "all",
   "expected_question_ids": [
     "A1",
@@ -5402,8 +5402,10 @@
       "required_count": 2,
       "recalled_count": 2,
       "missing": [],
-      "unrelated_at_10": 0,
-      "unrelated_ids": [],
+      "unrelated_at_10": 0.1,
+      "unrelated_ids": [
+        "TrainLCD/Website#186:3"
+      ],
       "empty_with_evidence": false,
       "mandatory": false,
       "mode": "normal",
@@ -5490,8 +5492,10 @@
       "required_count": 2,
       "recalled_count": 2,
       "missing": [],
-      "unrelated_at_10": 0,
-      "unrelated_ids": [],
+      "unrelated_at_10": 0.1,
+      "unrelated_ids": [
+        "TrainLCD/Website#186:4"
+      ],
       "empty_with_evidence": false,
       "mandatory": false,
       "mode": "normal",
@@ -5576,8 +5580,10 @@
       "required_count": 2,
       "recalled_count": 2,
       "missing": [],
-      "unrelated_at_10": 0,
-      "unrelated_ids": [],
+      "unrelated_at_10": 0.1,
+      "unrelated_ids": [
+        "TrainLCD/Website#186:3"
+      ],
       "empty_with_evidence": false,
       "mandatory": false,
       "mode": "normal",
@@ -12009,5 +12015,5 @@
     "file": "docs/evaluation/jev-development-final-original-labels.json",
     "questions_sha256": "e5cd2867e534e188e6f37160a3382b5273d7c06f652c5d5d52f0c1a1bf2faad3"
   },
-  "label_correction": "A1/A2 remove phone-layout passage (PR #53 discussion_r4577037411). Coverage questions exclude test-only GTFS fixtures, deployment/checklist/changed-file-only and encoded state passages: they do not establish actual supported scope. Original annotations, queries and required groups retained in *-original.json; only relevance annotations corrected."
+  "label_correction": "A1/A2 phone-layout false relevance removed. B1/B5/B12/B13/B14 and D2 exclude test-only samples, deployment/checklist/encoded-state/changed-file-only passages. Required groups and question text unchanged. See label-corrections.json and preserved original snapshots."
 }

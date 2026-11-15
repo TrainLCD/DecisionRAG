@@ -576,7 +576,6 @@
       "relevant_ids": [
         "TrainLCD/BFF#14:0",
         "TrainLCD/BFF#15:0",
-        "TrainLCD/BFF#15:4",
         "TrainLCD/StationAPI:CONTRIBUTING.md:0",
         "TrainLCD/StationAPI:README.md:2",
         "TrainLCD/StationAPI:data/gtfs-feeds/zz_gtfs_0260_gunma_0177_nippon_chuo_bus.md:0",
@@ -599,23 +598,8 @@
         "TrainLCD/StationAPI:docs/nearby-bus-stops.md:0",
         "TrainLCD/StationAPI:docs/nearby-bus-stops.md:1",
         "TrainLCD/StationAPI:docs/nearby-bus-stops.md:2",
-        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/README.md:0",
-        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/calendar.txt:0",
-        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/routes.txt:0",
-        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stop_times.txt:0",
-        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:0",
-        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/stops.txt:1",
-        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_city_bus/trips.txt:0",
-        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/routes.txt:0",
-        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/stop_times.txt:0",
-        "TrainLCD/StationAPI:preprocessor/test_data/nagoya_srt/trips.txt:0",
         "TrainLCD/Website#186:0",
-        "TrainLCD/Website#186:1",
         "TrainLCD/Website#186:2",
-        "TrainLCD/Website#186:3",
-        "TrainLCD/Website#186:4",
-        "TrainLCD/Website#186:5",
-        "TrainLCD/Website#186:6",
         "TrainLCD/gRPCProto#23:0"
       ],
       "fact": "旧PRの都営のみと新しい対応範囲の記載を区別する。",
@@ -846,5 +830,5 @@
       "mode": "malformed"
     }
   ],
-  "label_correction": "A1/A2 remove phone-layout passage (PR #53 discussion_r4577037411). Coverage questions exclude test-only GTFS fixtures, deployment/checklist/changed-file-only and encoded state passages: they do not establish actual supported scope. Original annotations, queries and required groups retained in *-original.json; only relevance annotations corrected."
+  "label_correction": "A1/A2 phone-layout false relevance removed. B1/B5/B12/B13/B14 and D2 exclude test-only samples, deployment/checklist/encoded-state/changed-file-only passages. Required groups and question text unchanged. See label-corrections.json and preserved original snapshots."
 }
