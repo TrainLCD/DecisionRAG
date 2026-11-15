@@ -222,6 +222,19 @@ fn unique_answers<'de, D: serde::Deserializer<'de>>(
     deserializer.deserialize_map(Answers)
 }
 fn parse_response(raw: &str) -> Result<Value> {
+    // Serde's derived structs also accept sequence representations. Validate the
+    // wire shape first; then parse the original bytes to retain duplicate-key
+    // detection (deserializing from Value would already have lost duplicates).
+    let shape: Value =
+        serde_json::from_str(raw).map_err(|_| Error::new(502, "invalid_jev_response"))?;
+    if !shape.is_object()
+        || !shape["usage"].is_object()
+        || shape["answers"]
+            .as_object()
+            .is_none_or(|answers| answers.values().any(|answer| !answer.is_object()))
+    {
+        return Err(Error::new(502, "invalid_jev_response"));
+    }
     let response: DecisionResponse =
         serde_json::from_str(raw).map_err(|_| Error::new(502, "invalid_jev_response"))?;
     serde_json::to_value(response).map_err(|_| Error::new(502, "invalid_jev_response"))
@@ -297,6 +310,16 @@ mod tests {
                 r#"{{"model":"jev-1.14.0","usage":{{"input_tokens":1,"output_tokens":1}},"answers":{answers}}}"#
             );
             assert!(parse_response(&raw).is_err());
+        }
+    }
+    #[test]
+    fn response_structures_must_be_json_objects() {
+        for raw in [
+            r#"["jev-1.14.0",{"input_tokens":1,"output_tokens":1},{}]"#,
+            r#"{"model":"jev-1.14.0","usage":[1,1],"answers":{}}"#,
+            r#"{"model":"jev-1.14.0","usage":{"input_tokens":1,"output_tokens":1},"answers":{"c0":["noul",0.9]}}"#,
+        ] {
+            assert!(parse_response(raw).is_err());
         }
     }
     #[test]
