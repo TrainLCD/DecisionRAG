@@ -188,20 +188,28 @@ pub async fn purge(h: &impl Host, repo: &str) -> Result<()> {
     .await?;
     Ok(())
 }
+pub struct SearchPlan {
+    pub ids: Vec<String>,
+    pub expanded_ids: Vec<String>,
+}
 pub async fn plan(
     h: &impl Host,
     query: &str,
     scope: Option<&Scope>,
-    max: usize,
+    limits: (usize, usize),
+    judge: Option<&crate::judge::Judge<'_, impl Host>>,
     vocabulary: &[Value],
     traces: &mut Vec<Value>,
-) -> Result<Vec<String>> {
+) -> Result<SearchPlan> {
+    let (max, seed_limit) = limits;
     let start = now();
     let measured = TimedDbHost::new(h);
     let h = &measured;
     let mut after = String::new();
     let mut candidates = Vec::new();
     let mut scored = Vec::new();
+    let mut semantic_candidates = Vec::new();
+    let mut candidate_bytes = 0usize;
     loop {
         let sql = format!(
             "SELECT s.id,s.kind,s.title,s.metadata, CASE WHEN s.kind='doc' THEN substr(s.body,1,1400)||' … '||substr(s.body,max(1,length(s.body)/4),400)||' … '||substr(s.body,max(1,length(s.body)/2),400)||' … '||substr(s.body,max(1,3*length(s.body)/4),400)||' … '||substr(s.body,-400) ELSE substr(s.body,1,480) END AS introduction, substr(s.body,1,60)||' … '||substr(s.body,max(1,length(s.body)/2-20),40)||' … '||substr(s.body,-40) AS sample FROM sources s JOIN repositories r ON s.repo=r.repo WHERE {} AND (s.kind<>'pr' OR instr(s.body,char(10)||'PENDING'||char(10))=0) AND s.id>? ORDER BY s.id LIMIT ?",
@@ -225,8 +233,17 @@ pub async fn plan(
         }
         after = next;
         let descriptions:Vec<_>=rows.iter().map(|r|json!({"id":r["id"],"description":format!("{}\n{} ({})\n{}\nBody excerpts: {}\n{}",s(r,"title"),s(r,"id"),s(r,"kind"),s(r,"metadata"),s(r,"sample"),s(r,"introduction"))})).collect();
-        for chunk in descriptions.chunks(64) {
-            scored.extend(
+        if judge.is_some() {
+            for description in &descriptions {
+                candidate_bytes = candidate_bytes.saturating_add(description.to_string().len());
+                if candidate_bytes > crate::judge::MAX_CANDIDATE_BYTES {
+                    return Err(Error::new(422, "decision_candidate_budget_exceeded"));
+                }
+            }
+            semantic_candidates.extend(descriptions);
+        } else {
+            for chunk in descriptions.chunks(64) {
+                scored.extend(
                 array(
                     &decision(
                         json!({"op":"score","query":query,"candidates":chunk,"allow_partial":true,"vocabulary":vocabulary}),
@@ -235,6 +252,7 @@ pub async fn plan(
                 .iter()
                 .cloned(),
             );
+            }
         }
         for row in &rows {
             candidates.push(json!({"id":row["id"],"references":local_references(s(row,"id"),&format!("{}\n{}",s(row,"sample"),s(row,"introduction")))}));
@@ -243,14 +261,24 @@ pub async fn plan(
             break;
         }
     }
+    if let Some(judge) = judge {
+        traces.push(with_storage_timing(
+            trace("document_loading", candidates.len(), vec![], start),
+            measured.storage_ms(),
+        ));
+        scored = judge
+            .score(query, &semantic_candidates, "document_screening", traces)
+            .await?;
+    }
     scored.sort_by(|a, b| {
         b["score"]
             .as_f64()
             .unwrap_or(0.)
             .total_cmp(&a["score"].as_f64().unwrap_or(0.))
     });
-    let result =
-        decision(json!({"op":"select_scored","candidates":candidates,"scores":scored,"limit":30}))?;
+    let result = decision(
+        json!({"op":"select_scored","candidates":candidates,"scores":scored,"limit":seed_limit}),
+    )?;
     let ids: Vec<String> = array(&result["ids"])?
         .iter()
         .filter_map(|v| v.as_str().map(String::from))
@@ -268,16 +296,32 @@ pub async fn plan(
             return Err(Error::new(422, "passage_screening_budget_exceeded"));
         }
     }
-    traces.push(with_storage_timing(
-        trace(
-            "document_screening",
-            scored.len(),
-            ids.iter().take(12).map(|s| json!(s)).collect(),
-            start,
-        ),
-        measured.storage_ms(),
-    ));
-    Ok(ids)
+    if judge.is_none() {
+        traces.push(with_storage_timing(
+            trace(
+                "document_screening",
+                scored.len(),
+                ids.iter().take(12).map(|s| json!(s)).collect(),
+                start,
+            ),
+            measured.storage_ms(),
+        ));
+    }
+    // Reuse this search's document decisions when widening the passage scan.
+    // Re-scoring the same documents wastes the request budget and can change
+    // the candidate population merely because the model is nondeterministic.
+    let expanded_ids = if judge.is_some() {
+        let expanded = decision(
+            json!({"op":"select_scored","candidates":candidates,"scores":scored,"limit":120}),
+        )?;
+        array(&expanded["ids"])?
+            .iter()
+            .filter_map(|v| v.as_str().map(String::from))
+            .collect()
+    } else {
+        Vec::new()
+    };
+    Ok(SearchPlan { ids, expanded_ids })
 }
 pub async fn passages(h: &impl Host, ids: &[String], scope: Option<&Scope>) -> Result<Vec<Value>> {
     if ids.is_empty() {
@@ -395,9 +439,379 @@ pub fn rank(
     Ok(out)
 }
 
+// Keep paragraphs/tables/code intact while separating independent sections. The
+// stored passage remains the citation unit; these are inference-only views.
+#[derive(Default)]
+struct EvidenceContext {
+    fence: Option<(u8, usize)>,
+    headings: Vec<(usize, String)>,
+}
+
+fn evidence_units_with_context(text: &str, context: &mut EvidenceContext) -> Vec<(String, String)> {
+    let mut units = Vec::new();
+    let mut current = String::new();
+    let mut scope = context
+        .headings
+        .iter()
+        .map(|(_, h)| h.as_str())
+        .collect::<Vec<_>>()
+        .join("\n");
+    for line in text.split_inclusive('\n') {
+        let trimmed_heading = line.trim_start();
+        let level = trimmed_heading.bytes().take_while(|b| *b == b'#').count();
+        let heading =
+            (1..=6).contains(&level) && trimmed_heading[level..].starts_with(char::is_whitespace);
+        if context.fence.is_none()
+            && !current.is_empty()
+            && (heading || (line.trim().is_empty() && current.chars().count() >= 600))
+        {
+            units.push((std::mem::take(&mut current), std::mem::take(&mut scope)));
+        }
+        if context.fence.is_none() && heading {
+            context.headings.retain(|(parent, _)| *parent < level);
+            context.headings.push((level, line.trim().to_string()));
+        }
+        if current.is_empty() {
+            scope = context
+                .headings
+                .iter()
+                .map(|(_, h)| h.as_str())
+                .collect::<Vec<_>>()
+                .join("\n");
+        }
+        let trimmed = line.trim_start_matches(' ');
+        let marker = trimmed.as_bytes().first().copied().unwrap_or(0);
+        let width = trimmed.bytes().take_while(|b| *b == marker).count();
+        if line.len() - trimmed.len() <= 3 && matches!(marker, b'`' | b'~') && width >= 3 {
+            match context.fence {
+                Some((open, length))
+                    if marker == open && width >= length && trimmed[width..].trim().is_empty() =>
+                {
+                    context.fence = None
+                }
+                None => context.fence = Some((marker, width)),
+                _ => {}
+            }
+        }
+        current.push_str(line);
+    }
+    if !current.is_empty() {
+        units.push((current, scope));
+    }
+    units
+}
+
+#[cfg(test)]
+fn evidence_units(text: &str) -> Vec<String> {
+    evidence_units_with_context(text, &mut EvidenceContext::default())
+        .into_iter()
+        .map(|(text, _)| text)
+        .collect()
+}
+
+fn semantic_candidates(passages: &[Value]) -> Result<(Vec<Value>, Vec<usize>)> {
+    let mut candidates = Vec::new();
+    let mut parents = Vec::new();
+    let mut bytes = 0usize;
+    let mut contexts: HashMap<&str, EvidenceContext> = HashMap::new();
+    // Storage loads complete sources in ordinal order. Preserve each source's
+    // Markdown scope across its stored citation boundaries.
+    let mut ordered: Vec<_> = passages.iter().enumerate().collect();
+    ordered.sort_by_key(|(_, p)| (s(p, "source_id"), p["ordinal"].as_u64().unwrap_or(0)));
+    for (parent, p) in ordered {
+        let context = contexts.entry(s(p, "source_id")).or_default();
+        let mut units = evidence_units_with_context(s(p, "text"), context);
+        // A title is a source-level fact, not evidence in every body fragment.
+        if p["ordinal"] == 0 {
+            let header = format!(
+                "Source header: {}\nIdentity: {}\nMetadata: {}\n",
+                s(p, "title"),
+                s(p, "source_id"),
+                p["metadata"]
+            );
+            if let Some(first) = units.first_mut() {
+                first.0.insert_str(0, &header);
+            } else {
+                units.push((header, String::new()));
+            }
+        }
+        for (unit, scope) in units
+            .into_iter()
+            .filter(|(unit, _)| !unit.trim().is_empty())
+        {
+            let section = if scope.is_empty() {
+                String::new()
+            } else {
+                format!("Section scope (applies to this evidence):\n{scope}\n")
+            };
+            let description = format!(
+                "Context only (not evidence): title={}; source={}; repository={}; metadata={}\n{section}Evidence to judge:\n{}",
+                s(p, "title"),
+                s(p, "source_id"),
+                s(p, "repo"),
+                p["metadata"],
+                unit
+            );
+            bytes = bytes.saturating_add(description.len());
+            if bytes > crate::judge::MAX_CANDIDATE_BYTES {
+                return Err(Error::new(422, "decision_candidate_budget_exceeded"));
+            }
+            candidates.push(json!({"id":candidates.len().to_string(),"description":description}));
+            parents.push(parent);
+        }
+    }
+    Ok((candidates, parents))
+}
+
+// Restore original passage order for equal scores after the source-ordered
+// Markdown scan. Stable sorting also preserves unit order within a passage.
+fn sort_semantic_rows(rows: &mut [Value], parents: &[usize]) {
+    rows.sort_by(|a, b| {
+        b["score"]
+            .as_f64()
+            .unwrap()
+            .total_cmp(&a["score"].as_f64().unwrap())
+            .then_with(|| {
+                let a = s(a, "id").parse::<usize>().unwrap();
+                let b = s(b, "id").parse::<usize>().unwrap();
+                parents[a].cmp(&parents[b])
+            })
+    });
+}
+
+/// Semantic selection runs once over all selected evidence units before pagination.
+pub async fn rank_semantic(
+    judge: &crate::judge::Judge<'_, impl Host>,
+    query: &str,
+    passages: &[Value],
+    traces: &mut Vec<Value>,
+) -> Result<Vec<Value>> {
+    let (candidates, parents) = semantic_candidates(passages)?;
+    // Subject eligibility is a separate constraint, not a contribution to an
+    // additive relevance score. This prevents an unrelated platform or feature
+    // from qualifying merely because it contains detailed background facts.
+    let collection = judge.collection_query(query, traces).await?;
+    let subject_rows = judge
+        .score(
+            query,
+            &candidates,
+            if collection {
+                "collection_subject"
+            } else {
+                "passage_subject"
+            },
+            traces,
+        )
+        .await?;
+    let eligible: HashSet<_> = subject_rows
+        .iter()
+        .filter(|r| r["score"].as_f64().unwrap_or(0.) > 0.5)
+        .map(|r| s(r, "id"))
+        .collect();
+    let candidates: Vec<_> = candidates
+        .into_iter()
+        .filter(|r| eligible.contains(s(r, "id")))
+        .collect();
+    if candidates.is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut rows = judge
+        .score(
+            query,
+            &candidates,
+            if collection {
+                "collection_evidence"
+            } else {
+                "passage_scoring"
+            },
+            traces,
+        )
+        .await?;
+    sort_semantic_rows(&mut rows, &parents);
+    if let Some(trace) = traces.last_mut() {
+        let mut selected = HashSet::new();
+        trace["selected"] = json!(
+            rows.iter()
+                .filter_map(|row| {
+                    let index = s(row, "id").parse::<usize>().ok()?;
+                    let id = passages[*parents.get(index)?]["id"].clone();
+                    selected.insert(id.to_string()).then_some(id)
+                })
+                .take(12)
+                .collect::<Vec<_>>()
+        );
+        trace["passages"] = json!(passages.len());
+    }
+    let mut out = Vec::new();
+    let mut seen = HashSet::new();
+    // Descending scores: a passage is represented by its strongest explicit
+    // fact, once. No votes, additive length bonus or threshold relaxation.
+    for row in rows
+        .iter()
+        .filter(|r| r["score"].as_f64().unwrap_or(0.) > 0.5)
+    {
+        let index: usize = s(row, "id")
+            .parse()
+            .map_err(|_| Error::new(502, "invalid_jev_response"))?;
+        let parent = parents[index];
+        if !seen.insert(parent) {
+            continue;
+        }
+        let mut p = passages[parent].clone();
+        p["citation"] = json!(format!("p{}", out.len() + 1));
+        p["relevance"] = row["score"].clone();
+        out.push(p);
+    }
+    Ok(out)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn semantic_ties_preserve_original_passage_order() {
+        let passages = vec![
+            json!({"source_id":"b","ordinal":0,"text":"B"}),
+            json!({"source_id":"a","ordinal":0,"text":"A"}),
+            json!({"source_id":"c","ordinal":0,"text":"C"}),
+        ];
+        let (candidates, parents) = semantic_candidates(&passages).unwrap();
+        assert_eq!(parents, vec![1, 0, 2]);
+        let mut rows: Vec<_> = candidates
+            .iter()
+            .map(|c| json!({"id":c["id"],"score":0.9}))
+            .collect();
+        sort_semantic_rows(&mut rows, &parents);
+        assert_eq!(
+            rows.iter()
+                .map(|r| parents[s(r, "id").parse::<usize>().unwrap()])
+                .collect::<Vec<_>>(),
+            vec![0, 1, 2]
+        );
+        rows[2]["score"] = json!(0.95);
+        sort_semantic_rows(&mut rows, &parents);
+        assert_eq!(
+            rows.iter()
+                .map(|r| parents[s(r, "id").parse::<usize>().unwrap()])
+                .collect::<Vec<_>>(),
+            vec![2, 0, 1]
+        );
+    }
+
+    #[test]
+    fn inference_units_preserve_every_byte_and_separate_sections() {
+        let text = format!(
+            "{}\n\n### Conditions\n| key | rule |\n| a | omit missing records |\n\n```rust\n# not a heading\n```\n",
+            "background ".repeat(70)
+        );
+        let units = evidence_units(&text);
+        assert_eq!(units.concat(), text);
+        assert!(
+            units
+                .iter()
+                .any(|u| u.starts_with("### Conditions") && u.contains("omit missing records"))
+        );
+        assert!(
+            units
+                .iter()
+                .any(|u| u.contains("```rust\n# not a heading\n```"))
+        );
+    }
+    #[test]
+    fn mismatched_fences_do_not_split_code_and_trailing_bytes_survive() {
+        let text =
+            "````markdown\n```\n# example heading\n~~~\n# still code\n````\n\n# actual heading\n\n";
+        let units = evidence_units(text);
+        assert_eq!(units.concat(), text);
+        assert_eq!(units.len(), 2);
+        assert!(units[0].contains("# still code"));
+        let text = format!("{}\n\n", "x".repeat(700));
+        assert_eq!(evidence_units(&text).concat(), text);
+    }
+    #[test]
+    fn saved_passage_boundaries_keep_fences_and_section_scope() {
+        let body = format!(
+            "## Android only\n```python\n{}\n# a\nvalue = 1\n# b\nvalue = 2\n```\n",
+            "x".repeat(2500)
+        );
+        let passages: Vec<_> = split_passages(&body).into_iter().enumerate()
+            .map(|(i, text)| json!({"id":format!("code:{i}"),"source_id":"code","ordinal":i,"text":text})).collect();
+        assert!(passages.len() > 1);
+        let (candidates, parents) = semantic_candidates(&passages).unwrap();
+        let tail = candidates
+            .iter()
+            .find(|c| s(c, "description").contains("# a"))
+            .unwrap();
+        assert!(s(tail, "description").contains("# b"));
+        assert!(
+            s(tail, "description")
+                .contains("Section scope (applies to this evidence):\n## Android only")
+        );
+        assert_eq!(parents.len(), passages.len());
+        for (candidate, parent) in candidates.iter().zip(parents) {
+            assert!(s(candidate, "description").ends_with(s(&passages[parent], "text")));
+        }
+    }
+    #[test]
+    fn paragraph_units_inherit_nested_scope_without_leaking_between_sources() {
+        let text = format!(
+            "## Android only\n### Background\n{}\n\nSupport continues here.\n## iOS only\nDifferent scope.",
+            "details ".repeat(90)
+        );
+        let passages = vec![
+            json!({"source_id":"a","ordinal":0,"text":text}),
+            json!({"source_id":"b","ordinal":0,"text":"Independent source."}),
+        ];
+        let (candidates, _) = semantic_candidates(&passages).unwrap();
+        let continuation = candidates
+            .iter()
+            .find(|c| s(c, "description").contains("Support continues here."))
+            .unwrap();
+        assert!(s(continuation, "description").contains(
+            "Section scope (applies to this evidence):\n## Android only\n### Background\n"
+        ));
+        let ios = candidates
+            .iter()
+            .find(|c| s(c, "description").contains("Different scope."))
+            .unwrap();
+        assert!(!s(ios, "description").contains("Android only"));
+        assert!(!s(candidates.last().unwrap(), "description").contains("Section scope"));
+    }
+    #[test]
+    fn title_evidence_belongs_only_to_the_first_passage() {
+        let passages = vec![
+            json!({"ordinal":0,"title":"Feature added","text":""}),
+            json!({"ordinal":1,"title":"Feature added","text":"opaque payload"}),
+        ];
+        let (candidates, parents) = semantic_candidates(&passages).unwrap();
+        assert_eq!(parents, vec![0, 1]);
+        assert!(
+            s(&candidates[0], "description")
+                .contains("Evidence to judge:\nSource header: Feature added")
+        );
+        assert!(s(&candidates[1], "description").ends_with("Evidence to judge:\nopaque payload"));
+    }
+    #[test]
+    fn first_unit_keeps_the_title_link_and_release_evidence_together() {
+        let passages = vec![
+            json!({"id":"App#20:0","source_id":"App#20","ordinal":0,"title":"Fix location refresh","text":"closes #19","metadata":{"merged_at":"2026-11-15","github_release":{"tag":"v1"}}}),
+        ];
+        let (candidates, parents) = semantic_candidates(&passages).unwrap();
+        assert_eq!(parents, vec![0]);
+        let evidence = s(&candidates[0], "description")
+            .split("Evidence to judge:\n")
+            .nth(1)
+            .unwrap();
+        for fact in [
+            "Fix location refresh",
+            "App#20",
+            "closes #19",
+            "merged_at",
+            "github_release",
+        ] {
+            assert!(evidence.contains(fact));
+        }
+    }
     #[test]
     fn passage_boundaries_preserve_unicode_and_size_budget() {
         let text = "😀測位".repeat(2000);

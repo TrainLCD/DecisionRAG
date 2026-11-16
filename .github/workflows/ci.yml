@@ -44,6 +44,7 @@ jobs:
       - run: cargo test --workspace --locked
       - run: npm run build:rust
       - run: npm run check
+      - run: node --test scripts/evaluation/*.test.mjs
       - run: npm test
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser

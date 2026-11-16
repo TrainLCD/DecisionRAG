@@ -63,6 +63,11 @@ const errors = {
   authentication_not_configured: "サーバーにAPI_TOKENが設定されていません。",
   public_search_rate_limited: "検索回数の上限に達しました。少し待ってから再実行してください。",
   public_search_unavailable: "公開資料の検索は現在利用できません。",
+  decision_budget_exceeded: "検索判定の処理量が上限に達したため、検索を完了できませんでした（decision_budget_exceeded）。",
+  decision_candidate_budget_exceeded: "検索候補のデータ量が上限に達したため、検索を完了できませんでした。",
+  decision_candidate_too_large: "検索候補が大きすぎるため、検索を完了できませんでした。",
+  decision_context_limit: "判定モデルが扱える入力サイズを超えたため、検索を完了できませんでした。",
+  decision_deadline_exceeded: "検索判定が制限時間を超えました。再実行してください。",
   decision_not_configured: "サーバーの判定モデルが設定されていません。",
   decision_capacity_exceeded: "判定サービスが混雑しています。少し待ってから再実行してください。",
   decision_rate_limited: "判定サービスの利用制限に達しました。1分ほど待ってから再実行してください。",
@@ -541,7 +546,7 @@ function renderResult(data, mode, query) {
     $("trace-list").append(row);
   }
   for (const step of trace) {
-    const stageNames = { vocabulary_expansion: "検索語の展開", page_screening: "関連する資料グループの選択", branch_screening: "検索する分野の選択", document_screening: "文書の選択", passage_scoring: "本文の評価", passage_ranking: "本文の評価と表示順の決定", shared_shortlist: "本文の再評価", choice_rerank: "表示順の決定", assess_evidence: "回答できるかの確認", answer_evidence: "回答に使う資料の選別", generate_answer: "回答の生成", verify_answer: "回答の検証" };
+    const stageNames = { vocabulary_expansion: "検索語の展開", page_screening: "関連する資料グループの選択", branch_screening: "検索する分野の選択", document_screening: "文書の選択", passage_scoring: "本文の評価", passage_subject: "質問の対象との照合", query_collection: "集計に必要な根拠の確認", collection_evidence: "対象集合の根拠の評価", collection_subject: "対象集合との照合", passage_ranking: "本文の評価と表示順の決定", shared_shortlist: "本文の再評価", choice_rerank: "表示順の決定", assess_evidence: "回答できるかの確認", answer_evidence: "回答に使う資料の選別", generate_answer: "回答の生成", verify_answer: "回答の検証" };
     const row = element("div", "trace-row", stageNames[step.stage] || step.stage);
     row.append(
       element(

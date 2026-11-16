@@ -1,20 +1,24 @@
 # TrainLCD DecisionRAG
 
-TrainLCD org の Issue・PR・リポジトリ文書・ユーザーフィードバックを検索するヘッドレスAPI。関連性の判定、順位付け、参照文書の選択、引用検査を **Rust/WASMのローカルルール**で実行する。Decisionの外部API、モデル重み、GPUは不要。
+TrainLCD org の Issue・PR・リポジトリ文書・ユーザーフィードバックを検索するヘッドレスAPI。検索の関連性は **Jevの共有文脈判定**で評価する。Rust/WASMは認証・資料取得・探索制御・順位付け・引用検査を担う。Jev用のAPIキーが必要。
 
 ヘッドレス側のルーティング・認証・検索・D1操作・GitHub同期・リリース判定・Webhook・Queues・回答検査・SSE処理は `backend/` のRust実装。`src/host.ts` と `src/worker.ts` はCloudflareのI/Oバインディングだけを担当する。判定コアはネイティブのJSON Lines CLIとしても動作する。
 
 ## 検索方法
 
 1. 公開範囲を確認してからD1の文書候補を読む。540文書ずつ読み込み、許可された範囲を全件走査する。`MAX_SCREENED_DOCUMENTS`を超えれば422で終了し、部分的な走査を成功扱いしない。
-2. RustでNFKC正規化、日英の用語対応、技術識別子、番号、未知の日本語名を照合する。語のカバー率と見出しの一致を重み付けする。語彙と間接的な手掛かりは `rust/rules.rs` と `rust/lib.rs` に置く。
-3. 上位30文書とスコア0.5超の文書を残し、検索範囲内の明示的な同一リポジトリ参照を1段だけたどる。従来のAIによる粗いグループ選別は行わない。
-4. 本文区間をRustで独立採点し、0.5超を関連本文とする。同点は元の順番を維持する。APIの `relevance` および内部互換名 `probability` は**ルールスコアであり、校正された確率ではない**。
-5. Webは全関連本文を取得後に10件ずつ表示する。全件数・総ページ数は同じ結果集合から算出し、ページ送りでは検索・判定・文章生成を再実行しない。
+2. 元の質問と文書の記述をJevへ送り、回答の一部の根拠になり得るかを判定する。質問をキーワードへ書き換えず、語彙一致を検索の必要条件にしない。候補は最大60件・JSON 24,000 UTF-8 bytesごとの共有文脈、並列数は4。
+3. 上位30文書とJevの関連性スコア0.5超の文書、許可範囲内の明示的な同一リポジトリ参照を残す。本文0件の場合、保存済みの文書判定を使って保持枠を最大120件へ一度だけ広げ、本文を再評価する。探索予算内の検索であり網羅性は保証しない。
+4. 本文もJevが共有文脈で評価し、部分的根拠・比較や計算の入力も含める。0.5超を採用し同点は入力順を維持する。スコアは校正済み確率ではなく、固定資料での実測と残る制約は評価報告を参照する。
+5. Webは全関連本文を取得後に10件ずつ表示する。APIカーソルも判定結果を固定し、継続ページでモデルを呼び直さない。`retrieval=jev-semantic-v1`、`retrieval_details.coverage=bounded` を返す。
 
-`/answer` の文章生成接続とSSEは維持する。ローカル検査は引用ID、原文一致、用語の対応、否定・条件・推測表現、数値、原因・配信・変更の断定を検査する。原文と完全一致しないだけで回答を削除せず、引用先と関連があり明示的なルール違反が見つからない言い換えも返す。語句の類似は意味の証明ではないため、`verification.method=local_support_rules`、`semantic_status=unknown` とし、`reasons`で原文一致・ルールによる支持・意味的支持の未確定を区別する。回答の完全性と意味的な矛盾検出も`unknown`である。引用先不明・関連なし・検出可能な否定反転や根拠のない配信断定などは除外し、残る回答がなければ原文を「資料の記載」として引用する。
+`RETRIEVAL_ENGINE=rust-rules-v1` で旧ローカル判定を明示選択できる。未設定はJev。Jevの障害・キー未設定時に旧ルールへ自動フォールバックしない。旧版の保存先は [backup/rust-inference-2026-11-15](https://github.com/TrainLCD/DecisionRAG/tree/backup/rust-inference-2026-11-15)。
 
-検索結果は以前のモデルと一致するとは限らない。実資料40区間での再現可能な比較と未検証範囲は [rust-local-decisions.md](docs/rust-local-decisions.md) を参照。
+関連資料を集めても全国の母数・対応数を確定したことにはならない。検索件数を対応率に流用しない。完全な母集団の登録とRustによる集計は別途実装が必要で、この変更では全国対応率の算出を保証しない。
+
+`/answer` の文章生成接続とSSEは維持する。ローカル検査は引用ID、原文一致、用語の対応、否定・条件・推測表現、数値、原因・配信・変更の断定を検査する。原文と完全一致しないだけで回答を削除せず、引用先と関連があり明示的なルール違反が見つからない言い換えも返す。語句の類似は意味の証明ではないため、`verification.method=local_support_rules`、`semantic_status=unknown` とし、`reasons`で原文一致・ルールによる支持・意味的支持の未確定を区別する。回答の完全性と意味的な矛盾検出も`unknown`である。引用先不明・関連なし・検出可能な否定反転や根拠のない配信断定などは除外し、残る回答がなければ検索結果と `generation_unavailable` を返す。
+
+検索結果は旧ルールと一致するとは限らない。旧Rustルールへの移行時の実資料40区間での比較と当時の未検証範囲は [rust-local-decisions.md](docs/rust-local-decisions.md) を参照。
 
 ## 情報源と同期
 
@@ -53,14 +57,17 @@ npm run db:remote
 npx wrangler secret put API_TOKEN
 npx wrangler secret put WEBHOOK_SECRET
 npx wrangler secret put GITHUB_TOKEN
+npx wrangler secret put TYPESAFE_API_KEY
 ```
 
 - `API_TOKEN`: フィードバック検索・同期・管理用のBearerトークン。十分長いランダム値を設定する。
 - `WEBHOOK_SECRET`: GitHub Webhookと同じ値。
 - `GITHUB_TOKEN`: org内対象リポジトリのMetadata・Contents・Issues・Pull requestsの読み取り権限が必要。リポジトリ作成・書き込み権限は不要。
-- 判定はRust/WASM内で完結する。`AI` は文章生成にのみ使用する。`SCREENING_MODEL`、`TYPESAFE_API_KEY`、`JEV_MODEL` は本番の判定では参照しない。
+- `TYPESAFE_API_KEY`: Jev用Secret。接続先は公式 `https://api.typesafe.ai/v1/systemone` に固定する。
+- `JEV_MODEL`: 既定 `jev-1.14.0`。再現性のため版を固定。`RETRIEVAL_ENGINE`: `jev`（既定）または `rust-rules-v1`。
+- `AI` は回答生成と同期時の語彙抽出に使用する。`SCREENING_MODEL` は使用しない。同期辞書は旧ルール経路のみ検索に利用する。
 
-既定の文章生成には Cloudflare Workers AI の `AI` バインディングを使う。別の生成サービスを使う場合は、`ANSWER_MODEL`・`ANSWER_BASE_URL` を設定し、`wrangler secret put ANSWER_API_KEY` を実行する。OpenAI互換の `/chat/completions` とJSON object出力に対応するプロバイダーを想定する。サンプルWebアプリではSSEストリーミング（`stream: true`、`stream_options.include_usage: true`）への対応も必要となる。非ストリーミングへのフォールバックはなく、未対応のプロバイダーではWebアプリの回答が失敗する場合がある。Acceptヘッダーを省略したJSON APIは引き続き非ストリーミングで動作する。根拠の本文は設定された文章生成サービスにのみ送信される。検索だけではAIサービスへの通信は発生しない。
+既定の文章生成には Cloudflare Workers AI の `AI` バインディングを使う。別の生成サービスを使う場合は、`ANSWER_MODEL`・`ANSWER_BASE_URL` を設定し、`wrangler secret put ANSWER_API_KEY` を実行する。OpenAI互換の `/chat/completions` とJSON object出力に対応するプロバイダーを想定する。サンプルWebアプリではSSEストリーミング（`stream: true`、`stream_options.include_usage: true`）への対応も必要となる。非ストリーミングへのフォールバックはなく、未対応のプロバイダーではWebアプリの回答が失敗する場合がある。Acceptヘッダーを省略したJSON APIは引き続き非ストリーミングで動作する。Jev検索では許可範囲内の文書記述・本文をTypeSafeへ送信する。回答時は選択した根拠を文章生成サービスにも送る。検索だけの場合は文章生成を行わない。
 
 `workers_dev` は既定で `false`。利用するホスト名のrouteを設定するか、意図して `true` に変更してから `npm run deploy` を実行する。公開資料の検索・回答は認証なしで使える。フィードバック検索、同期、管理APIはBearer認証が必須。WebhookはHMAC-SHA256署名検証が必須。複数ユーザー向けのACLは実装していないため、このAPIトークンを他者に配布しないこと。
 
@@ -152,9 +159,9 @@ curl "$RAG_URL/search" \
 
 ### ページ分割
 
-`/search`・`/answer` に `paginated: true` を指定すると、`pagination` に `page`、`total_pages`、`next_cursor` を返す。続きは同じ `query`・`include_feedback`・認証条件と `cursor: next_cursor` を送る。`next_cursor: null` が最終ページ。`total_pages` は評価前の本文区間を20件ずつ分けたページ数で、ページによって関連本文が0件になることもある。`hit_count`、回答は現在のページだけを対象とする。省略時のAPIは従来どおり選択文書の全本文を評価する。
+`/search`・`/answer` に `paginated: true` を指定すると、`pagination` に `page`、`total_pages`、`next_cursor` を返す。続きは同じ `query`・`include_feedback`・認証条件と `cursor: next_cursor` を送る。`next_cursor: null` が最終ページ。Jev経路の `total_pages` は確定した関連本文の20件単位のページ数、`hit_count` は全関連本文数。旧ルール経路では従来どおり評価前の本文区間を分割し、`hit_count` は現在ページの件数。回答生成は両経路とも現在ページの根拠を対象とする。省略時のAPIは従来どおり選択文書の全本文を評価する。
 
-カーソルは `API_TOKEN` を鍵として暗号化・認証し、初回検索から15分で失効する。公開リポジトリ一覧を取得する検索条件（認証なし、または `include_feedback` を明示した検索）では、継続時にもGitHubで最新の公開範囲を確認する。Bearer認証で `include_feedback` を省略する互換モードは索引全体を対象とし、公開範囲の変更を再確認しない。初回検索の計画に保存された文書について、本文・メタデータや公開範囲の変化で読み込まれる区間が変わった場合は `409 search_results_changed` を返し、再検索を求める。新たに公開された文書や、初回の計画で選択されなかった文書の追加・変更は検出せず、それだけでは409を返さない。不正・期限切れ・検索条件不一致のカーソルは `400 invalid_search_cursor`。`API_TOKEN` の変更でも既存カーソルは無効になる。
+Jev経路では選択文書IDに加え、本文の位置とスコア・順序をカーソルへ固定する。本文そのものは含めず、毎ページ許可範囲内で再取得して改訂を検査する。カーソルが200,000文字を超えれば422で失敗し、結果を黙って切り詰めない。モデル設定・エンジンの変更時も409とする。カーソルは `API_TOKEN` を鍵として暗号化・認証し、初回検索から15分で失効する。公開リポジトリ一覧を取得する検索条件（認証なし、または `include_feedback` を明示した検索）では、継続時にもGitHubで最新の公開範囲を確認する。Bearer認証で `include_feedback` を省略する互換モードは索引全体を対象とし、公開範囲の変更を再確認しない。初回検索の計画に保存された文書について、本文・メタデータや公開範囲の変化で読み込まれる区間が変わった場合は `409 search_results_changed` を返し、再検索を求める。新たに公開された文書や、初回の計画で選択されなかった文書の追加・変更は検出せず、それだけでは409を返さない。不正・期限切れ・検索条件不一致のカーソルは `400 invalid_search_cursor`。`API_TOKEN` の変更でも既存カーソルは無効になる。
 
 Webアプリの「前へ」は表示済みページをメモリから復元する。新しい検索・接続解除・再読み込みで破棄する。次ページでエラーが起きた場合は前の結果を残し、再試行できる。
 
@@ -168,7 +175,7 @@ Webアプリの「前へ」は表示済みページをメモリから復元す�
 - `verification_failed`: 生成結果を根拠検査で却下。回答はnull。
 - `generation_unavailable`: 既定の生成モデルから利用できる回答を得られなかった。検索で得た資料は返す。
 
-検索予算超過・WASM入力上限はHTTP 422、ローカル実行失敗は `503 local_decision_failed`。Decisionプロバイダーの容量不足・クォータ・レート制限は発生しない。公開検索のレート制限と文章生成サービスのエラー処理は維持する。SSE開始後の例外は `error` イベントになる。既定生成モデルが失敗した場合、利用可能な根拠から引用を返す。別途設定した外部生成サービスの接続エラーは従来どおり通知する。
+検索予算超過・WASM入力上限はHTTP 422、ローカル実行失敗は `503 local_decision_failed`。Jev未設定は503 `jev_not_configured`、認証不備は503 `jev_authentication_failed`、不正応答は502。429/529はRetry-Afterを尊重し、最大1回再試行する（30秒を超える待機なら明示的に失敗）。最大512呼出し・送信JSON合計12,288,000 bytes（512回×24,000 bytes）・検索判定120秒の予算は再試行と追加探索も含む。予算超過422・期限超過504・レート制限429・過負荷503を0件に変換しない。公開検索のレート制限と文章生成サービスのエラー処理は維持する。SSE開始後の例外は `error` イベントになる。既定生成モデルが失敗した場合、取得した検索結果は維持する。別途設定した外部生成サービスの接続エラーは従来どおり通知する。
 
 ## GitHub Webhook
 
@@ -254,4 +261,4 @@ HTTPSで開き、iOSでは共有メニューの「ホーム画面に追加」、
 
 既定の `ANSWER_CONTEXT_ENGINE=jev` には `TYPESAFE_API_KEY` が必要。モデルは `JEV_MODEL`（既定 `jev-1.14.0`）。判定の通信・認証・予算エラーを空回答や未選別の生成へ変換しない。該当資料がないという正常な判定だけを `insufficient_evidence` とする。`ANSWER_CONTEXT_ENGINE=none` は比較・切り戻し用であり、質問例に引きずられる旧動作が再発し得る。
 
-Jevクライアントは意味検索PR #53の実装と共有する構成で、今回は索引検索に使わず回答用資料だけを判定する。入力上限24,000 UTF-8 bytes、並列4、要求期限120秒、最大512呼出し／8MBの上限を維持する。生成前の推論分だけ費用と初回draftまでの時間が増える。`answer_evidence` トレースで呼出数・入力トークン・時間・採用引用を確認できる。判定スコアは正解の保証ではなく、回答内容は実サービスでも検証する。
+Jevクライアントは検索の意味判定と回答用資料の選別で共有する。入力上限24,000 UTF-8 bytes、並列4、要求期限120秒、最大512呼出し／12,288,000 bytesの上限を維持する。生成前の推論分だけ費用と初回draftまでの時間が増える。`answer_evidence` トレースで呼出数・入力トークン・時間・採用引用を確認できる。判定スコアは正解の保証ではなく、回答内容は実サービスでも検証する。

@@ -12,3 +12,5 @@ dist-test/
 /generated/
 
 /test-results/
+/wrangler.evaluation.json
+/evaluation-results/

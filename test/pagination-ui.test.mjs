@@ -376,3 +376,19 @@ test('draft inline citation waits for the corresponding complete claim citation 
     assert.equal(c.$('answer-panel').querySelectorAll('a').length, 0);
   } finally { c.close(); }
 });
+
+ test('budget error explains failure and permits a subsequent successful search', async () => {
+  let attempts = 0;
+  const c = client(() => ++attempts === 1
+    ? Response.json({error: 'decision_budget_exceeded'}, {status: 422})
+    : Response.json(result(1)));
+  try {
+    c.submit();
+    await until(() => !c.$('search-button').disabled);
+    assert.match(c.window.document.body.textContent, /検索判定の処理量が上限/);
+    assert.doesNotMatch(c.window.document.body.textContent, /リクエストに失敗しました（HTTP 422）/);
+    c.submit();
+    await until(() => c.cards().length === 1);
+    expectPage(c, 0, 1);
+  } finally { c.close(); }
+});
