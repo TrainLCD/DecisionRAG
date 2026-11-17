@@ -82,6 +82,7 @@ pub struct Config {
     pub webhook_secret: String,
     pub github_token: String,
     pub github_org: String,
+    pub answer_context_engine: String,
     pub answer_api_key: String,
     pub answer_model: String,
     pub answer_base_url: String,

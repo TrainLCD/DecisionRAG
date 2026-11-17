@@ -443,13 +443,49 @@ pub async fn answer(
     if all.is_empty() {
         return Ok(json!({"status":"insufficient_evidence","answer":null,"citations":[]}));
     }
-    let context = answer_context(all);
+    let mut context = answer_context(all);
     let external = !c.answer_api_key.is_empty() && !c.answer_model.is_empty();
     if !external && !c.ai {
         return fallback();
     }
+    match c.answer_context_engine.as_str() {
+        "" | "none" => {}
+        "jev" => {
+            let judge = crate::judge::Judge::new(h, c)?;
+            let candidates: Vec<_> = context
+                .iter()
+                .map(|p| {
+                    json!({
+                        "id": p["citation"], "description": p.to_string()
+                    })
+                })
+                .collect();
+            let scores = judge
+                .score(query, &candidates, "answer_evidence", traces)
+                .await?;
+            let allowed: HashSet<_> = scores
+                .iter()
+                .filter(|row| row["score"].as_f64().is_some_and(|score| score > 0.5))
+                .map(|row| s(row, "id"))
+                .collect();
+            context.retain(|p| allowed.contains(s(p, "citation")));
+            if let Some(trace) = traces.last_mut() {
+                trace["selected"] = json!(
+                    context
+                        .iter()
+                        .take(12)
+                        .map(|p| p["citation"].clone())
+                        .collect::<Vec<_>>()
+                );
+            }
+            if context.is_empty() {
+                return Ok(json!({"status":"insufficient_evidence","answer":null,"citations":[]}));
+            }
+        }
+        _ => return Err(Error::new(503, "invalid_answer_context_engine")),
+    }
     let ids: Vec<_> = context.iter().map(|p| p["citation"].clone()).collect();
-    let messages = json!([{"role":"system","content":include_str!("instructions.txt")},{"role":"user","content":format!("{}\n\n{}",json!({"query":query,"evidence":context,"evidence_scope":{"retrieved_passages":all.len(),"included_passages":context.len(),"exhaustive":false}}),include_str!("writingGuide.txt"))}]);
+    let messages = json!([{"role":"system","content":include_str!("instructions.txt")},{"role":"user","content":format!("{}\n\n{}\n\n{}\n{}",json!({"query":query,"evidence":context,"evidence_scope":{"retrieved_passages":all.len(),"included_passages":context.len(),"exhaustive":false}}),include_str!("writingGuide.txt"),include_str!("answerFocus.txt"),json!({"original_query":query}))}]);
     let base = if external {
         let parsed = url::Url::parse(if c.answer_base_url.is_empty() {
             "https://api.openai.com/v1"

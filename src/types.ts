@@ -10,6 +10,7 @@ export interface Env {
   WEBHOOK_SECRET: string;
   GITHUB_TOKEN: string;
   GITHUB_ORG: string;
+  ANSWER_CONTEXT_ENGINE?: string;
   ANSWER_API_KEY?: string;
   ANSWER_MODEL?: string;
   ANSWER_BASE_URL?: string;

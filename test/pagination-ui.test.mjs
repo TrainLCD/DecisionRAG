@@ -154,6 +154,13 @@ for (const transport of ['json', 'sse']) {
       ]);
       assert.doesNotMatch(c.$('trace-panel').textContent, /clef/i);
 
+      data = { ...data, timings: { ...data.timings, model_ms: 584 }, trace: [...data.trace,
+        { stage: 'answer_evidence', candidates: 20, calls: 4, elapsed_ms: 500, model: ['jev-1.14.0'] }] };
+      c.submit(transport === 'sse');
+      await until(() => !c.$('search-button').disabled);
+      assert.match(rows()[0][1], /判定（ローカル・API） 584 ms/);
+      assert.deepEqual(rows().at(-1), ['回答に使う資料の選別', '候補 20 · API 4 回 · 500 ms · jev-1.14.0']);
+
       // A subsequent search must replace old timings and retain meaningful zeros.
       data = { ...result(1), timings: { scope_ms: 0, storage_ms: 0, model_ms: 0, generation_ms: 0 },
         trace: [{ stage: 'document_screening', candidates: 0, calls: 0, elapsed_ms: 0, model: ['rust-rules-v1'] }] };
